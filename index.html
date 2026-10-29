@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#fdf6ec">
+<meta name="description" content="Jelajah Nusantara: kumpulan kuis interaktif tentang ibukota, bentuk provinsi, dan budaya 38 provinsi Indonesia. Mode Single & VS, siap untuk flat panel, laptop, dan HP.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="ikon/nusantara.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="ikon/nusantara.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<title>Jelajah Nusantara — Kuis Interaktif Indonesia</title>
+<style>
+  :root{
+    --bg:#fdf6ec; --paper:#ffffff; --ink:#1f2340; --muted:#5d6380; --line:#eadfcc;
+    --red:#d62839; --red-d:#9b1b28; --gold:#f4b400; --gold-d:#c48f00;
+    /* warna khas tiap kuis */
+    --sky:#1aa3ea; --sky-d:#0b6fa8; --sea:#0e6383; --sea-d:#0a3d55; --batik:#8b1e2d; --batik-d:#5e1320;
+    --r:clamp(16px,2.2vmin,24px);
+    --head:"Fredoka","Nunito","Segoe UI Rounded",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--ink);font-family:"Nunito","Segoe UI",system-ui,sans-serif;font-weight:700;line-height:1.5;
+    background-image:radial-gradient(rgba(31,35,64,.06) 1.5px,transparent 1.5px);background-size:24px 24px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  a{color:inherit}
+  button{font:inherit;color:inherit;border:0;cursor:pointer;background:none}
+  h1,h2,h3{font-family:var(--head);font-weight:700;line-height:1.1}
+  .wrap{width:100%;max-width:1180px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left))}
+
+  /* ---------- tombol ---------- */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:10px 22px;border-radius:14px;
+    font-family:var(--head);font-weight:600;font-size:clamp(16px,2vmin,19px);text-decoration:none;
+    background:var(--f,#fff);color:var(--c,var(--ink));border:3px solid var(--d,var(--line));box-shadow:0 5px 0 var(--d,var(--line));
+    transition:transform .08s,box-shadow .08s}
+  .btn:active{transform:translateY(5px);box-shadow:0 0 0 var(--d,var(--line))}
+  .btn.red{--f:var(--red);--d:var(--red-d);--c:#fff}
+  .btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ---------- header ---------- */
+  header{position:sticky;top:0;z-index:10;background:rgba(253,246,236,.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+    border-bottom:2px solid var(--line);padding-top:env(safe-area-inset-top)}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:68px}
+  .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+  .logo svg{width:42px;height:42px;flex:none}
+  .logo b{display:block;font-family:var(--head);font-size:clamp(18px,2.6vmin,24px);line-height:1}
+  .logo small{display:block;font-size:12px;color:var(--muted);font-weight:800}
+  .bar-actions{display:flex;gap:10px;align-items:center}
+  .icon-btn{width:48px;height:48px;padding:0}
+  .net{font-size:12px;font-weight:900;padding:4px 10px;border-radius:99px;background:#e3f6e8;color:#1d6b36}
+  .net.off{background:#fde7e9;color:var(--red-d)}
+
+  /* ---------- hero ---------- */
+  .hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:clamp(20px,4vw,48px);align-items:center;padding-top:clamp(28px,6vh,64px);padding-bottom:clamp(20px,4vh,40px)}
+  .kicker{display:inline-flex;align-items:center;gap:8px;background:#fff;border:2px solid var(--line);border-radius:99px;padding:4px 14px 4px 6px;font-size:13px;font-weight:900;color:var(--muted)}
+  .flag{width:26px;height:18px;border-radius:4px;overflow:hidden;display:inline-grid;grid-template-rows:1fr 1fr;border:1px solid #ddd}
+  .flag::before{content:"";background:var(--red)} .flag::after{content:"";background:#fff}
+  .hero h1{font-size:clamp(34px,6vw,64px);margin:16px 0 14px;letter-spacing:-.5px}
+  .hero h1 em{font-style:normal;color:var(--red);position:relative;white-space:nowrap}
+  .hero h1 em::after{content:"";position:absolute;left:0;right:0;bottom:.04em;height:.18em;background:var(--gold);opacity:.55;border-radius:99px;z-index:-1}
+  .lead{font-size:clamp(16px,2.1vmin,20px);color:var(--muted);max-width:540px}
+  .hero-cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+  .facts{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+  .fact{background:#fff;border:2px solid var(--line);border-radius:14px;padding:6px 14px;font-size:14px;color:var(--muted)}
+  .fact b{font-family:var(--head);font-size:20px;color:var(--ink);margin-right:4px}
+
+  .map-card{position:relative;background:linear-gradient(180deg,#d9f1fb,#bfe6f6);border:3px solid #9fd3ea;border-radius:28px;
+    box-shadow:0 8px 0 #9fd3ea;padding:clamp(12px,2vw,22px);aspect-ratio:925/420}
+  .map-card svg{width:100%;height:100%;display:block;overflow:visible}
+  #heroMap path{fill:#fffaf0;stroke:#c8b796;stroke-width:.8;stroke-linejoin:round;transition:fill .6s}
+  #heroMap path.l1{fill:var(--sky)} #heroMap path.l2{fill:#2bb3a3} #heroMap path.l3{fill:var(--batik)} #heroMap path.l4{fill:var(--gold)}
+  .map-label{position:absolute;left:clamp(12px,2vw,22px);bottom:clamp(10px,2vw,18px);background:#fff;border:2px solid #9fd3ea;border-radius:12px;
+    padding:4px 12px;font-size:clamp(12px,1.6vmin,15px);color:var(--muted);max-width:80%}
+  .map-label b{color:var(--ink);font-family:var(--head)}
+  .map-credit{position:absolute;left:14px;top:8px;font-size:10px;font-weight:700;color:#5d7a8a;text-decoration:none;opacity:.85}
+  .map-credit:hover{text-decoration:underline}
+  .mascots{position:absolute;right:clamp(8px,2vw,20px);top:-30px;display:flex;gap:4px}
+  .mascots svg{width:clamp(44px,6vw,64px);overflow:visible}
+  .bob{animation:bob 2s ease-in-out infinite}
+  .mascots svg:nth-child(2) .bob{animation-delay:-.6s} .mascots svg:nth-child(3) .bob{animation-delay:-1.2s}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  /* ---------- section umum ---------- */
+  section{padding:clamp(28px,5vh,56px) 0}
+  .sec-head{text-align:center;max-width:680px;margin:0 auto clamp(20px,4vh,36px)}
+  .sec-head .eyebrow{font-size:13px;font-weight:900;letter-spacing:1.5px;color:var(--red);text-transform:uppercase}
+  .sec-head h2{font-size:clamp(26px,4vw,40px);margin:6px 0 8px}
+  .sec-head p{color:var(--muted)}
+
+  /* ---------- kartu kuis ---------- */
+  .quizzes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:clamp(16px,2.5vw,28px)}
+  .quiz{--qc:var(--sky);--qd:var(--sky-d);--qbg:#e8f6fd;position:relative;display:flex;flex-direction:column;background:#fff;
+    border:3px solid var(--qc);border-radius:26px;box-shadow:0 8px 0 var(--qd);overflow:hidden;text-decoration:none;transition:transform .15s}
+  .quiz:hover{transform:translateY(-4px)}
+  .quiz:active{transform:translateY(4px);box-shadow:0 4px 0 var(--qd)}
+  .quiz.provinsi{--qc:var(--sea);--qd:var(--sea-d);--qbg:#e3f1f6}
+  .quiz.budaya{--qc:var(--batik);--qd:var(--batik-d);--qbg:#fbeee6}
+  .quiz-top{position:relative;background:var(--qbg);padding:22px 22px 14px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;min-height:150px}
+  .quiz.ibukota .quiz-top{background:linear-gradient(180deg,#bfe9ff,#e8f6fd 70%,#8ee07f 70%,#8ee07f)}
+  .quiz.provinsi .quiz-top{background:repeating-linear-gradient(0deg,rgba(255,255,255,.08) 0 1px,transparent 1px 28px),repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 1px,transparent 1px 28px),linear-gradient(180deg,#0e6383,#0a3d55)}
+  .quiz.budaya .quiz-top{background-color:#6b3420;background-image:radial-gradient(ellipse 28% 14% at 50% 0%,#7f4129 97%,transparent 100%),radial-gradient(ellipse 28% 14% at 50% 100%,#7f4129 97%,transparent 100%),radial-gradient(ellipse 14% 28% at 0% 50%,#7f4129 97%,transparent 100%),radial-gradient(ellipse 14% 28% at 100% 50%,#7f4129 97%,transparent 100%);background-size:40px 40px}
+  .quiz-top svg{width:100px;height:110px;overflow:visible}
+  .quiz-num{font-family:var(--head);font-size:64px;line-height:.8;color:rgba(255,255,255,.75);-webkit-text-stroke:3px var(--qd)}
+  .level{position:absolute;top:14px;left:14px;background:#fff;color:var(--qd);border:2px solid var(--qc);font-size:12px;font-weight:900;padding:2px 10px;border-radius:99px}
+  .resume{position:absolute;top:14px;right:14px;background:var(--gold);color:var(--ink);font-size:12px;font-weight:900;padding:2px 10px;border-radius:99px;animation:blink 1.6s ease-in-out infinite}
+  @keyframes blink{50%{opacity:.6}}
+  .quiz-body{padding:18px 22px 22px;display:flex;flex-direction:column;gap:10px;flex:1}
+  .quiz-body h3{font-size:clamp(22px,2.8vmin,28px);color:var(--qd)}
+  .quiz-body p{color:var(--muted)}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+  .tag{font-size:12px;font-weight:900;padding:3px 10px;border-radius:99px;background:var(--qbg);color:var(--qd)}
+  .best{font-size:14px;color:var(--muted);min-height:1.5em}
+  .best b{color:var(--ink)}
+  .quiz-go{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;border-radius:14px;
+    background:var(--qc);color:#fff;font-family:var(--head);font-weight:600;font-size:19px;box-shadow:0 5px 0 var(--qd)}
+  .quiz-go svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+  .quiz:hover .quiz-go svg{transform:translateX(4px)}
+
+  /* ---------- rute belajar & cara bermain ---------- */
+  .route{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:clamp(20px,3vh,32px);color:var(--muted);font-size:15px}
+  .route b{font-family:var(--head);color:var(--ink)}
+  .route .dot{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;color:#fff;font-family:var(--head);margin-right:6px}
+  .route .arrow{color:#c9bda8;font-size:22px}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px;counter-reset:s}
+  .step{background:#fff;border:2px solid var(--line);border-radius:var(--r);padding:20px;position:relative}
+  .step::before{counter-increment:s;content:counter(s);position:absolute;top:-14px;left:18px;width:34px;height:34px;border-radius:10px;
+    background:var(--red);color:#fff;display:grid;place-items:center;font-family:var(--head);font-size:18px;box-shadow:0 4px 0 var(--red-d)}
+  .step .ic{font-size:30px;margin:6px 0}
+  .step h3{font-size:20px;margin-bottom:4px}
+  .step p{color:var(--muted);font-size:15px}
+
+  /* ---------- untuk guru ---------- */
+  .teacher{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(16px,3vw,32px);align-items:start;
+    background:var(--ink);color:#fff;border-radius:28px;padding:clamp(22px,4vw,44px)}
+  .teacher .eyebrow{color:var(--gold)}
+  .teacher h2{font-size:clamp(26px,3.6vw,38px);margin:6px 0 10px}
+  .teacher p{color:#c5c8dc}
+  .tips{list-style:none;display:grid;gap:12px}
+  .tips li{display:flex;gap:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px}
+  .tips .ic{font-size:24px;line-height:1.2}
+  .tips b{display:block;font-family:var(--head);font-weight:600;font-size:17px}
+  .tips span{color:#c5c8dc;font-size:14px}
+  .install-box{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .install-note{font-size:13px;color:#c5c8dc}
+
+  /* ---------- footer ---------- */
+  footer{border-top:2px solid var(--line);margin-top:clamp(24px,4vh,40px);padding:28px 0 calc(28px + env(safe-area-inset-bottom));text-align:center;color:var(--muted);font-size:14px}
+  footer .dev{font-size:16px;color:var(--ink);margin-bottom:6px}
+  footer .dev b{color:var(--red)}
+  footer small{display:block;margin-top:6px;font-size:12px}
+  footer a{color:var(--sea)}
+
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:50;max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s}
+  #toast.show{opacity:1}
+
+  @media (max-width:820px){
+    .hero{grid-template-columns:minmax(0,1fr)}
+    .map-card{margin-top:28px}
+    .teacher{grid-template-columns:minmax(0,1fr)}
+  }
+  @media (max-width:520px){
+    .logo small,.net{display:none}
+    .hero-cta .btn{flex:1}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <a class="logo" href="#top" aria-label="Jelajah Nusantara">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <rect width="48" height="48" rx="14" fill="#1f2340"/>
+        <path d="M24 9c-7 0-12 5-12 12 0 9 12 19 12 19s12-10 12-19c0-7-5-12-12-12z" fill="#fff"/>
+        <path d="M12 21c0-7 5-12 12-12s12 5 12 12z" fill="#d62839"/>
+        <circle cx="24" cy="21" r="4" fill="#1f2340"/>
+      </svg>
+      <span><b>Jelajah Nusantara</b><small>Kuis Interaktif Indonesia</small></span>
+    </a>
+    <div class="bar-actions">
+      <span class="net" id="net">● Daring</span>
+      <button class="btn icon-btn" id="fsBtn" aria-label="Layar penuh"></button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ================= HERO ================= -->
+  <div class="wrap hero">
+    <div>
+      <span class="kicker"><span class="flag"></span>Media Pembelajaran Interaktif Kelas</span>
+      <h1>Kenali Indonesia,<br><em>satu kuis</em> sekali jalan.</h1>
+      <p class="lead">Tiga petualangan seru tentang ibukota, bentuk provinsi, dan budaya Nusantara. Main sendiri untuk berlatih, atau bertanding antartim di depan kelas!</p>
+      <div class="hero-cta">
+        <a class="btn red" href="#kuis">Pilih Kuis
+          <svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></a>
+        <a class="btn" href="#guru">Panduan Guru</a>
+      </div>
+      <div class="facts">
+        <span class="fact"><b>38</b>provinsi</span>
+        <span class="fact"><b>3</b>kuis</span>
+        <span class="fact"><b>2</b>mode main</span>
+        <span class="fact"><b>0</b>iklan</span>
+      </div>
+    </div>
+    <div class="map-card" aria-hidden="true">
+      <div class="mascots" id="mascots"></div>
+      <svg id="heroMap"></svg>
+      <div class="map-label" id="mapLabel">Dari Sabang sampai Merauke…</div>
+      <a class="map-credit" href="https://github.com/denyherianto/indonesia-geojson-topojson-maps-with-38-provinces" target="_blank" rel="noopener">Peta: Deny Herianto (CC BY 4.0)</a>
+    </div>
+  </div>
+
+  <!-- ================= KUIS ================= -->
+  <section id="kuis">
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Pilih Petualanganmu</span>
+        <h2>Tiga Kuis, Satu Indonesia</h2>
+        <p>Setiap kuis bisa dimainkan sendiri (Single) atau oleh dua tim di satu layar (VS).</p>
+      </div>
+
+      <div class="quizzes">
+        <a class="quiz ibukota" href="ibukota.html" data-key="ibukota">
+          <div class="quiz-top">
+            <span class="level">Tingkat: Pemula</span>
+            <span class="resume" hidden>⏸ Belum selesai</span>
+            <span class="quiz-num">1</span>
+            <span class="art" data-art="pin"></span>
+          </div>
+          <div class="quiz-body">
+            <h3>Kuis Ibukota Provinsi</h3>
+            <p>Medan, Makassar, atau Manokwari? Pasangkan setiap provinsi dengan ibukotanya, lengkap dengan peta yang menunjukkan letaknya.</p>
+            <div class="tags"><span class="tag">38 provinsi</span><span class="tag">Peta penanda</span><span class="tag">Bonus kecepatan</span></div>
+            <p class="best"></p>
+            <span class="quiz-go">Mainkan <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+
+        <a class="quiz provinsi" href="provinsi.html" data-key="provinsi">
+          <div class="quiz-top">
+            <span class="level">Tingkat: Menengah</span>
+            <span class="resume" hidden>⏸ Belum selesai</span>
+            <span class="quiz-num">2</span>
+            <span class="art" data-art="compass"></span>
+          </div>
+          <div class="quiz-body">
+            <h3>Tebak Provinsi</h3>
+            <p>Amati garis pantai dan pulaunya, lalu tebak provinsi mana yang sedang diperbesar kamera peta. Siap jadi penjelajah sejati?</p>
+            <div class="tags"><span class="tag">3 tingkat kesulitan</span><span class="tag">Filter pulau</span><span class="tag">Bantuan 50:50</span></div>
+            <p class="best"></p>
+            <span class="quiz-go">Mainkan <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+
+        <a class="quiz budaya" href="budaya.html" data-key="budaya">
+          <div class="quiz-top">
+            <span class="level">Tingkat: Lanjutan</span>
+            <span class="resume" hidden>⏸ Belum selesai</span>
+            <span class="quiz-num">3</span>
+            <span class="art" data-art="gunungan"></span>
+          </div>
+          <div class="quiz-body">
+            <h3>Kuis Budaya Nusantara</h3>
+            <p>Rumah Gadang, Tari Kecak, Sasando, Rendang… dari mana asalnya? Jelajahi kekayaan budaya Indonesia dan warnai petamu.</p>
+            <div class="tags"><span class="tag">Rumah adat</span><span class="tag">Tarian</span><span class="tag">Alat musik</span><span class="tag">Makanan</span></div>
+            <p class="best"></p>
+            <span class="quiz-go">Mainkan <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          </div>
+        </a>
+      </div>
+
+      <p class="route">
+        <span>Saran urutan belajar:</span>
+        <span><span class="dot" style="background:var(--sky)">1</span><b>Ibukota</b></span><span class="arrow">→</span>
+        <span><span class="dot" style="background:var(--sea)">2</span><b>Bentuk Provinsi</b></span><span class="arrow">→</span>
+        <span><span class="dot" style="background:var(--batik)">3</span><b>Budaya</b></span>
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= CARA BERMAIN ================= -->
+  <section>
+    <div class="wrap">
+      <div class="sec-head">
+        <span class="eyebrow">Cara Bermain</span>
+        <h2>Mudah, Cepat, Seru</h2>
+        <p>Tanpa daftar akun, tanpa unduh aplikasi. Buka, pilih, mainkan.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="ic">🗺️</div><h3>Pilih kuis</h3><p>Mulai dari kuis yang paling sesuai dengan materi hari ini.</p></div>
+        <div class="step"><div class="ic">👥</div><h3>Pilih mode</h3><p><b>Single</b> untuk latihan mandiri, <b>VS</b> untuk dua tim berebut menjawab lebih dulu.</p></div>
+        <div class="step"><div class="ic">⏱️</div><h3>Atur permainan</h3><p>Tentukan jumlah soal dan waktu per soal: 10, 15, 25, 30 detik, atau bebas.</p></div>
+        <div class="step"><div class="ic">🏆</div><h3>Jawab &amp; pelajari</h3><p>Setiap jawaban langsung ditunjukkan di peta, jadi siswa belajar sambil bermain.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= UNTUK GURU ================= -->
+  <section id="guru">
+    <div class="wrap">
+      <div class="teacher">
+        <div>
+          <span class="eyebrow" style="font-size:13px;font-weight:900;letter-spacing:1.5px;text-transform:uppercase">Untuk Bapak/Ibu Guru</span>
+          <h2>Dirancang untuk ruang kelas</h2>
+          <p>Bisa ditampilkan di flat panel interaktif, proyektor, laptop, maupun HP siswa. Semua kuis tetap bisa dimainkan meski internet sekolah sedang tidak stabil.</p>
+          <div class="install-box">
+            <button class="btn red" id="installBtn" hidden>📲 Pasang sebagai Aplikasi</button>
+            <span class="install-note" id="installNote"></span>
+          </div>
+        </div>
+        <ul class="tips">
+          <li><span class="ic">🖐️</span><div><b>Mode VS untuk flat panel</b><span>Layar dibagi untuk dua tim. Dua siswa bisa menyentuh layar bersamaan, dan tim yang lebih dulu benar mendapat poin.</span></div></li>
+          <li><span class="ic">📱</span><div><b>Berhadapan di meja</b><span>Di HP atau tablet yang tegak, sisi Tim B otomatis diputar agar dua siswa bisa bermain berhadapan.</span></div></li>
+          <li><span class="ic">💾</span><div><b>Aman saat halaman tertutup</b><span>Permainan tersimpan otomatis. Jika halaman ter-refresh, cukup tekan "Lanjutkan".</span></div></li>
+          <li><span class="ic">⌨️</span><div><b>Pintasan keyboard</b><span>F = layar penuh. Single: tombol 1–4. VS: Tim A 1–4, Tim B 7–0.</span></div></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="dev">Development by <b>Andri Fernanda, S.Pd., Gr.</b> © 2026</p>
+    <p>Dibuat dengan ❤️ untuk siswa Indonesia.</p>
+  </div>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+// Disederhanakan dari "Indonesia GeoJSON & TopoJSON Maps (38 Provinces)" — Deny Herianto, CC BY 4.0.
+const MAP = {"vb":[-1,1,925,345],"p":{"Sulawesi Tengah":{"d":"M491.2 141l3.3-3.8 3.1 4.1-2.4-7.5 1-7.1-2.7-0.3-1.4-2.2 4.7 1.8 0.8-3.5-1.9-3 2.3 0.2-0.3-4.9 3.2-1.1-0.1-3.9 3.8-1.7 1.1-3.8 2.3 3.9 3.8 0.7 0.9-3.7 3.5-1.8 0-5.9 1.9-0.6 7 2.5 4.2-1.5-0.9 2.4 2.6 2.4 12.9 0.5-3.6 2.6-3-1.6-12.9 4-1.1 2.4 3.3 1.9 0.1 2-5.1 1.5-8.7-2.4-5.4 1.2-4.8 5.4-2 5.3 1 12.3 4.5 5.5 2-0.8 1.9 1.4 3.4 8.4 3-1.2 5.5 1.7 4.7-7.5 6-5.2 1.7 3 4.5 0.8 3.1-0.7 2-3.4 15.2-0.7-4.3-1.6 6.3-2.2 4.1 0.3 3.5 2.8-1.8 6.3-1.9 0-3-4-6 2.1-8.3 11.1-10.9 4.1-3.4 4.9-7.4-3 0.7 3.8 1.5-1.5 2.7 5.2 5.5 2.5 3.7 8.5 6.2 4-1.4 2.1 4.7 3.1-3.5 1.9-1-3.5-11.8-4 2.3-5.2-6.3-4.5-7.3-0.3 0.1-2.4-7.3-0.8-6.5-5.2-2.6 1.2-4.3-1.8-4.1 1.4 0-4.7-4-4.8 0.3-2-5.1-2.1 3.3-4.3-0.7-5.5zM557.6 156l-1.9-3.1 2.5-5.3 5.6-0.6 1.1 4.8 2.4-3.3 3.8 1-2 4.9-4-1.6-0.3 4.2-2.8-1 1.7-1.7-1-4.3-5.1 6zM533.4 135.5l1.7-3 3.2 0.3-0.6 2-3-0.9-1.3 1.6zM569.8 158.1l1.1-4.3 1.4 4.2-2.5 0.1zM547.7 131.3l-3.1-3 3.1 1.4 0 1.6zM539.5 132.5l-2.3-0.9 4-0.6-1.7 1.5zM562.5 196.2l-1.6-0.3 2.3-0.7-0.7 1z","c":[528.7,143.2]},"Sulawesi Barat":{"d":"M491.2 141l0.7 5.5-3.3 4.3 5.1 2.1-0.3 2 4 4.8 0 4.7-3.8 5.2 1.6 6.1-0.2 2.6-3.4 0.8 1.1 7.1-5 2.1 1.8 5.7-3.3-1.5-6.3 2.8-1.8-0.8-2.5-8.9 2-4-2.2-0.3-0.3-1.6 1.4-3.3 2 0.8 4.3-3.7 1.4-9.6 3.1-2.7-1.7-3.4 0.5-8.3 5.1-8.5z","c":[486.3,168.1]},"Sulawesi Selatan":{"d":"M489.5 194l-1.8-5.7 5-2.1-1.1-7.1 3.4-0.8 0.2-2.6-1.6-6.1 3.8-5.2 4.1-1.4 4.3 1.8 2.6-1.2 6.5 5.2 7.3 0.8-0.1 2.4 7.3 0.3 6.3 4.5-2.3 5.2-5.6 2.3-6.2-4.8-1.4 1.8 1.4-3.3-6.6-1.6-11.2 7.1 1.3 3.7 3.3 2.1 0.4 9.6-2 6.9 0.2 6.7 2 4.6-2.9 4.3-0.7 5.4 3.9 9.4-3.1-2.1-3.6 1.7-4-0.9-4.5 3.2-5.7-2.9-1.3-4.7 3.4-8-0.9-3.5 3.1-8.6 0-7.1-3.6-5 0.4-4.3zM508.8 247.9l1.1-8.5 1.5 5.7-1.8 8.7-0.8-5.9zM515.5 266.4l-2.8 0.2-0.3-2.5 3.1 2.3zM522 271.9l-0.3-1.8 1.6 0.9-1.3 0.9z","c":[511.4,200.5]},"Papua Tengah":{"d":"M797.7 209l4.2-5.7-1.5-4.9 3.6-2.5-3.7 0.1-1.9-3.2-3.9-1.6-2.3-4.6-0.5-6.5 1.5-1 0.5 4.2 3.2-1.3 0.3 7 5.1 2.6 4.7 0.2 3.1-0.7 8.4-7.9 1.7-5.1 3.9 1.9 2.7 4.6 4.6 0.3-0.1 4.2 2-0.6 0.1-1.8 1.5 2.6 2.1-0.2 1 3 1.2-0.3-1.1-4.6 2.7 1-1.8 1.5 1.1 0.6 2.1-3.6 5.1-1.3 10.2 0.2 3.4-1.9-0.8 4 1.5 1.1-0.1 6.9 3.8 0.9-0.1 2.9 1.9 1-7.1 1.4-1.5 5.9-3.8-1.4 0 2 2.3-0.3 0.5 1.4 1.9-1.1-2.7 5.7 1.8 1.8-3.1 1.1 2.5 2.6-4.3 8.8-35-14.5-14.4-0.6-6.5-4.3z","c":[829.4,203.2]},"Papua Barat":{"d":"M752 168l1.9-2.6-1.3-3.2 2.1-1.2 3.6-11.3 2.1 1.3 4.6-3.3 3.6-0.1 1.1-8.8 9.7-0.4 3.3 3-2.5 1.9 5.3 7.4-4.1 6.8 0.9 9.7 6.9 14.1 1.5-8.3 2.1 1.1 0.4 5-1.5 1 0.5 6.5 2.3 4.6 3.9 1.6 1.9 3.2 3.7-0.1-3.6 2.5 1.5 4.9-4.2 5.7-5.1-2.6 1.4-1-0.8-1.7 6-0.7-5.7-0.6-3.4 2.5-3.1-3 0 1.4-1.6-0.4 0.7 2.1-3.8-2.9 1.5-1.4-1-1.8-3.9 2-2.2-5.7-0.4 3.3-2.5-1.1-1.4-3.9 1.6-1.4-0.7-3.2 4.2-4-0.7-2.2-3.8 3.7-0.4 5.9-2.7-0.8 2.1 3.1-3.8 3.2 0.9 3.4-4.1 4.2-6.7 0.3-3.6-8 4.1-2.7-2.5-2.1-0.1-3.7-2.9 1.1-3.9-5.7-3.7-2-3.9 0.6-1.8-2.7 1.1-0.9-2.1-0.2 5.6-2.3 7.2 0.8 2.8 2.2 9.6-7.9 3.3 1.9 0.7 3.8 4.6-3.2 0.4 2.5 2.2 0.1 0.7-0.4-0.4-3.1 0.8-0.9 1.5 0.7 1.5 0-0.5-1.7 0.8-0.1-0.1-0.5-0.7-0.8 1-1.7-1-3.2-6.6 3-8.8-0.7-4.4 1.9-6.4-0.1-0.8-1.7zM766.8 206l4.4 2.8-2 0.2-2.4-3zM778.7 170.6l1 0.7 0 0.5-2.9-0.6 1.9-0.6zM783.5 162.3l-0.6-1.7 1.9-1.7-1.3 3.4zM774.6 175.1l0.9 0.6 0.2 1.4-0.6 0-0.1-0.7-1.1-0.1 0.7-1.2zM776.6 172.2l0.7 1.2-0.8-0.5-1 0.7-0.9-0.8 2-0.6zM788.1 165.2l-1.1 2.1 0.3-3.3 0.8 1.2zM782 202.3l1.7 1.9-2-0.5 0.3-1.4zM791.2 172.1l-1.1-0.3 1.4-1.5-0.3 1.8z","c":[771.5,173.7]},"Gorontalo":{"d":"M526.7 114.5l-0.1-2-3.3-1.9 1.1-2.4 12.9-4 3 1.6 3.6-2.6 5.2 0.2 7.5 4.2 2.2-2.8 3.6 0.7 3 2.4 0.1 2.1 5.2 2.5-1.2 5.1-4.1 0-4.1-3.7-13.4-0.3-11.6 2-5.8-2.6-3.8 1.5z","c":[547,110.4]},"Riau":{"d":"M103.6 108.8l-1.2-1.2 0.9-7-2.2-4.2 7.6-2.8-0.9-4.8-2.2-1 1.9-8.3-1.1-6.5 1.5 4.6 3.5 3.3 3.9 1.4 0.1-3.9 5.5-0.2 5.2 5 1.8 6.5 7.3 1.1 7.8 5.7 1.6 7.6 3.9 3.9 2.9 1.2 6.9 0.5 3.9 6.6 4.3-3.2 7.7 4.9 2 6.2-3.9-0.1-3.2 3.6 6.5 3.2-7.2 3.5 0.4 4.2-1.7 1.4-7-0.9-7.5 7.4-7-4.2-5.9-0.7-3.2 2-15.2-9.5-1.5-3.8-2.9 0.6-2-5.9 2.4-1.9-1.7-0.8 1.3-2.8-3.2 0.7-4.4-2.5-0.1-1.9-3.7 0-1.5-4.3 1.7-1.3-2.1-1.4zM128.4 87.6l-0.3-4 6-1.5 1.6 3.1-1.5 3.9-3.7 0.8-2.1-2.3zM151.4 108.6l-2.7-1.1-0.5-1.3 6.5-2.6 6.4 4.8-0.7 1.9-3.3-2.2-5.7 0.5zM144.5 99.1l-0.3-3.1 1.2-0.4 4.3 3.6-0.9 3.4 0.9 2.4-1.8 0.7-2.4-1.8-1-4.8zM142.4 94.8l-2.4-2.7 9.2 1.5 1 5.2-4.5-3.5-3.3-0.5zM157.9 104.8l-3-1.6-2.4 0.4 2.2-2.7 3.2 0.6 5.2 5.5-5.2-2.2zM164.1 113.6l-1.3-1 1.3-2.6 1.9 2.1-1.9 1.5zM149.8 104.5l-0.6-2.1 1.5-1 1.4 2.5-2.3 0.6z","c":[138.6,109.8]},"Papua Selatan":{"d":"M853.6 228.4l4.3-8.8-2.5-2.6 3.1-1.1 3.3-0.6 2.1 3 2.6-0.9 1.5 2.8 3.4-0.3 0.4-1.9 5.3 0 3.9 2.9 2.3-2.1-1.7 4.9 18.1 1.4-1.3 3-2-0.8 2.5 1.1 0.8-2.6 1.2 1.8 1.5-0.6-1.2-2 3.5-0.1 3.1 3.3 12.2 2.7 0 19.5-3.1 7.3 1.4 3.6 2.1 0.5 0 44.7-2.6-0.9-18.8-19.6-12.2 2.1-2.7-2.2-5.9 3.3-1.5-2.7 1.9-1.3-0.4-2.5 2.1-1.5 1.9-5.8-8.5-6.8 0.4-3.1-2.8-2.8 7.5-1.8 0.2-0.9-2.4-0.4-0.1-1.7-8.1-7-2.9-10.1-4.2-2.3-0.4-2.7 1.6-1.1-5.2-3.7-2.6 0.4-1.1-3zM854.4 292.2l-1.6 0.2 0.5-2.4 4-8.9 7.1-7.7 10.3-2 6.9 4-1.7 5.6-2 1 0.3 3.5-1.4 0-0.7 1.2-2.4 0.2-4.9 4.2-14.4 1.1zM876.4 286.9l1.5 4.8-6.6-0.7 2.3-3.6 2.8-0.5zM874.2 256.7l2.1 1.3 0.1 1.5 0.5 0.5 2 0.1-2 0.5-3.4-2.1 0.7-1.8zM873.1 258.9l2.8 1.7-2.4 0.8-0.4-2.5z","c":[887,260.9]},"DI Yogyakarta":{"d":"M300.1 281.8l2.2-4.3 3.2 0.5 3.4-3.2 0.9 4.5 5.9 1-0.6 4.2 1.6 3.6-16.6-6.3z","c":[308.4,281.4]},"Sumatera Barat":{"d":"M103.6 108.8l2.1 1.4-1.7 1.3 1.5 4.3 3.7 0 0.1 1.9 4.4 2.5 3.2-0.7-1.3 2.8 1.7 0.8-2.4 1.9 2 5.9 2.9-0.6 1.5 3.8 15.2 9.5 1.2 3.1-3.7 2.8-0.4 4.5-4.1 3.5-6.8 0.2 3.2 12.1-5.5 3.8-3.9-6 0.9-4.7-4.6-6.7-1.5-5.5-3.3-1.3-1.4-8.2-10.2-11.2-1.8-5.6-7.4-5-3.9 0 6.9-6.2 8 1.4 1.1-1.5-2.7-3 0.1-3.9 6.9 2.6zM85.5 156.8l0 2.1-1.2-2.1 0.6 3.1-2.4 0.3-6-3.9-4.6-8.3 1.8-4.8 4.5-1 7.3 14.6zM105.1 185l-1.3-5.2 5.3 4.5 0.2 2.6-1.7 0.5 1.7 3.5-4.2-5.9zM96.2 170.1l1.1 1.7-5.3-2.1-0.8-4.7 2.6 0.5 2.4 4.6zM102.5 180.7l-2.3 0.2-0.8-6.6 5 4.7-1.9 1.7z","c":[110.5,139.9]},"DKI Jakarta":{"d":"M234.5 245.8l4.9 0-1 5.2-2.8-0.7-1.9-2.9 0.8-1.6z","c":[236.6,248.4]},"Maluku":{"d":"M657.9 193.8l1-2.8-2.1-3.7 5.5-2-0.7-2.1 2.1-1.9 17.4-1.4 1.5 3.5 7.9-3.9 10 4.5 7.2-0.2 4.3 3.2 0.9 4.5 3.2 0.6 1.5 4.2-1.2 5.1-16-7.7-1.8-2.9-8.1-0.8 0.3 3.4-12.1-2.3 0.6-2.6-1.6-0.4-4.2 4.6-4.1 0.5-4.1-5.1-1.7 0.5 0.1-3.3-1.9 1.3-2.6 8-1.3-0.8zM633.8 201.2l-10.2-4.9-3.5-5.1 0.2-3.7 15.5-2.3 6.4 3.5-1.5 0.6 0.7 2 3.8 0.2-0.7 5.7-10.7 4zM726.6 283.1l-0.6 1.4-0.3-2-3.6 1.4 0-5.8 2.5 0.3-1.5-1 1.7-4 4.1-2.5 1.8-4.1 2.5-0.3 1.7 1.7-2.2 0.9-0.1 7.3-6 6.7zM616.1 284.1l2.8-6.9 4.8 1.3 8.6-3.3 4.6 3.5-5.9 1.8-1.7 3-7.9-1.7-5.3 2.3zM785 261.8l-1.1 0.8-2.8-3.2 1.2-6.4 2 0.8-1.9-1.3-0.1-5.3 8.3 8.4-5.6 6.2zM785.7 246.8l-0.1-1.8 3.2-0.7 1.9-1.9 5 3.5-1.1 4.1-2.3 1.4-6.6-4.6zM786.8 244.5l-0.9-2.2 2-2.5-3.7-1.4 2.7 0.2 2.1-3.6 1.5 0.3 0.4 1.7 2.8 2.5 0.1 1.2-7 3.8zM662.5 199.6l2.2-3-4.7 3-1.5-2 8.3-3.6 0.3 2.6-1.9-0.2 0.8 1.5-3.5 1.7zM691.6 281.8l1.9-2.1 3.9 2.4-2.3 3-3.5-3.3zM757 243.9l6.1-14.4-1.1 6.5-5 7.9zM754.8 243l-2.1-5.7 1.5-1.4 2.1 5.1-1.5 2zM661 288.7l-4.6-0.7-1.1-1.8 7.2 0.9-1.5 1.6zM715.9 290.9l2.8-4.4 4.6-0.1-7.4 4.5zM785.9 249.7l-3.6-3.7 0.5-1.7 1.7 0 0.2 2.2 2 2-0.8 1.2zM790.8 236.7l-0.2-1.3 0.5-0.2 4.2 2.1-1.3 1.2-1.7 0-1.5-1.8zM792 235.4l-1.9-0.3-0.1-2.7 4 1.8-2 1.2zM789.2 249.5l1.5 1.3-1.1 2.2-2.4-1.7 2-1.8zM673.3 196.1l-2-2.1 3.3 0.3 0.1 2.1-1.4-0.3zM673.4 267.2l-0.9 1.1-2-1.4 1.7-1.7 1.2 2zM739.1 267.3l-0.1 1.7-4.7-1.9 4.8 0.2zM647.1 277l0.2-3 2.2 0.3-2.4 2.7zM668.4 196.7l0.6-2.5 2.4 1.1-3 1.4zM794.3 253.2l1 1.4-1.7 0.7-0.8-1.8 1.5-0.3zM662.8 289.5l-1-1.4 2.6 0.1 0.3 1.2-1.9 0.1zM794.4 240.7l0.3 2.9-2.1-1.2 1.8-1.7zM794.3 258.5l-1.8 0.6 1.6-3.5 0.2 2.9zM791.8 253.3l-1.5 1.3 0.1-3.2 1.4 1.9zM797.5 249.7l-0.6 3.8-1-1.7 1.6-2.1zM658.9 184.3l-2.1 0.2 3-2-0.9 1.8zM722.7 273.2l-3.3 0.6 3.8-1.7-0.5 1.1zM652.5 190.1l0.6 1.2-3.4-1.3 2.8 0.1zM717.2 274.1l2.2 1.2-2.7-0.2 0.5-1zM729 205.3l-1.7-1.8 1.2-0.5 0.5 2.3z","c":[687.2,190.4]},"Bengkulu":{"d":"M120.4 173.6l5.5-3.8 5.2 3.2-0.3 2.4 2.7-0.7 3.7 3.9 4.1 0.8 4.1 5.5 4 0.8 0.5 3.7 9.9 2 0.1 3.1-1.8 1.8-1.9-1.7-0.8 3.6-2.8 2 7.3 4.2-1.5 1.5 3 3.2 7.4 1.5-0.7 3.4 1.6 1.5 2.7-0.9 1.1 3.8 2.3 1.2-3.9 2.8-5.3-2.2-20.5-16.5-1.4-6-12.3-8.8-6-10.2-6-5.1zM143.9 232.3l-2.2-1.5 1-0.9 4.9 1.8-0.1 2-3.6-1.4z","c":[148.1,196.1]},"Lampung":{"d":"M171.9 222.4l3.9-2.8 1.5 2.7 9.4-0.9-0.8-4.3 1.8-6.2 12.7-3.6 6-8.6 4 2.1 2.6 4.9 3.4 1.4 0.1 3.9 1.8 1.8-0.3 9.7-3.7 19.6-8.5-9.2-2.5 3.2 0.9 3.3-1.2 0.8-8.8-5.8-3-0.1 3.4 8.4-2.9 0.2-13.6-14.2 0.1-2.2-6.3-4.1z","c":[195.1,220.8]},"Papua":{"d":"M820.2 178.1l4.3-1.9 3.3-7.8 7.2 0.6 8.2-3.1 1.4-0.8-2.8-4.1 0.7-1.5 16.2-6.3 2.6 2.8 12.4 4.1 3.8 3.3 17.8 7.8 6.9-0.8 4.8 2.8 0.8-1.2 6.1 1.6 0.2 3 5.9-0.5 0 28.3-6.8-0.7 0.7 1.2-2.2 1.4-3.2-3.7-0.2-3 2.5 1 0 2.7 4.7-0.1 1-1.8-2.5 0.3-0.2-1.8-7.4-1-1-1.5-5.4 0.6-4.9-3.8-3.2 4.3-2.4-5.3-6.7-0.7-1.5-3-3.9 3 0.8-3.4-3.3-1.5-1.7 2.6-1.5-1.7 0.2-5.3-1.4-0.5-3.4 0.2-2.2 2.1-2.2-1.2-1.1 5-1.5-1.1 0.8-4-3.4 1.9-10.2-0.2-5.1 1.3-2.1 3.6-1.1-0.6 1.8-1.5-2.7-1 1.1 4.6-1.2 0.3-1-3-2.1 0.2-1.5-2.6-0.1 1.8-2 0.6 0.1-4.2-4.6-0.3-2.7-4.6-3.9-1.9zM810 157.6l-0.9-1.6 28.9 3.7-13 2.2-15-4.3zM815.5 141.5l-1.1-1.6 1.8-2.2 7 7 4.5 0.9-5 2.4-5.5-0.7-1.7-5.8zM809.4 138.8l0.4 1.3-2.5-3.5 7.6 2.3-2 2.8-3.5-2.9zM797.8 146.8l-1.9-2.2 0.9-1.9 2 0.6-0.3 2.2 1.1-1.2-1.8 2.5z","c":[870.1,179.7]},"Kepulauan Riau":{"d":"M262 47.5l-2.5-3.8 4.9-4.3 3.6 5.4-0.1 2.7-2 3.3-2.9 0.5-0.7-2.1 2.8-0.4-3.1-1.3zM184.6 102.9l2.3-2.6 4.8-0.8 1.4 6.4-2 1.8-2.3-1.9 0.2-2.9-2.3 1.2-2.1-1.2zM190.6 129.4l-2.1-1.7 2.7-4.1 3.8 4.2 1.5-1.1 3.1 2.9-2.9 0.7-2.6-2.2-3.5 1.3zM185.2 133.5l1.3-2.5 0 1.7 3.1-2 2.4 2.7-1.9 3.5-1.3-1.1-1.5 1.9-2.1-4.2zM178.9 103.8l-0.5-2.7 4.4-0.5-0.1 2.7-3.8 0.5zM169.3 111.1l-2.1-1.7 0.3-3.3 2.7 2.7-0.9 2.3zM215.7 65.9l-1.2 1.8-0.6-4.6 2.7 1.1-0.9 1.7zM184.8 106.7l-1.2 1.6-2-3.2 3.2 1.6zM168.8 104.2l-2.2-0.6 0.4-2.3 1.8 2.9zM179.3 104.6l-0.5 1.2-2.1-2.2 2.6 1zM185.2 108l-0.1 2.1-1.5-1.6 1.6-0.5zM224.1 61.2l0.5-1.8 1.1 2.6-1.6-0.8zM280.7 74.3l-1.1-1.4 2.7 0.7-1.6 0.7z","c":[263.8,45.4]},"Nusa Tenggara Barat":{"d":"M439 305.1l-4.2-1.2 1.5-3.5-1.1-2.9 6.9-6 5.8 1.9 3.4-1.2 4.8 6.3 9.4-1.4-1-2.1-10.7-6.2 4.7-3.2 4.4 1.2 2.7 4.5 3.6-2.3 3.7 0.8 0.3 4.8 2.8-4.9 4.1 0.6 0.6 6.5 3-1-1.1 3.2-4.4-1.4-4 1.2 4 0.5-0.1 1.6-3.1-1-6.8 1.5-0.3-5-5.4 5.2-21.4 4.5-2.1-1zM422.1 301.5l-2 0.6-3.6-2.8 5.1-0.7-0.9-5.7 1.3-1.6 5-3.1 7.4 2.8-4.5 9.3 1.5 1.5-2.7 0.6 0.7-1.9-1.2 0.3-0.7 2.3-5.4-1.6zM453.7 287.7l-3.1 4.1-1.2-0.7 0.2-3.4 4.1 0zM481.4 286.6l1.1 1.2-1.5 1.4-1-1.7 1.4-0.9z","c":[459.2,295.8]},"Jambi":{"d":"M136.5 143.6l3.2-2 5.9 0.7 7 4.2 7.5-7.4 7 0.9 1.7-1.4 7.4 5.7 11 0.1 2.6 13-1.7-0.8-16.4 4.6-1.7 2 1.3 1.6-2.2 6.4-4.5-4.5-0.4 3.7-7.1 0.3-1.5 4.4-4 2.5-6.2-1.1-4.1 2.9-4.1-0.8-3.7-3.9-2.7 0.7 0.3-2.4-5.2-3.2-3.2-12.1 6.8-0.2 4.1-3.5 0.4-4.5 3.7-2.8-1.2-3.1z","c":[156.3,159]},"Bali":{"d":"M398.5 293.4l-6.8-1.4-2.9-6.1 8.4 2 6.5-2.7 10.5 6.4-8.8 5.5-2 3.9-1.7-0.3 1.6-2.6-4.8-4.7zM409.7 299.2l1.6-1.8 1.3 2-2.9-0.2z","c":[401.5,293.1]},"Jawa Timur":{"d":"M318 288.2l1.1-3 3.1 0.1 0.9-2.9 2.8-0.9-2.3-3.7-0.6-8.6 6.1 2.2 0-2.3 3.1-2.3-0.7-4.5 2.3-3.2 5.4 0.1 3.3 2.9 8.6-1.2 2.1 7.3 3.7 1.5 0.9 6.6 5.2 2.5 12-0.1 5.9-2.5 1.1 1.8 7.1 2.1-2.1 14.5 4.9 4.4-5-0.2 0.6-1.2-2.5-1.6-5.8 0.3-14.4-6.6-11.8 3.3-17.1-3.9-2.2 2.4-5.2-2.3-10.5-1zM353.8 267.1l-0.1-2.5 3.5-2.7 21-0.6 4.3 2.3-4.7 1.6-0.1 1.5-5.6-0.2-1.8 2.6-16.5-2zM407.1 262.8l1 1-4-1.1 0.8-2.1 6.5 2.2-4.3 0zM351.9 241.1l0.4-2.1 2.2-0.3-0.1 2.2-2.5 0.2zM415.8 266.3l2.2 0.2-0.1 1.3-2.8-0.4 0.7-1.1zM366 292.9l2.2 0.7-2.8 0.3 0.6-1z","c":[355,279]},"Papua Barat Daya":{"d":"M769.7 138.8l-1.1 8.8-3.6 0.1-4.6 3.3-2.1-1.3-3.6 11.3-2.1 1.2 1.3 3.2-1.9 2.6-5.7 1.7-5.5-4.3 1-0.8-2.3-1.1-1.1-3.2 2.1-2-2.2 0.1-1.2-3-2.8 0.2 0.6-1.7-0.5-1.4-5.5 1.6-1.8-3.7-1.5 3.7-6.7-1.3 6.1-7.1-0.3-5.1 12.2-2.5 6.3-5.4 5.2-1.8 10.7 2.2 10.6 5.7zM704.7 128l3 0.6 1.2-0.8-3.3-1.6 10.3-2.1 6.8 1.3 4.1 4.3-1.9 1.9-2.8-1.4-2.4 1-7-5.3 2.2 3.9 3.7 0.8-3.6 2.3-1.1-2.9-2.3 0.4-0.2 1.7-1.1-3.3-3.6 0.5-2-1.3zM696.6 160.6l10.4-3.2 1.9 3.1-1.8 1.9 1.7 1.3-6 1.4-8.2-3.1 2-1.4zM715 148.7l-2.1-5.6 7.7-0.8 1 2.4-1.8 6-2.7 0.2-2.1-2.2zM713.8 141.8l-5-0.3 0.9-1.7 8.6-0.1-4.5 2.1zM734.8 153.1l-0.1 1.1-1.5 0.7-1.5-1.2 2.6-1.1 0.5 0.5zM712.3 133.7l-2.9 0.7 0.7-1.6 3.8 0.2-1.6 0.7zM695.8 148.1l-1.1-0.3 4.9-0.4-3.8 0.7z","c":[744.3,150.3]},"Sumatera Utara":{"d":"M65.1 38.2l-1.6 3.5 7.3 2.1 3.3 4.8 21 12 4.7 4.6-0.1 3.6 4.7 1.1 2 3.1 1.1 6.5-1.9 8.3 2.2 1 0.9 4.8-7.6 2.8 2.2 4.2-0.9 7 1.2 1.2-6.9-2.6-0.1 3.9 2.7 3-1.1 1.5-8-1.4-6.9 6.2-2.1-10.2-6.6-15.8 2-2.9-14.1-9.9 1.4-2.9-2.3-4.1 0.6-5.1-3.2-2.4 0.6-4.4-1.4-2.7 2.4-1.6-4.6-7.9 2-3.7 3.7-0.9-0.3-5.9 3.7-0.8zM50.3 105.9l-9.1-10 4.5-0.4 1.3-2.3 2.8 1.3 4 5.9 4.6 3.1-0.7 8.4-3.5 0.9-3.9-6.9zM67.2 134.9l1.6-6 1.3 6-2.9 0zM66.9 124.8l0.7-1 1.8 2.1 1.3 5.1-3.8-6.2zM72 122.1l-1.5-0.9 6.6 0.5-5.1 0.4z","c":[82.3,78.8]},"Sulawesi Tenggara":{"d":"M520.2 181.3l1.4-1.8 6.2 4.8 5.6-2.3 11.8 4 2.4 7-2-1.7 0 3.8-1.7 1.1 5 2.8 1.6 2.9 2.8 0-2.5 1.5 2.4 0.7 0.4 3.1 3.5-1.8 0.7 6.6-1.4 0.9-2.9-2.4 1.3 3.7-3-2.3-7.4 1.7-3.1 2.1 0.6 4.8-1.4 1.4-6.8-0.9-4.3-3.6 2.8-12.1-5.3-1.6-9.3-9.1-0.3-1.9 3.8-5 0.7-5.2-1.6-1.2zM551.5 234.7l1.6-4.2 3.1-2.1-1.3-0.1 0.1-3.7 2.4-10.1 4.2-3.2 2.7 9.9-1.5-2.7-2.2 0.8-2.2 8.2 2.5-0.7 3.5 3.2-7 3.1 0.5 2.2-2.2 2.7-1.7-1.4-1.3 1.3-1.2-3.2zM546.6 231.9l-1.3-1.4 2.3-4.7-1.2-5.2 7.6-4.3 1.3 5.7-3.5 5.2 1 3.9-2.4 1.7 0.1-3.3-1.2 2.6-1.6-1.7-1.1 1.5zM536.8 230.7l0-4.5 2.4-1 2 2.9-0.3 5-2 0.6-2.1-3zM558.8 206.1l1.5-2.5 4.9 2.3-2.8 3.3-3.6-3.1zM571.9 231.7l-1.2-2.7 2.2 0.9-1 1.8z","c":[537.6,200.7]},"Nusa Tenggara Timur":{"d":"M500.2 300.4l-2.4 0.8-1.8-1.9 1.5-6.1 2.9-1.6 1.9 1.2 1.7-2.7 4.6-1.3 10.9 2.1 10.8 5.4 2.1-2.8 7.6-0.5 5.9 3.8 3.7-0.7 0.2-2.6 8.1-4 0.1-1.9-3.4 0.7 2.7-3 3.1 4.3-2.6 3.3-2.1-0.3 0.7 3.3-8.9 3.1-5.2-0.4-6.8 3.1-7.7-1.9-1 2.3-6.2 1-3.8-2.5-1.7 1.3-3.1-1.6-11.8 0.1zM570.3 330.8l-1.2 0.2 0.7-2.5 5.6-3.6-3.7-0.2-0.1-1.8 4.3-9.1 5.7-3.3 0.4 1.7 2.3-0.9 2.8 2.4 2.5-6.2 8.9-4.2 1.2 2 2.6-1.9 1.3 1-0.1 3.1-3.8 0.3 2 5.5-2 3.4-10.1 9.7-6.8 0.8-7 3.9-5.5-0.3zM486.6 319.3l-6.1-1.8-2-2.5 0.8-1.4 6.7-2.5 10.1 0.8 2.6-2.4 2.9 3.8 2.6 0.5 0.7 2.9 4.3-0.4 2.7 2.3 4.9 7.3-7.7 4.4-5.8-1.6-9.9-9.1-6.8-0.3zM589.4 292.7l-2.7-0.3 4.1-3.6-2.7 0.6 1.3-2.8 2.6-0.1 0.2 1.4 9.5-1 1 1.5-0.2 2.4-13.1 1.9zM556.7 342.6l-0.5-3 10-3.7-1.9-0.3 3.8-2.5-0.1 4.6-3.5 2.8-7.8 2.1zM565.8 295l-1.6-0.8 5.1-3.3-1.5-1.7 3.4-0.4-1.2 2.2 1.3 0.3 0.8-2.9 1.6 0.8 2.1-1.8 2.7 1.5-6.1 3.2-1.2 3.1-5.4-0.2zM582 294.9l-1.3-2.5-2.4 0.3 1-1.7 1.9-1.1 0.6 1.6 4.7-3.8-0.5 2.9-4 4.3zM560 292.1l2.9-3.3 3.8 0.5-0.8 2.5-5.9 0.3zM535.1 336.3l-1.4-0.8 3.3-2.7 3 0.1-0.3 2.1-4.6 1.3zM489.3 292.7l2.1 1.4-2.7 4.9-1-2.5 1.6-3.8zM558.9 295.7l-1.5 0 2.1-3 3.8-0.1-4.4 3.1zM492.9 296.2l0.5 1.5 2.5-1.4-2 3.9-1.8-1.1 0.8-2.9zM567 330.1l-1-0.7 3-3.1 1.1 1.4-2.2 0.4 0.2 2.7-1.1-0.7z","c":[528.2,294.2]},"Kalimantan Selatan":{"d":"M387 193.3l5-13 3.2-1.9 3.5-5.6 7.2-4.5 2.4-4 0.5-1.5-2.6-1.8 1.6-6.6 7.4-4.1-2.8 3.5 2.2 6.1-0.7 4.9 2.3 0.4 0.5 6.6 6.5-1.7 7.9 2.1-0.9 3-3.9-0.6 1.9 1.2-2.8 8.3-2.4-1.4-0.2-2.1-1 3.2 3.5 2.4-4.7 5.1-1.3 4.9-26.5 11.3-0.5-10.5-5.3-3.7zM422 205.2l-2-8.4 2.3-6.6 2.8-2 1.1 14.1-4.2 2.9zM428.1 195.9l-0.9 1.1-0.9-2 1.9-3.8-0.1 4.7z","c":[409.1,178.9]},"Aceh":{"d":"M65.1 38.2l-3.7 0.8 0.3 5.9-3.7 0.9-2 3.7 4.6 7.9-2.4 1.6 1.4 2.7-0.6 4.4 3.2 2.4-0.6 5.1 2.3 4.1-1.4 2.9-3.5-2-3.3 0.8-2.3-3.2-1.6-9.8-4.5-2.3-9.7-13.6-7.6-1.4-19.2-18.2-6.4-12.6-0.5-4.8 4.7-2.6 3.6 0.5 5.6 2.6 3.8 4.2 6.3 1.6 9.3-1.3 6.9 2.6 5.8-2.1 8.2 7.2 1.6 7.1 6 2.4-0.6 2.5zM16.1 71.3l-2.3-2.8 1.9-3 6.1 3.5 0.4 2.3 6.9 3.2 0.9 2.2-3.1 0.5-5.3-4.5-5.5-1.4zM43.6 79.3l2.4 0.4 0.8 3.2-4.5-3.2 1.3-0.4zM6.5 8.5l-2.2-2.6 2.7 0.4-0.5 2.2z","c":[34.8,45.7]},"Kalimantan Tengah":{"d":"M314.7 183.9l8.8-6.1-1.2-7.3-1.8-2 1.5-4.7-2.7-1.6 1.1-3.9-2.7-2.3 6.3-2.5 7-5.4 1.8-4.7 8.9-5.4 1.8 0.5 0.8-2.2 1.9 2.1 5-0.5 11.4-4.9 1.8 1.1 0-3.4 4.5-5.4-3.2-6.3 5.4-1.7 5.7-6.5 5.7-0.7 1.6 3.1 3.2 0.2 5.9-3.4 6.5-0.6 2.8 7.2-4.4 1-3.9 4.9 3.6 2 1.8 5 3.7-3.8 2.9-0.1-1.5 5.7 1.1 3.8 1.8 0.3-1.8 4.5 1.7 1.6 3.6-0.3 4.2 5.6 1.5-0.9-1.6 4.4-7.4 4.1-1.6 6.6 2.6 1.8-0.5 1.5-2.4 4-7.2 4.5-3.5 5.6-3.2 1.9-5 13-6.1-2.9-8.3 2.9-0.6-6-5.3 2.2-5.8-6-2 2.5 1.3 1.2-8.9 5.7-6.2-2.6-8.3 4.5-1.4-0.6 1.1-9.2-2.1-4.1-3.3 3.3-2.9-2.1-8.7 3.2-4.8-1.4z","c":[365.8,152.1]},"Papua Pegunungan":{"d":"M858.5 215.9l-1.8-1.8 2.7-5.7-1.9 1.1-0.5-1.4-2.3 0.3 0-2 3.8 1.4 1.5-5.9 7.1-1.4-1.9-1 0.1-2.9-3.8-0.9 0.1-6.9 1.1-5 2.2 1.2 2.2-2.1 3.4-0.2 1.4 0.5-0.2 5.3 1.5 1.7 1.7-2.6 3.3 1.5-0.8 3.4 3.9-3 1.5 3 6.7 0.7 2.4 5.3 3.2-4.3 4.9 3.8 5.4-0.6 1 1.5 7.4 1 0.2 1.8 2.5-0.3-1 1.8-4.7 0.1 0-2.7-2.5-1 0.2 3 3.2 3.7 2.2-1.4-0.7-1.2 6.8 0.7 0 26.5-12.2-2.7-3.1-3.3-3.5 0.1 1.2 2-1.5 0.6-1.2-1.8-0.8 2.6-2.5-1.1 2 0.8 1.3-3-18.1-1.4 1.7-4.9-2.3 2.1-3.9-2.9-5.3 0-0.4 1.9-3.4 0.3-1.5-2.8-2.6 0.9-2.1-3-3.3 0.6z","c":[887.3,206.8]},"Kepulauan Bangka Belitung":{"d":"M208 166.5l-2 0.6-3.8-2.6 5.5-4.5 0.2-3.9 4.2-1.5 2.2 2.5-1.2 1.8 3.1 1.4-1.8-5.5 3.4-0.8 3.2 2 5 16.4 10.8 3-2.6 1.5-2.4 5.5 3 1.7-0.1 1.6-4.4 0.6-1.7-2.8-9.6-3.1-0.3-6.8-2.6-2.3-0.4-4-4.9-1.7-2.8 0.9zM253.3 188.3l-1.4 0.2 0.1-5.8-1.4-0.3 2.6-7.2 6.6 0.2 5.6 3.6 0.5 2.6-4.4 7.3-1.8 0.5-2.9-4.1-0.1 1.8-3.4 1.2zM236.9 182.4l0.8 2.2-3.3-1.2 2.5-1zM248.5 182.6l-0.9-1.6 1.8-0.5-0.9 2.1z","c":[219.5,170.2]},"Sumatera Selatan":{"d":"M141.3 179.4l4.1-2.9 6.2 1.1 4-2.5 1.5-4.4 7.1-0.3 0.4-3.7 4.5 4.5 2.2-6.4-1.3-1.6 1.7-2 16.4-4.6 1.7 0.8 0.7 0.8-1.1 3.1 0.7 2.1 1.5 0.7 0.6 0 0.9-0.8 3.5 0.8 1.4 2-4 5.1 4-1.6 2.9 1.9 11.5 0.3-0.2 4.2 3.4 1.8 0.7 4.6 4.6 1.5 1 4.9-3.6 2.9-1.9 5.1 2.8 3.7-2.8 6.6-3.4-1.4-2.6-4.9-4-2.1-6 8.6-12.7 3.6-1.8 6.2 0.8 4.3-9.4 0.9-1.5-2.7-2.3-1.2-1.1-3.8-2.7 0.9-1.6-1.5 0.7-3.4-7.4-1.5-3-3.2 1.5-1.5-7.3-4.2 2.8-2 0.8-3.6 1.9 1.7 1.8-1.8-0.1-3.1-9.9-2-0.5-3.7-4-0.8-4.1-5.5zM191.1 161.1l1.7 1.2-0.7 1.7-2.1-1.1 1.1-1.8z","c":[181.6,189.5]},"Banten":{"d":"M234.5 245.8l-0.8 1.6 1.9 2.9-7.1 0.7 0.1 6.6 1.9 1.8-2.6 4.2-8-3.3-9.1 1.2-5.5-0.6-0.7-1.8 2.9-2 1.9 3.5 3.6-7 2.4 0.7 2.2-8.8 2.8-3.7 3 2.8 3.6-1.3 2.7 1.7 3.9-0.7 0.9 1.5zM205.2 254.4l-1.8 2.9-1-1.5 2.8-1.4z","c":[220.1,252.7]},"Sulawesi Utara":{"d":"M569.5 117.6l1.2-5.1-5.2-2.5-0.1-2.1-3-2.4 16.3 1.8 7.2-3.5 1.8-3.4 3.8-0.2-0.9-3.3 5.7-2.1-0.2-2.3 3.5-3.5 3.7 1.2 1.3 4.5-3 2-3.9 7.9-4.9 3.5-2.6 6.4-20.7 3.1zM633.8 44l2-4.3-2.2-2.4 1.2-4.2 2.3 1.2 1.1 4.3-2.4 5.1-2 0.3zM610 54.6l-1.5-5.3 2.6 1.4 2.4 4.8-1.4 1.1-2.1-2zM607.5 70.5l1.1-2.6 0 3.1-1.1-0.5zM635.6 49l-0.5-2.1 1.9 2-1.4 0.1z","c":[583.5,103.3]},"Kalimantan Utara":{"d":"M391.3 95.5l2.8-4.2 0-3.7 3.5-2-2.8-5.4 10.2-6.4-3.2-2.1 1.3-3.6-1.1-0.7 3.7-4.3 2.2 1.3 3.3-3.4-0.3-4.2 2.2-1.6-1.8-9.6 6.2-9.4 3.9 2.3 2.1-2.1 3.5-0.2 1.8 2 2.5-2 9.1 1.4 4.6-1.1 4.4 4 2.5 0.1-1.6 1.4-2-0.8 0.9 4.2 4.9 1.4 1.6 2.1-2-0.2 2.5 1.2-2.8 1.8-3.7-2-1.1 1.8-8.3 0.6 4.2-0.2-0.1 2.2 6.1 3.9-4.1 2.7 2.5 0.1-0.2 2.2 3.8 0-1 1.4 2.3 0.4 0 3.5 6 7-4.9 2.2-2.6-3.9-4.5-0.8-3.2 1.6-0.3-1.7-3.3 0.3-1.4 2.3-3.7-1.5-1.6 2.4-4.2-1.3-0.6 3.3-3.7 1.1 1.1 1.5-2.5 1.3-1.2 7-2.4 3.8-5.5 5.9-5.6 0.2-2.1 2.6-5.6-1.6-4-4.4-3.6 2.1-3.1-2.2zM450.8 43.5l2.8 2.7-4.4-0.8-0.3-1.5 1.9-0.4zM451.7 58.1l-0.7-2.9 2.3 0.5-0.3 3.5-1.3-1.1zM454.9 43.1l-1.5 1.6-1.6-2.3 1.6-1.3 1.5 2zM445 52.2l5.4 2.2-5.8-0.3 0.4-1.9zM458.5 42.8l-4.8-2.1 4.3 0 0.5 2.1z","c":[425.5,68.9]},"Kalimantan Timur":{"d":"M376.8 110.8l1.7-3.6-0.7-4.2 4.8-2.1 1.5-5.1 3.6-2.2 6.7 4.1 3.6-2.1 4 4.4 5.6 1.6 2.1-2.6 5.6-0.2 5.5-5.9 2.4-3.8 1.2-7 2.5-1.3-1.1-1.5 3.7-1.1 0.6-3.3 4.2 1.3 1.6-2.4 3.7 1.5 1.4-2.3 3.3-0.3 0.3 1.7 3.2-1.6 4.5 0.8 2.6 3.9 4.9-2.2 2.2 3-1.6 1.7-6.6 0.4 0.2 2.9 2.4 0.5 1.8 3.8 21.5 16.7-3.8 3.7-8.5-0.1-6.1-2-3.4-4.4 2.6 7-2.2-1.2-3.3 1.6-3.8 6.7-0.8 9-2 3.7 0.7 4.9-3.6 2.3-0.5 6.6-7.3 7.4-1.5 0.1-1.8-4.8 0.8 6.4-4.1 1.8 0.1 3-6.3 3.6 4.1-0.1 0.2 5.7-2 1 0.8 2.1 3.7-0.9-0.6 4.8-7.9-2.1-6.5 1.7-0.5-6.6-2.3-0.4 0.7-4.9-2.2-6.1 2.8-3.5 1.6-4.4-1.5 0.9-4.2-5.6-3.6 0.3-1.7-1.6 1.8-4.5-1.8-0.3-1.1-3.8 1.5-5.7-2.9 0.1-3.7 3.8-1.8-5-3.6-2 3.9-4.9 4.4-1-2.8-7.2-6.5 0.6-5.9 3.4-3.2-0.2-1.6-3.1-5.7 0.7zM447.5 138.4l1.2 3-2.7-4.8 1.5 1.8zM456.1 80.9l-1.5 1.3 0-1.6 1.5 0.3zM450.1 134.9l1.6-0.5-0.7 1.6-0.9-1.1z","c":[428.3,122.4]},"Jawa Tengah":{"d":"M276 277.5l-2.5-6.3-2.4-1.5 0.1-2.3 4.1-1.1 1.3-6.6 4.7-0.5 0.7 1.6 4.1 0.6 4-1.6 9.4 2.7 4.1-1.5 2.8 2.3 2.7-0.2 5.2-9.9 3.7-1.1 2.9 0.4 2.2 4.6 4.5 0.9 2.3-1.6 3.9 2.7-2.3 3.2 0.7 4.5-3.1 2.3 0 2.3-6.1-2.2 0.6 8.6 2.3 3.7-2.8 0.9-0.9 2.9-3.1-0.1-1.1 3-1.3-0.1-1.6-3.6 0.6-4.2-5.9-1-0.9-4.5-3.4 3.2-3.2-0.5-2.2 4.3-14.3-3.8-5.8 0.9-4-1.4z","c":[302.5,270.2]},"Maluku Utara":{"d":"M648.5 103.1l-0.3-3.8 3.3-10.4 8.1-9 1.7 0.7-4.5 6.4 3.4 2.2 0 8.6-2.1 3.2-5.1 2.6 0.3 2.9 4.4 0.9 2.1-5.2 4.1-1.5-2.2-1.9 1.6-2.1 6.1-3.7 5.1-0.4-0.8 10-9.7 5.6 2.4 2.7 7.2 2.1 0 4.3 3.8 1.9-15.8-4.7-3.3 0.4-0.9 2.9 0.4 6.3 3.2 8.3 7.4 9.6-8.2-4.4-2.9-6.3-3.6-1.9 1-11.6-4.2-4.9 2.3-5.2-4.3-4.6zM588.7 164.5l-2-2.7 1.3-4.6 5.4-0.3 8 2.6 1.3-1.8 0.9 2 1.2-1.2 1.6 1.2-0.2 2.1-9 0-8.5 2.7zM649.3 157.9l-1.3-1.4 0.7-3.8 4.1-2.1 10.6 6.1-3 1.8-11.1-0.6zM663.9 78.4l7.4-7.3 2.4 2.9-3.3 8.7-4.4 0.6-2.1-4.9zM647 135.1l-0.4-4.1 2.5 1.3 2.3-2 2.4 3-1.8 3 6 3.1-2.7 1.9-2.7-2.5-3.1 1.7 0.1-3.9-2.6-1.5zM614 162.6l-5.5 0.4-1.9-2.5 19.9 0.3-12.5 1.8zM621.5 172.7l-1.7 0.1-2.2-4.6 0.5-4.7 1.7 1.1-0.5 3.1 2.2 5zM644.6 134.2l-2.2-0.4 0.6-4.6 2.8 0.6-1.2 4.4zM650 149.4l0.2-1.8 3.7 1-0.5 1.2-3.4-0.4zM644.9 139.3l-1.6-0.3 1.1-2.9 2.3 3.6-1.8-0.4zM646.5 108.9l0-2.2 1.3 1.5-1.3 0.7zM647 117.7l1.8-0.7-0.5 1.4-1.3-0.7zM647 152.7l-1.4-0.4 2-0.9-0.6 1.3z","c":[662.8,110.9]},"Kalimantan Barat":{"d":"M384.1 95.8l-1.5 5.1-4.8 2.1 0.7 4.2-1.7 3.6-5.7 6.5-5.4 1.7 3.2 6.3-4.5 5.4 0 3.4-1.8-1.1-11.4 4.9-5 0.5-1.9-2.1-0.8 2.2-1.8-0.5-8.9 5.4-1.8 4.7-7 5.4-6.3 2.5 2.7 2.3-1.1 3.9 2.7 1.6-1.5 4.7 1.8 2 1.2 7.3-8.8 6.1-2.2 0.7-1.2-3.8-6.2 2.3-3.4-14.3 0.4-5-4.1-3.2 2.7-3.3 0.3-6.8-2.9-2.4 0.7-1.6-4.2-2.7 0.6-1.7-2.5-2.2 0.7-2.2-11.1-3.6-0.5-4.6 2.1-1.1 0-5.6-2.2-3.8-3.4-1.8 0.3-5.7-1.8-3.8 2.6-2.5-1.3-4.5 1.5-0.4 1.2-6 4.2-3.5 1.8-5.7 5.7-2.4-1.7 2.8 0.9 2.7 2 0.2-0.5 3.3 3.6 3.9 2.5 0.3 2 3.9 2.6 0.5 1.6 3.8 5.6 2.7 13.5-4.5 5.2 1 0.6 1.5 3-1.7 3 1.2 2.3-2.7 4.2-0.3 1.3-6.3 5.5-2.6 11 0.3-1.1 3.1 11.2 1.7 1.9 2.1 6.8-4.6 4.6 0.8zM293.7 148.1l-3.6 2.1-2.5-1.1 2.2-5.6 1.2 0.6 1.8-0.4 0.9 0.7 0.7-0.6 0.7 0.5 0.5 2.6-1.9 1.2zM284.8 140.4l0.2-3.2 6.2 1.8 3.7 3-1.2 2.3-2.6-2.5-2.5-0.7-2.6 0.9-1.2-1.6zM279 155.3l0.2 1.5-2.6 0.5-0.6-1.9 3-0.1zM282.6 128.1l1.3 0.3-2.2 1 0.2 1.2-0.8-2.1 1.5-0.4zM287.3 141.6l0.8 1-2-0.6 1.2-0.4z","c":[330.5,133.6]},"Jawa Barat":{"d":"M227.9 263.6l2.6-4.2-1.9-1.8-0.1-6.6 7.1-0.7 2.8 0.7 1.8-8.6 6.7 1 2.6 3.6 4.1 1.7 4.4-0.9 4 2.8 2.2-1.9 3 0.5 3.5 4.4 1.3 5.6 4.6 0.5-1.3 6.6-4.1 1.1-0.1 2.3 2.4 1.5 2.5 6.3-5.7 0.5-0.4 1.9-3 0.5-10-1.7-8-4.6-18.4-1.9-3.1-2.6 3.4-5.9-2.9-0.1z","c":[252,261.4]}}};
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const store = { get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } } };
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.id); toast.id = setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+/* ===================== MASKOT TIAP KUIS ===================== */
+const ART = {
+  // pin peta (Kuis Ibukota)
+  pin: `<svg viewBox="0 0 120 150"><ellipse cx="60" cy="142" rx="26" ry="6" fill="rgba(0,0,0,.18)"/><g class="bob">
+    <path d="M60 14C36 14 18 32 18 56c0 30 42 70 42 70s42-40 42-70C102 32 84 14 60 14z" fill="#ffc928" stroke="#d99a00" stroke-width="4"/>
+    <circle cx="46" cy="54" r="7" fill="#1e1b4b"/><circle cx="74" cy="54" r="7" fill="#1e1b4b"/><circle cx="48" cy="51.5" r="2.4" fill="#fff"/><circle cx="76" cy="51.5" r="2.4" fill="#fff"/>
+    <ellipse cx="35" cy="68" rx="6" ry="3.5" fill="#ff7aa8" opacity=".75"/><ellipse cx="85" cy="68" rx="6" ry="3.5" fill="#ff7aa8" opacity=".75"/>
+    <path d="M52 70q8 8 16 0" fill="none" stroke="#1e1b4b" stroke-width="4" stroke-linecap="round"/>
+    <path d="M30 20 60 6l30 14-30 12z" fill="#1e1b4b"/><path d="M44 25v8q16 9 32 0v-8" fill="#1e1b4b"/></g></svg>`,
+  // kompas (Tebak Provinsi)
+  compass: `<svg viewBox="0 0 120 150"><ellipse cx="60" cy="142" rx="26" ry="6" fill="rgba(0,0,0,.25)"/><g class="bob">
+    <circle cx="60" cy="66" r="52" fill="#fbf1d9" stroke="#2b1a0e" stroke-width="5"/><circle cx="60" cy="66" r="40" fill="none" stroke="#c9a86a" stroke-width="3" stroke-dasharray="4 6"/>
+    <path d="M60 30l9 36H51z" fill="#c0392b" stroke="#2b1a0e" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M60 102l-9-36h18z" fill="#fff" stroke="#2b1a0e" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="60" cy="66" r="7" fill="#f2a516" stroke="#2b1a0e" stroke-width="3"/></g></svg>`,
+  // gunungan (Kuis Budaya)
+  gunungan: `<svg viewBox="0 0 120 150"><ellipse cx="60" cy="144" rx="30" ry="5" fill="rgba(0,0,0,.25)"/><g class="bob">
+    <rect x="34" y="122" width="52" height="14" rx="3" fill="#8b1e2d" stroke="#2a160c" stroke-width="4"/>
+    <path d="M60 6C40 30 18 60 16 98q0 22 16 24h56q16-2 16-24C102 60 80 30 60 6z" fill="#e3a72f" stroke="#2a160c" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M60 34v84M60 56l-16-12M60 56l16-12M60 74l-22-14M60 74l22-14" fill="none" stroke="#8b1e2d" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="48" cy="94" r="5" fill="#2a160c"/><circle cx="72" cy="94" r="5" fill="#2a160c"/>
+    <path d="M52 106q8 6 16 0" fill="none" stroke="#2a160c" stroke-width="3.5" stroke-linecap="round"/></g></svg>`,
+};
+$$(".art").forEach(el => el.innerHTML = ART[el.dataset.art]);
+$("#mascots").innerHTML = ART.pin + ART.compass + ART.gunungan;
+
+/* ===================== PETA HERO: provinsi menyala bergantian ===================== */
+const names = Object.keys(MAP.p);
+$("#heroMap").setAttribute("viewBox", MAP.vb.join(" "));
+$("#heroMap").innerHTML = names.map(n => `<path data-p="${n}" d="${MAP.p[n].d}"><title>${n}</title></path>`).join("");
+const paths = [...$$("#heroMap path")];
+let lit = [];
+function glow(){
+  if(document.hidden) return;
+  const p = paths[Math.floor(Math.random() * paths.length)];
+  p.classList.add("l" + (1 + Math.floor(Math.random() * 4)));
+  lit.push(p);
+  if(lit.length > 6){ const old = lit.shift(); old.className.baseVal = ""; }
+  $("#mapLabel").innerHTML = `Provinsi <b>${p.dataset.p}</b>`;
+}
+if(!matchMedia("(prefers-reduced-motion: reduce)").matches) setInterval(glow, 1100);
+
+/* ===================== SKOR TERBAIK & PERMAINAN TERSIMPAN ===================== */
+// Membaca data yang disimpan masing-masing kuis di perangkat ini
+const KEYS = {
+  ibukota:  { best: "ibukota_best2", game: "ibukota_game" },
+  provinsi: { best: "provinsi_best", game: "provinsi_game" },
+  budaya:   { best: "budaya_best",   game: "budaya_game" },
+};
+$$(".quiz").forEach(card => {
+  const k = KEYS[card.dataset.key];
+  const best = store.get(k.best, null), game = store.get(k.game, null);
+  card.querySelector(".best").innerHTML = best && best.score
+    ? `🏆 Skor terbaik: <b>${best.score}</b>${best.name ? " — " + String(best.name).replace(/[<>&]/g, "") : ""}`
+    : "Belum ada skor. Jadilah yang pertama!";
+  card.querySelector(".resume").hidden = !(game && game.t && Date.now() - game.t < 6 * 3600 * 1000);
+});
+
+/* ===================== FULLSCREEN ===================== */
+const ICON_FS_ON  = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const ICON_FS_OFF = '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+const isFs = () => document.fullscreenElement || document.webkitFullscreenElement;
+function updFs(){ $("#fsBtn").innerHTML = isFs() ? ICON_FS_OFF : ICON_FS_ON; }
+$("#fsBtn").addEventListener("click", () => {
+  const el = document.documentElement;
+  if(isFs()){ (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if(!req){ toast("Browser ini tidak mendukung layar penuh. Di iPhone: Bagikan → Tambah ke Layar Utama."); return; }
+  const p = req.call(el);
+  if(p && p.catch) p.catch(() => toast("Layar penuh ditolak oleh browser."));
+});
+document.addEventListener("fullscreenchange", updFs);
+document.addEventListener("webkitfullscreenchange", updFs);
+document.addEventListener("keydown", e => { if(e.key.toLowerCase() === "f" && !e.repeat) $("#fsBtn").click(); });
+updFs();
+
+/* ===================== STATUS INTERNET ===================== */
+function updNet(){
+  const on = navigator.onLine;
+  $("#net").textContent = on ? "● Daring" : "● Luring — kuis tetap bisa dimainkan";
+  $("#net").classList.toggle("off", !on);
+}
+addEventListener("online", updNet);
+addEventListener("offline", updNet);
+updNet();
+
+/* ===================== PASANG APLIKASI (PWA) ===================== */
+let installEvt = null;
+const standalone = matchMedia("(display-mode: standalone), (display-mode: fullscreen)").matches || navigator.standalone;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+if(standalone) $("#installNote").textContent = "✅ Sudah terpasang sebagai aplikasi di perangkat ini.";
+else if(isIOS) $("#installNote").textContent = "Di iPhone/iPad: ketuk Bagikan, lalu pilih \"Tambah ke Layar Utama\".";
+else if(location.protocol === "file:") $("#installNote").textContent = "Untuk dipasang sebagai aplikasi, buka halaman ini lewat alamat web (https).";
+else $("#installNote").textContent = "Tip: buka di Chrome atau Edge untuk memasang sebagai aplikasi.";
+addEventListener("beforeinstallprompt", e => {
+  e.preventDefault();
+  installEvt = e;
+  $("#installBtn").hidden = false;
+  $("#installNote").textContent = "Sekali pasang, kuis bisa dibuka dari layar utama tanpa internet.";
+});
+$("#installBtn").addEventListener("click", async () => {
+  if(!installEvt) return;
+  installEvt.prompt();
+  const { outcome } = await installEvt.userChoice;
+  installEvt = null;
+  $("#installBtn").hidden = true;
+  if(outcome === "accepted") $("#installNote").textContent = "✅ Terima kasih! Aplikasi sedang dipasang.";
+});
+addEventListener("appinstalled", () => { $("#installBtn").hidden = true; $("#installNote").textContent = "✅ Sudah terpasang sebagai aplikasi di perangkat ini."; });
+
+// PWA: service worker hanya jalan lewat http(s) / localhost, tidak lewat file://
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b4f6c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="ikon/provinsi.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="ikon/provinsi.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<title>Tebak Provinsi</title>
+<style>
+  /* Tema: "Penjelajah Nusantara" — laut, kertas peta tua, kompas, garis tinta tebal */
+  :root{
+    --ink:#2b1a0e; --muted:#6b5541; --paper:#fbf1d9; --paper2:#f3e2bd; --line:#c9a86a;
+    --sea1:#0e6383; --sea2:#0a3d55; --sea-map:#9fd8e8;
+    --land:#efe3c0; --land-line:#a88b52; --land-dim:#ded1ad;
+    --gold:#f2a516; --gold-d:#b87a00; --red:#c0392b; --red-d:#8e2a20;
+    --green:#2e8b57; --green-d:#1e5e3a; --teal:#0f8a7e; --teal-d:#0a5f57;
+    --p1:#c2410c; --p2:#1d4ed8;
+    --r:clamp(12px,1.8vmin,20px);
+    --sh:clamp(3px,.5vmin,5px);
+    --head:"Lilita One","Fredoka","Segoe UI",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{
+    background:
+      repeating-linear-gradient(0deg,rgba(255,255,255,.05) 0 1px,transparent 1px 80px),
+      repeating-linear-gradient(90deg,rgba(255,255,255,.05) 0 1px,transparent 1px 80px),
+      radial-gradient(ellipse at 50% -10%,#1d93b8,transparent 60%),
+      linear-gradient(180deg,var(--sea1),var(--sea2));
+    color:var(--ink);font-family:"Nunito","Segoe UI",system-ui,sans-serif;font-weight:700;
+    overflow:hidden;overscroll-behavior:none;
+    user-select:none;-webkit-user-select:none;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  }
+  button,input{font:inherit;color:inherit}
+  button{border:0;cursor:pointer;touch-action:manipulation;background:none}
+  h1,h2,h3,.head{font-family:var(--head);font-weight:400;letter-spacing:.5px}
+
+  /* ---------- latar: ombak & kapal ---------- */
+  .scene{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .waves{position:absolute;left:0;bottom:0;width:200%;height:16vh;display:flex;animation:waves 14s linear infinite}
+  .waves.back{bottom:3vh;opacity:.45;animation-duration:22s}
+  .waves svg{width:50%;height:100%}
+  .ship{position:absolute;bottom:9vh;left:0;width:clamp(70px,9vw,130px);animation:sail 60s linear infinite}
+  .ship svg{width:100%;animation:rock 3s ease-in-out infinite;transform-origin:50% 90%}
+  @keyframes waves{to{transform:translateX(-50%)}}
+  @keyframes sail{from{transform:translateX(-20vw)}to{transform:translateX(110vw)}}
+  @keyframes rock{50%{transform:rotate(-6deg) translateY(-4px)}}
+
+  .screen{
+    position:fixed;inset:0;z-index:1;display:none;flex-direction:column;
+    padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right))
+            max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+  }
+  .screen.active{display:flex}
+
+  /* ---------- tombol "cap tinta": garis hitam + bayangan bergeser ---------- */
+  .tb,.tile,.seg button,.start,.opt,.btn,.hint{
+    background:var(--f,var(--paper));color:var(--c,var(--ink));
+    border:3px solid var(--ink);border-radius:14px;box-shadow:var(--sh) var(--sh) 0 var(--ink);
+    transition:transform .08s,box-shadow .08s,background .15s,opacity .2s;
+  }
+  .tb:active,.tile:active,.seg button:active,.start:active,.opt:active,.btn:active,.hint:active{
+    transform:translate(var(--sh),var(--sh));box-shadow:0 0 0 var(--ink);
+  }
+
+  /* ---------- toolbar ---------- */
+  .tools{display:flex;gap:10px}
+  .tb{width:clamp(46px,6.4vmin,62px);height:clamp(46px,6.4vmin,62px);display:grid;place-items:center;font-size:clamp(18px,2.8vmin,28px)}
+  .tb[data-act="fs"]{--f:var(--gold)}
+  .tb svg{width:56%;height:56%;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .tb.home-link{width:auto;padding:0 16px 0 10px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;font-weight:900;font-size:clamp(14px,2vmin,18px)}
+  .tb.home-link svg{width:22px;height:22px}
+  @media (max-width:420px){.tb.home-link span{display:none}.tb.home-link{padding:0;width:clamp(46px,6.4vmin,62px);justify-content:center}}
+
+  /* ---------- kompas (maskot) ---------- */
+  .compass{overflow:visible}
+  .compass .needle{transform-origin:60px 60px;animation:seek 3.2s ease-in-out infinite}
+  .compass .rose{transform-origin:60px 60px;animation:spin 40s linear infinite}
+  @keyframes seek{0%,100%{transform:rotate(-18deg)}35%{transform:rotate(14deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(4deg)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- menu utama ---------- */
+  #home{overflow-y:auto}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;width:100%;max-width:1180px;margin:0 auto;flex:none}
+  .brand{display:flex;align-items:center;gap:10px;background:var(--paper);border:3px solid var(--ink);border-radius:16px;
+    padding:6px 16px 6px 6px;box-shadow:var(--sh) var(--sh) 0 rgba(0,0,0,.4);min-width:0}
+  .brand .compass{flex:none;width:50px}
+  .brand b{display:block;font-family:var(--head);font-weight:400;font-size:clamp(17px,2.6vmin,26px);line-height:1.05;color:var(--red-d)}
+  .brand small{display:block;font-size:12px;font-weight:800;color:var(--muted)}
+  .main{
+    flex:none;width:100%;max-width:1180px;margin:18px auto 12vh;
+    background:var(--paper);border:4px solid var(--ink);border-radius:26px;
+    outline:2px dashed var(--line);outline-offset:-14px;
+    box-shadow:8px 8px 0 rgba(0,0,0,.35);
+    padding:clamp(18px,3vmin,32px);display:flex;flex-direction:column;gap:clamp(14px,2.4vmin,24px);
+  }
+  .hero{
+    position:relative;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    background:linear-gradient(135deg,#0f7ea3,#0b4f6c);color:#fff;border:3px solid var(--ink);border-radius:20px;
+    padding:clamp(16px,3vmin,30px);box-shadow:var(--sh) var(--sh) 0 var(--ink);overflow:hidden;
+  }
+  .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,transparent 1px 36px),repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 1px,transparent 1px 36px)}
+  .hero-text{position:relative;flex:1 1 320px}
+  .stamp{display:inline-block;color:#fff;background:var(--red);border:2px solid #fff;outline:2px solid var(--red);
+    font-weight:900;font-size:12px;letter-spacing:1px;padding:3px 10px;border-radius:6px;transform:rotate(-2deg)}
+  .hero h1{font-size:clamp(30px,5.6vmin,56px);line-height:1.02;margin:.25em 0 .2em;text-shadow:3px 3px 0 var(--ink)}
+  .hero p{max-width:560px;font-size:clamp(14px,2vmin,18px);font-weight:700}
+  .hero-show{position:relative;display:flex;align-items:center;gap:clamp(10px,2vmin,22px);margin:0 auto}
+  .hero-show .compass{width:clamp(80px,13vmin,130px)}
+  .mystery{width:clamp(120px,18vmin,180px);aspect-ratio:1;background:var(--paper);border:3px solid var(--ink);border-radius:18px;
+    box-shadow:var(--sh) var(--sh) 0 var(--ink);display:grid;place-items:center;position:relative;transform:rotate(3deg)}
+  .mystery svg{width:82%;height:82%}
+  .mystery path{fill:var(--gold);stroke:var(--ink);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+  .mystery .q{position:absolute;right:-12px;top:-14px;width:38px;height:38px;border-radius:50%;background:var(--red);color:#fff;
+    border:3px solid var(--ink);display:grid;place-items:center;font-family:var(--head);font-size:22px}
+
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(14px,2.4vmin,22px)}
+  .sec{background:#fffaf0;border:3px solid var(--ink);border-radius:18px;padding:clamp(14px,2.2vmin,22px);display:flex;flex-direction:column;gap:10px}
+  .sec h2{font-size:clamp(19px,2.6vmin,25px);display:flex;align-items:center;gap:10px;color:var(--red-d)}
+  .num{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:17px;background:var(--gold);border:3px solid var(--ink);color:var(--ink)}
+  .lbl{font-size:13px;font-weight:900;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 var(--sh) var(--sh) 0}
+  .tile{padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-family:var(--head);font-size:clamp(20px,3vmin,28px)}
+  .tile .ic{font-size:1.2em;line-height:1.2}
+  .tile small{font-family:"Nunito",sans-serif;font-size:12px;font-weight:800;color:var(--muted)}
+  .tile.on{--f:var(--gold)}
+  .tile.on small{color:var(--ink)}
+  .field{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .field label{font-weight:900;font-size:14px}
+  .field input{width:100%;min-height:52px;padding:10px 14px;border:3px solid var(--fc,var(--ink));border-radius:12px;background:#fff;
+    font-weight:800;font-size:clamp(16px,2.2vmin,20px);color:var(--ink);outline:none;user-select:text;-webkit-user-select:text}
+  .field input:focus{box-shadow:0 0 0 4px rgba(242,165,22,.45)}
+  .field input::placeholder{color:#9b8a73}
+  .names{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .team-a{--fc:var(--p1)} .team-a label{color:var(--p1)}
+  .team-b{--fc:var(--p2)} .team-b label{color:var(--p2)}
+  .seg{display:flex;flex-wrap:wrap;gap:8px;padding:0 var(--sh) var(--sh) 0}
+  .seg button{flex:1;min-width:58px;min-height:46px;padding:5px 9px;font-weight:900;font-size:clamp(14px,1.9vmin,17px)}
+  .seg button.on{--f:var(--teal);--c:#fff}
+  .seg[data-key="area"] button{flex:1 1 28%}
+  .level-note{font-size:13px;color:var(--muted);font-weight:700;min-height:2.4em}
+  .start{--f:var(--red);--c:#fff;font-family:var(--head);font-size:clamp(26px,4.4vmin,44px);letter-spacing:1.5px;
+    padding:clamp(10px,1.8vmin,16px);display:flex;align-items:center;justify-content:center;gap:14px;border-radius:18px;text-shadow:2px 2px 0 var(--ink)}
+  .start .boat{display:inline-block;animation:rock 2s ease-in-out infinite}
+  .best{text-align:center;color:var(--red-d)}
+  .credit{text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
+  .credit a{color:var(--teal-d)}
+  .credit.dev{font-size:14px;color:var(--ink);margin-bottom:-8px}
+  .credit.dev b{color:var(--red-d)}
+
+  /* ---------- panggung peta (satu-satunya peta, dipindah antar layar) ---------- */
+  .slot{position:relative;min-height:0;min-width:0}
+  body > .stage{display:none}   /* belum dipindah ke layar permainan */
+  .stage{position:absolute;inset:0;border:4px solid var(--ink);border-radius:var(--r);overflow:hidden;
+    background:radial-gradient(circle at 50% 45%,#c4ecf6,var(--sea-map) 70%);box-shadow:var(--sh) var(--sh) 0 rgba(0,0,0,.4)}
+  .stage .map{position:absolute;inset:0;width:100%;height:100%}
+  .map *{vector-effect:non-scaling-stroke}
+  .map .grid line{stroke:rgba(14,99,131,.3);stroke-width:1.2;stroke-dasharray:5 7}
+  .map path{fill:var(--land);stroke:var(--land-line);stroke-width:1;stroke-linejoin:round;transition:fill .4s,opacity .4s}
+  .map path.tg{fill:var(--gold);stroke:var(--ink);stroke-width:3}
+  .stage.sedang.asking path:not(.tg){fill:var(--land-dim);opacity:.6}
+  .stage.sulit.asking path:not(.tg),.stage.sulit.asking .grid{opacity:0}
+  .stage.reveal path.tg{fill:var(--green)}
+  .stage.reveal.bad path.tg{fill:var(--red)}
+  .map .pin{display:none}
+  .stage.mudah.asking .pin,.stage.reveal .pin{display:inline}
+  .map .dot{fill:var(--red);stroke:#fff;stroke-width:3}
+  .map .ping{fill:none;stroke:var(--red);stroke-width:4;transform-box:fill-box;transform-origin:center;animation:ping 1.4s ease-out infinite}
+  @keyframes ping{from{transform:scale(.3);opacity:1}to{transform:scale(1.8);opacity:0}}
+  .ask-chip{position:absolute;top:10px;left:10px;background:var(--paper);border:3px solid var(--ink);border-radius:99px;
+    padding:.15em .8em;font-family:var(--head);font-size:clamp(15px,2.4vmin,26px);box-shadow:3px 3px 0 var(--ink)}
+  .stage.reveal .ask-chip{display:none}
+  .stage .compass{position:absolute;right:10px;top:10px;width:clamp(40px,7vmin,72px);opacity:.9}
+  .reveal-tag{position:absolute;left:50%;bottom:8px;transform:translateX(-50%);background:var(--paper);border:3px solid var(--ink);
+    border-radius:12px;padding:.15em .9em;text-align:center;box-shadow:3px 3px 0 var(--ink);width:max-content;max-width:94%;animation:rise .35s ease-out}
+  .reveal-tag b{display:block;font-family:var(--head);font-weight:400;font-size:clamp(15px,3vmin,34px);line-height:1.1}
+  .reveal-tag span{display:block;font-size:clamp(11px,1.7vmin,18px);color:var(--muted);line-height:1.2}
+  @keyframes rise{from{transform:translate(-50%,20px);opacity:0}}
+
+  /* ---------- opsi jawaban ---------- */
+  .timer{--t:1;background:var(--paper);border:3px solid var(--ink);border-radius:99px;overflow:hidden;position:relative;height:clamp(16px,2.2vmin,24px)}
+  .timer .bar{position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--t));
+    background:repeating-linear-gradient(-45deg,var(--gold) 0 12px,#f7bf4a 12px 24px)}
+  .timer.low .bar{background:var(--red)}
+  .timer.off{opacity:.4}
+  .opts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:1fr;gap:clamp(10px,1.8vmin,18px);flex:1;min-height:0;padding:0 var(--sh) var(--sh) 0}
+  .opt{position:relative;font-family:var(--head);font-weight:400;padding:.35em .6em;display:flex;align-items:center;justify-content:center;gap:.5em;
+    min-height:52px;min-width:0;overflow-wrap:break-word;flex-wrap:wrap;text-align:center;line-height:1.1}
+  .opt .lt{flex:none;width:1.7em;height:1.7em;border-radius:50%;border:3px solid var(--ink);display:grid;place-items:center;font-size:.7em;background:var(--gold)}
+  .opt:nth-child(2) .lt{background:#7fc8a9} .opt:nth-child(3) .lt{background:#f4978e} .opt:nth-child(4) .lt{background:#9cc5f0}
+  .opt kbd{position:absolute;top:4px;right:8px;font-size:12px;opacity:.5;font-family:"Nunito",sans-serif}
+  .opt.correct{--f:var(--green);--c:#fff;animation:pulse .5s}
+  .opt.wrong{--f:var(--red);--c:#fff;animation:shake .4s}
+  .opt.correct .lt,.opt.wrong .lt{background:#fff;color:var(--ink)}
+  .opt.dim{opacity:.4}
+  .opt.gone{opacity:.15;pointer-events:none;box-shadow:none;transform:translate(var(--sh),var(--sh))}
+  @media (hover:none){.opt kbd{display:none}}
+  .fb{min-height:1.5em;text-align:center;font-weight:900}
+  .fb.ok,.fb.bad{align-self:center;padding:.1em .9em;border:3px solid var(--ink);border-radius:99px;color:#fff}
+  .fb.ok{background:var(--green)} .fb.bad{background:var(--red)}
+  @keyframes pulse{50%{transform:scale(1.05)}}
+  @keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+  @keyframes pop{0%{transform:scale(.7)}70%{transform:scale(1.08)}100%{transform:none}}
+  .pop{animation:pop .35s ease-out}
+
+  /* ---------- single ---------- */
+  .game{flex:1;display:flex;flex-direction:column;gap:clamp(10px,1.8vmin,18px);width:100%;max-width:1400px;margin:0 auto;min-height:0}
+  .hud{display:flex;align-items:center;gap:clamp(8px,1.4vmin,14px);font-size:clamp(14px,2.2vmin,22px);flex-wrap:wrap}
+  .hud>div:not(.tools){background:var(--paper);border:3px solid var(--ink);border-radius:99px;padding:.15em .8em;font-weight:900}
+  .hud .who{max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hint{--f:var(--gold);padding:.15em .8em;border-radius:99px;font-weight:900;font-size:inherit;min-height:44px}
+  .hint:disabled{opacity:.45;cursor:default}
+  .hud .tools{margin-left:auto}
+  .play{flex:1;min-height:0;display:grid;gap:clamp(10px,2vmin,20px);grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+  .side{display:flex;flex-direction:column;gap:clamp(8px,1.4vmin,14px);min-height:0}
+  #single .opts{grid-template-columns:minmax(0,1fr)}
+  #single .opt{font-size:clamp(18px,3.4vmin,36px);justify-content:flex-start;text-align:left;padding-left:.7em}
+  #single .fb{font-size:clamp(15px,2.6vmin,26px)}
+  @media (orientation:portrait){
+    .play{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+    .side{height:clamp(220px,38vh,420px)}
+    #single .opts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+    #single .opt{justify-content:center;text-align:center;padding-left:.6em}
+  }
+
+  /* ---------- VS: peta di tengah, panel tim di kiri/kanan ---------- */
+  .arena{flex:1;display:grid;min-height:0;gap:clamp(8px,1.6vmin,16px);
+    grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);grid-template-areas:"p1 center p2"}
+  .pl{--pc:var(--p1);min-width:0;min-height:0;display:flex;flex-direction:column;gap:clamp(6px,1.2vmin,12px);
+    background:var(--paper);border:4px solid var(--ink);border-radius:var(--r);box-shadow:var(--sh) var(--sh) 0 rgba(0,0,0,.4);
+    padding:clamp(8px,1.4vmin,16px);border-top:clamp(10px,1.6vmin,16px) solid var(--pc);transition:background .2s}
+  #p1{grid-area:p1} #p2{grid-area:p2;--pc:var(--p2)}
+  .pl.win{background:#dff3e6}
+  .pl.out .opts{opacity:.55}
+  .pl-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--head);font-size:clamp(17px,2.8vmin,30px)}
+  .pl-name{color:var(--pc);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pl-score{background:var(--pc);color:#fff;border:3px solid var(--ink);border-radius:99px;padding:0 .6em;min-width:2.2em;text-align:center}
+  .pl-ask{text-align:center;color:var(--muted);font-size:clamp(13px,2vmin,20px)}
+  .pl .opts{grid-template-columns:minmax(0,1fr)}
+  .pl .opt{font-size:clamp(14px,2.8vmin,30px)}
+  .pl .fb{font-size:clamp(12px,2vmin,20px)}
+  .center{grid-area:center;display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+  .cbar{display:flex;align-items:center;gap:10px}
+  .cbar .timer{flex:1}
+  .round{font-family:var(--head);font-size:clamp(15px,2.4vmin,24px);background:var(--gold);border:3px solid var(--ink);border-radius:12px;padding:.05em .5em}
+  .center .slot{flex:1}
+  @media (orientation:portrait){
+    .arena{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1fr);grid-template-areas:"p2" "center" "p1"}
+    #p2{transform:rotate(180deg)}   /* berhadapan: HP/tablet diletakkan di meja */
+    .pl .opts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  }
+
+  /* ---------- hasil ---------- */
+  #result{overflow-y:auto}
+  .res-wrap{margin:auto;width:100%;max-width:760px;text-align:center;display:flex;flex-direction:column;gap:16px;
+    background:var(--paper);border:4px solid var(--ink);border-radius:26px;outline:2px dashed var(--line);outline-offset:-14px;
+    box-shadow:8px 8px 0 rgba(0,0,0,.35);padding:clamp(22px,3.4vmin,36px)}
+  .res-icon{font-size:clamp(56px,11vmin,100px);line-height:1}
+  .res-wrap h2{font-size:clamp(30px,5.6vmin,54px);color:var(--red-d);line-height:1.05}
+  .res-wrap h3{color:var(--teal-d)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;padding:0 var(--sh) var(--sh) 0}
+  .stat{background:#fff;border:3px solid var(--ink);border-radius:var(--r);box-shadow:var(--sh) var(--sh) 0 var(--ink);padding:12px;border-top-width:10px;border-top-color:var(--gold)}
+  .stat:nth-child(4n+2){border-top-color:#7fc8a9} .stat:nth-child(4n+3){border-top-color:#f4978e} .stat:nth-child(4n+4){border-top-color:#9cc5f0}
+  .stat.p1{border-top-color:var(--p1)} .stat.p2{border-top-color:var(--p2)}
+  .stat.lead{background:#fff4d1;transform:rotate(-2deg) scale(1.04)}
+  .stat b{display:block;font-family:var(--head);font-weight:400;font-size:clamp(26px,4.6vmin,44px)}
+  .stat span{color:var(--muted)}
+  .review{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .rv{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .thumb{width:84px;height:84px}
+  .thumb path{fill:var(--gold);stroke:var(--ink);stroke-width:1.5;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+  .rv b{font-family:var(--head);font-weight:400;font-size:17px;line-height:1.1}
+  .rv span{font-size:12px;color:var(--muted)}
+  .res-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding:0 var(--sh) var(--sh) 0}
+  .btn{padding:12px 26px;font-family:var(--head);font-size:clamp(18px,2.8vmin,26px);min-height:56px}
+  .btn.primary{--f:var(--teal);--c:#fff}
+  .btn.danger{--f:var(--red);--c:#fff}
+
+  /* ---------- modal, overlay, toast ---------- */
+  .modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:rgba(10,30,45,.55);
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:fade .2s}
+  .modal-card{width:min(440px,100%);background:var(--paper);border:4px solid var(--ink);border-radius:24px;
+    outline:2px dashed var(--line);outline-offset:-12px;box-shadow:8px 8px 0 rgba(0,0,0,.4);
+    padding:clamp(20px,3vmin,30px);text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;animation:pop .3s ease-out}
+  .modal-card .compass{width:clamp(70px,11vmin,96px)}
+  .modal-card h3{font-size:clamp(23px,3.6vmin,32px);color:var(--red-d)}
+  .modal-card p{color:var(--muted);font-size:clamp(15px,2.2vmin,19px)}
+  .modal-btns{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;padding:0 var(--sh) var(--sh) 0}
+  .modal-btns .btn{padding:10px 12px}
+  @keyframes fade{from{opacity:0}}
+  #overlay{position:fixed;inset:0;z-index:20;display:none;place-items:center;background:rgba(10,30,45,.5);
+    font-family:var(--head);font-size:clamp(90px,24vmin,240px);color:var(--gold);
+    -webkit-text-stroke:clamp(4px,.8vmin,8px) var(--ink);paint-order:stroke fill;text-shadow:10px 10px 0 var(--ink)}
+  #overlay.show{display:grid}
+  #overlay span{display:inline-block}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:50;max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s}
+  #toast.show{opacity:1}
+
+  @media (max-width:520px){
+    .names{grid-template-columns:1fr}
+    .brand small{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= LATAR ================= -->
+<div class="scene" aria-hidden="true">
+  <div class="waves back">
+    <svg viewBox="0 0 800 100" preserveAspectRatio="none"><path d="M0 40q100-30 200 0t200 0 200 0 200 0V100H0z" fill="#0d6f93"/></svg>
+    <svg viewBox="0 0 800 100" preserveAspectRatio="none"><path d="M0 40q100-30 200 0t200 0 200 0 200 0V100H0z" fill="#0d6f93"/></svg>
+  </div>
+  <div class="ship">
+    <svg viewBox="0 0 120 100">
+      <path d="M60 8v54" stroke="#2b1a0e" stroke-width="4"/>
+      <path d="M60 9l18 5-18 5z" fill="#c0392b"/><path d="M60 14l18 0-18 5z" fill="#fff"/>
+      <path d="M63 16q34 20 0 42z" fill="#fff" stroke="#2b1a0e" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M57 20q-28 18 0 38z" fill="#fbf1d9" stroke="#2b1a0e" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M8 62h104l-16 22H24z" fill="#a0652e" stroke="#2b1a0e" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M20 70h80" stroke="#f2a516" stroke-width="3"/>
+    </svg>
+  </div>
+  <div class="waves">
+    <svg viewBox="0 0 800 100" preserveAspectRatio="none"><path d="M0 50q100-34 200 0t200 0 200 0 200 0V100H0z" fill="#0b4f6c"/></svg>
+    <svg viewBox="0 0 800 100" preserveAspectRatio="none"><path d="M0 50q100-34 200 0t200 0 200 0 200 0V100H0z" fill="#0b4f6c"/></svg>
+  </div>
+</div>
+
+<!-- ================= MENU ================= -->
+<section id="home" class="screen active">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-ic"></span>
+      <div><b>TEBAK PROVINSI</b><small>Penjelajah Nusantara • Media Pembelajaran Interaktif (IFP Ready)</small></div>
+    </div>
+    <div class="tools">
+      <a class="tb home-link" href="index.html" aria-label="Kembali ke Beranda"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Beranda</span></a>
+      <button class="tb" data-act="sound" aria-label="Suara"></button>
+      <button class="tb" data-act="fs" aria-label="Layar penuh"></button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="hero">
+      <div class="hero-text">
+        <span class="stamp">EKSPEDISI 38 PROVINSI</span>
+        <h1>Kenali Bentuk Provinsimu!</h1>
+        <p>Peta akan memperlihatkan bentuk sebuah provinsi. Amati garis pantai dan pulaunya, lalu tebak namanya secepat mungkin, Penjelajah!</p>
+      </div>
+      <div class="hero-show">
+        <span class="hero-compass"></span>
+        <div class="mystery"><svg id="heroShape"><path/></svg><span class="q">?</span></div>
+      </div>
+    </div>
+
+    <div class="grid3">
+      <section class="sec">
+        <h2><span class="num">1</span> Mode &amp; Pemain</h2>
+        <div class="tiles">
+          <button class="tile" data-mode="single"><span class="ic">🧭</span>Single<small>Main sendiri</small></button>
+          <button class="tile" data-mode="vs"><span class="ic">⚔️</span>VS<small>2 tim, 1 peta</small></button>
+        </div>
+        <div class="field" id="nameSingle">
+          <label for="nSolo">Nama Penjelajah</label>
+          <input id="nSolo" maxlength="16" placeholder="Tulis namamu…" autocomplete="off">
+        </div>
+        <div class="names" id="nameVs" hidden>
+          <div class="field team-a"><label for="n1">Tim A</label><input id="n1" maxlength="14" value="Tim A" autocomplete="off"></div>
+          <div class="field team-b"><label for="n2">Tim B</label><input id="n2" maxlength="14" value="Tim B" autocomplete="off"></div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2><span class="num">2</span> Tingkat &amp; Wilayah</h2>
+        <p class="lbl">Tingkat kesulitan</p>
+        <div class="seg" data-key="level">
+          <button data-v="mudah">🟢 Mudah</button><button data-v="sedang">🟡 Sedang</button><button data-v="sulit">🔴 Sulit</button>
+        </div>
+        <p class="level-note" id="levelNote"></p>
+        <p class="lbl">Wilayah</p>
+        <div class="seg" data-key="area">
+          <button data-v="all">Semua</button><button data-v="sum">Sumatera</button><button data-v="jawa">Jawa–Nusa</button>
+          <button data-v="kal">Kalimantan</button><button data-v="sul">Sulawesi</button><button data-v="timur">Maluku–Papua</button>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2><span class="num">3</span> Waktu &amp; Soal</h2>
+        <p class="lbl">Jumlah soal</p>
+        <div class="seg" data-key="count">
+          <button data-v="10">10</button><button data-v="20">20</button><button data-v="38">Semua</button>
+        </div>
+        <p class="lbl">Waktu per soal</p>
+        <div class="seg" data-key="time">
+          <button data-v="10">10 dtk</button><button data-v="15">15 dtk</button><button data-v="25">25 dtk</button>
+          <button data-v="30">30 dtk</button><button data-v="0">Bebas</button>
+        </div>
+      </section>
+    </div>
+
+    <button class="start" id="btnStart"><span class="boat">⛵</span>MULAI EKSPEDISI</button>
+    <p class="best" id="best"></p>
+    <p class="credit dev">Development by <b>Andri Fernanda, S.Pd., Gr.</b> © 2026</p>
+    <p class="credit">Data peta: <a href="https://github.com/denyherianto/indonesia-geojson-topojson-maps-with-38-provinces" target="_blank" rel="noopener">Indonesia GeoJSON &amp; TopoJSON Maps (38 Provinces)</a> oleh Deny Herianto, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> — disederhanakan.</p>
+  </main>
+</section>
+
+<!-- ================= SINGLE ================= -->
+<section id="single" class="screen">
+  <div class="game">
+    <header class="hud">
+      <div class="who">🧭 <span id="sName"></span></div>
+      <div>Soal <b id="sNum">1</b>/<span id="sTot">10</span></div>
+      <div>Skor <b id="sScore">0</b></div>
+      <div>🔥 <b id="sStreak">0</b></div>
+      <button class="hint" id="sHint" title="Hapus 2 jawaban salah (poin soal ini jadi setengah)">💡 50:50 ×<b id="sHintN">3</b></button>
+      <div class="tools">
+        <button class="tb" data-act="sound" aria-label="Suara"></button>
+        <button class="tb" data-act="fs" aria-label="Layar penuh"></button>
+        <button class="tb" data-act="home" aria-label="Menu">🏠</button>
+      </div>
+    </header>
+    <div class="timer" id="sTimer"><div class="bar"></div></div>
+    <div class="play">
+      <div class="slot" id="sSlot"></div>
+      <div class="side">
+        <div class="opts" id="sOpts"></div>
+        <div class="fb" id="sFb"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= VS ================= -->
+<section id="vs" class="screen">
+  <div class="arena">
+    <div class="pl" id="p1">
+      <div class="pl-head"><span class="pl-name">Tim A</span><span class="pl-score">0</span></div>
+      <p class="pl-ask">Provinsi apakah ini?</p>
+      <div class="opts"></div>
+      <div class="fb"></div>
+    </div>
+    <div class="center">
+      <div class="cbar">
+        <div class="round" id="vRound">1/10</div>
+        <div class="timer" id="vTimer"><div class="bar"></div></div>
+        <div class="tools">
+          <button class="tb" data-act="sound" aria-label="Suara"></button>
+          <button class="tb" data-act="fs" aria-label="Layar penuh"></button>
+          <button class="tb" data-act="home" aria-label="Menu">🏠</button>
+        </div>
+      </div>
+      <div class="slot" id="vSlot"></div>
+    </div>
+    <div class="pl" id="p2">
+      <div class="pl-head"><span class="pl-name">Tim B</span><span class="pl-score">0</span></div>
+      <p class="pl-ask">Provinsi apakah ini?</p>
+      <div class="opts"></div>
+      <div class="fb"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HASIL ================= -->
+<section id="result" class="screen">
+  <div class="res-wrap">
+    <div class="res-icon" id="rIcon"></div>
+    <h2 id="rTitle"></h2>
+    <div id="rBody"></div>
+    <div class="res-btns">
+      <button class="btn primary" id="rAgain">🔁 Main Lagi</button>
+      <button class="btn" id="rHome">🏠 Menu</button>
+    </div>
+  </div>
+</section>
+
+<!-- peta tunggal: dipindahkan ke #sSlot atau #vSlot sesuai layar -->
+<div class="stage sedang asking" id="stage">
+  <span class="ask-chip">Provinsi apakah ini?</span>
+  <div class="reveal-tag" id="revealTag" hidden><b id="rvName"></b><span id="rvInfo"></span></div>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <span id="mIcon"></span>
+    <h3 id="mTitle"></h3>
+    <p id="mText"></p>
+    <div class="modal-btns">
+      <button class="btn" id="mNo"></button>
+      <button class="btn primary" id="mYes"></button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay"></div>
+<div id="toast"></div>
+
+<script>
+/* ===================== DATA: 38 provinsi ===================== */
+// c = ibukota (ditampilkan saat jawaban dibuka), r = wilayah (pengecoh & filter)
+const DATA = [
+  {p:"Aceh", c:"Banda Aceh", r:"Sumatera"},
+  {p:"Sumatera Utara", c:"Medan", r:"Sumatera"},
+  {p:"Sumatera Barat", c:"Padang", r:"Sumatera"},
+  {p:"Riau", c:"Pekanbaru", r:"Sumatera"},
+  {p:"Kepulauan Riau", c:"Tanjungpinang", r:"Sumatera"},
+  {p:"Jambi", c:"Jambi", r:"Sumatera"},
+  {p:"Sumatera Selatan", c:"Palembang", r:"Sumatera"},
+  {p:"Kepulauan Bangka Belitung", c:"Pangkalpinang", r:"Sumatera"},
+  {p:"Bengkulu", c:"Bengkulu", r:"Sumatera"},
+  {p:"Lampung", c:"Bandar Lampung", r:"Sumatera"},
+  {p:"DKI Jakarta", c:"Jakarta", r:"Jawa"},
+  {p:"Jawa Barat", c:"Bandung", r:"Jawa"},
+  {p:"Banten", c:"Serang", r:"Jawa"},
+  {p:"Jawa Tengah", c:"Semarang", r:"Jawa"},
+  {p:"DI Yogyakarta", c:"Yogyakarta", r:"Jawa"},
+  {p:"Jawa Timur", c:"Surabaya", r:"Jawa"},
+  {p:"Bali", c:"Denpasar", r:"Nusa"},
+  {p:"Nusa Tenggara Barat", c:"Mataram", r:"Nusa"},
+  {p:"Nusa Tenggara Timur", c:"Kupang", r:"Nusa"},
+  {p:"Kalimantan Barat", c:"Pontianak", r:"Kalimantan"},
+  {p:"Kalimantan Tengah", c:"Palangka Raya", r:"Kalimantan"},
+  {p:"Kalimantan Selatan", c:"Banjarbaru", r:"Kalimantan"},
+  {p:"Kalimantan Timur", c:"Samarinda", r:"Kalimantan"},
+  {p:"Kalimantan Utara", c:"Tanjung Selor", r:"Kalimantan"},
+  {p:"Sulawesi Utara", c:"Manado", r:"Sulawesi"},
+  {p:"Gorontalo", c:"Gorontalo", r:"Sulawesi"},
+  {p:"Sulawesi Tengah", c:"Palu", r:"Sulawesi"},
+  {p:"Sulawesi Barat", c:"Mamuju", r:"Sulawesi"},
+  {p:"Sulawesi Selatan", c:"Makassar", r:"Sulawesi"},
+  {p:"Sulawesi Tenggara", c:"Kendari", r:"Sulawesi"},
+  {p:"Maluku", c:"Ambon", r:"Maluku"},
+  {p:"Maluku Utara", c:"Sofifi", r:"Maluku"},
+  {p:"Papua", c:"Jayapura", r:"Papua"},
+  {p:"Papua Barat", c:"Manokwari", r:"Papua"},
+  {p:"Papua Barat Daya", c:"Sorong", r:"Papua"},
+  {p:"Papua Tengah", c:"Nabire", r:"Papua"},
+  {p:"Papua Pegunungan", c:"Wamena", r:"Papua"},
+  {p:"Papua Selatan", c:"Merauke", r:"Papua"},
+];
+const REGION_LABEL = {
+  Sumatera:"Pulau Sumatera", Jawa:"Pulau Jawa", Nusa:"Bali & Nusa Tenggara", Kalimantan:"Pulau Kalimantan",
+  Sulawesi:"Pulau Sulawesi", Maluku:"Kepulauan Maluku", Papua:"Pulau Papua",
+};
+const AREAS = { all:null, sum:["Sumatera"], jawa:["Jawa","Nusa"], kal:["Kalimantan"], sul:["Sulawesi"], timur:["Maluku","Papua"] };
+const LEVEL_NOTE = {
+  mudah:"Peta Indonesia utuh, provinsi ditandai. Cocok untuk mengenal letak.",
+  sedang:"Kamera memperbesar provinsi, tetangganya masih terlihat samar.",
+  sulit:"Hanya bentuk provinsi tanpa petunjuk letak. Untuk para ahli!",
+};
+
+/* ===================== PETA (path SVG per provinsi) ===================== */
+// Disederhanakan dari "Indonesia GeoJSON & TopoJSON Maps (38 Provinces)" — Deny Herianto, CC BY 4.0.
+// vb = viewBox seluruh Indonesia; p[nama] = { d: path, c: [x,y] titik penanda, b: [x,y,w,h] kotak batas }
+const MAP = {"vb":[-1,1,925,345],"p":{"Sulawesi Tengah":{"d":"M491.2 141l3.3-3.8 3.1 4.1-2.4-7.5 1-7.1-2.7-0.3-1.4-2.2 4.7 1.8 0.8-3.5-1.9-3 2.3 0.2-0.3-4.9 3.2-1.1-0.1-3.9 3.8-1.7 1.1-3.8 2.3 3.9 3.8 0.7 0.9-3.7 3.5-1.8 0-5.9 1.9-0.6 7 2.5 4.2-1.5-0.9 2.4 2.6 2.4 12.9 0.5-3.6 2.6-3-1.6-12.9 4-1.1 2.4 3.3 1.9 0.1 2-5.1 1.5-8.7-2.4-5.4 1.2-4.8 5.4-2 5.3 1 12.3 4.5 5.5 2-0.8 1.9 1.4 3.4 8.4 3-1.2 5.5 1.7 4.7-7.5 6-5.2 1.7 3 4.5 0.8 3.1-0.7 2-3.4 15.2-0.7-4.3-1.6 6.3-2.2 4.1 0.3 3.5 2.8-1.8 6.3-1.9 0-3-4-6 2.1-8.3 11.1-10.9 4.1-3.4 4.9-7.4-3 0.7 3.8 1.5-1.5 2.7 5.2 5.5 2.5 3.7 8.5 6.2 4-1.4 2.1 4.7 3.1-3.5 1.9-1-3.5-11.8-4 2.3-5.2-6.3-4.5-7.3-0.3 0.1-2.4-7.3-0.8-6.5-5.2-2.6 1.2-4.3-1.8-4.1 1.4 0-4.7-4-4.8 0.3-2-5.1-2.1 3.3-4.3-0.7-5.5zM557.6 156l-1.9-3.1 2.5-5.3 5.6-0.6 1.1 4.8 2.4-3.3 3.8 1-2 4.9-4-1.6-0.3 4.2-2.8-1 1.7-1.7-1-4.3-5.1 6zM533.4 135.5l1.7-3 3.2 0.3-0.6 2-3-0.9-1.3 1.6zM569.8 158.1l1.1-4.3 1.4 4.2-2.5 0.1zM547.7 131.3l-3.1-3 3.1 1.4 0 1.6zM539.5 132.5l-2.3-0.9 4-0.6-1.7 1.5zM562.5 196.2l-1.6-0.3 2.3-0.7-0.7 1z","c":[528.7,143.2],"b":[488.6,96.9,83.7,99.3]},"Sulawesi Barat":{"d":"M491.2 141l0.7 5.5-3.3 4.3 5.1 2.1-0.3 2 4 4.8 0 4.7-3.8 5.2 1.6 6.1-0.2 2.6-3.4 0.8 1.1 7.1-5 2.1 1.8 5.7-3.3-1.5-6.3 2.8-1.8-0.8-2.5-8.9 2-4-2.2-0.3-0.3-1.6 1.4-3.3 2 0.8 4.3-3.7 1.4-9.6 3.1-2.7-1.7-3.4 0.5-8.3 5.1-8.5z","c":[486.3,168.1],"b":[475.1,141,22.3,54.3]},"Sulawesi Selatan":{"d":"M489.5 194l-1.8-5.7 5-2.1-1.1-7.1 3.4-0.8 0.2-2.6-1.6-6.1 3.8-5.2 4.1-1.4 4.3 1.8 2.6-1.2 6.5 5.2 7.3 0.8-0.1 2.4 7.3 0.3 6.3 4.5-2.3 5.2-5.6 2.3-6.2-4.8-1.4 1.8 1.4-3.3-6.6-1.6-11.2 7.1 1.3 3.7 3.3 2.1 0.4 9.6-2 6.9 0.2 6.7 2 4.6-2.9 4.3-0.7 5.4 3.9 9.4-3.1-2.1-3.6 1.7-4-0.9-4.5 3.2-5.7-2.9-1.3-4.7 3.4-8-0.9-3.5 3.1-8.6 0-7.1-3.6-5 0.4-4.3zM508.8 247.9l1.1-8.5 1.5 5.7-1.8 8.7-0.8-5.9zM515.5 266.4l-2.8 0.2-0.3-2.5 3.1 2.3zM522 271.9l-0.3-1.8 1.6 0.9-1.3 0.9z","c":[511.4,200.5],"b":[487.1,163,48.6,109]},"Papua Tengah":{"d":"M797.7 209l4.2-5.7-1.5-4.9 3.6-2.5-3.7 0.1-1.9-3.2-3.9-1.6-2.3-4.6-0.5-6.5 1.5-1 0.5 4.2 3.2-1.3 0.3 7 5.1 2.6 4.7 0.2 3.1-0.7 8.4-7.9 1.7-5.1 3.9 1.9 2.7 4.6 4.6 0.3-0.1 4.2 2-0.6 0.1-1.8 1.5 2.6 2.1-0.2 1 3 1.2-0.3-1.1-4.6 2.7 1-1.8 1.5 1.1 0.6 2.1-3.6 5.1-1.3 10.2 0.2 3.4-1.9-0.8 4 1.5 1.1-0.1 6.9 3.8 0.9-0.1 2.9 1.9 1-7.1 1.4-1.5 5.9-3.8-1.4 0 2 2.3-0.3 0.5 1.4 1.9-1.1-2.7 5.7 1.8 1.8-3.1 1.1 2.5 2.6-4.3 8.8-35-14.5-14.4-0.6-6.5-4.3z","c":[829.4,203.2],"b":[791.7,178.1,75.4,50.2]},"Papua Barat":{"d":"M752 168l1.9-2.6-1.3-3.2 2.1-1.2 3.6-11.3 2.1 1.3 4.6-3.3 3.6-0.1 1.1-8.8 9.7-0.4 3.3 3-2.5 1.9 5.3 7.4-4.1 6.8 0.9 9.7 6.9 14.1 1.5-8.3 2.1 1.1 0.4 5-1.5 1 0.5 6.5 2.3 4.6 3.9 1.6 1.9 3.2 3.7-0.1-3.6 2.5 1.5 4.9-4.2 5.7-5.1-2.6 1.4-1-0.8-1.7 6-0.7-5.7-0.6-3.4 2.5-3.1-3 0 1.4-1.6-0.4 0.7 2.1-3.8-2.9 1.5-1.4-1-1.8-3.9 2-2.2-5.7-0.4 3.3-2.5-1.1-1.4-3.9 1.6-1.4-0.7-3.2 4.2-4-0.7-2.2-3.8 3.7-0.4 5.9-2.7-0.8 2.1 3.1-3.8 3.2 0.9 3.4-4.1 4.2-6.7 0.3-3.6-8 4.1-2.7-2.5-2.1-0.1-3.7-2.9 1.1-3.9-5.7-3.7-2-3.9 0.6-1.8-2.7 1.1-0.9-2.1-0.2 5.6-2.3 7.2 0.8 2.8 2.2 9.6-7.9 3.3 1.9 0.7 3.8 4.6-3.2 0.4 2.5 2.2 0.1 0.7-0.4-0.4-3.1 0.5-0.4 0.3-0.5 0.7 0.5 0.2-0.3 0.6 0.5 1.5 0-0.5-1.7 0.4-0.2 0.4 0.1-0.1-0.5-0.7-0.8 1-1.7-1-3.2-6.6 3-8.8-0.7-4.4 1.9-6.4-0.1-0.8-1.7zM766.8 206l4.4 2.8-2 0.2-2.4-3zM778.7 170.6l1 0.7 0 0.5-0.7 0.1-2.2-0.7 1.9-0.6zM783.5 162.3l-0.6-1.7 1.9-1.7-1.3 3.4zM774.6 175.1l0.9 0.6 0.4 1.3-0.2 0.1-0.6 0-0.1-0.7-1.1-0.1 0.7-1.2zM776.6 172.2l0.8 0.9-0.1 0.3-0.8-0.5-1 0.7-0.9-0.8 2-0.6zM788.1 165.2l-1.1 2.1 0.3-3.3 0.8 1.2zM782 202.3l1.7 1.9-2-0.5 0.3-1.4zM791.2 172.1l-1.1-0.3 1.4-1.5-0.3 1.8z","c":[771.5,173.7],"b":[739,138.4,64.9,70.7]},"Gorontalo":{"d":"M526.7 114.5l-0.1-2-3.3-1.9 1.1-2.4 12.9-4 3 1.6 3.6-2.6 5.2 0.2 7.5 4.2 2.2-2.8 3.6 0.7 3 2.4 0.1 2.1 5.2 2.5-1.2 5.1-4.1 0-4.1-3.7-13.4-0.3-11.6 2-5.8-2.6-3.8 1.5z","c":[547,110.4],"b":[523.3,103.2,47.4,14.4]},"Riau":{"d":"M103.6 108.8l-1.2-1.2 0.9-7-2.2-4.2 7.6-2.8-0.9-4.8-2.2-1 1.9-8.3-1.1-6.5 1.5 4.6 3.5 3.3 3.9 1.4 0.1-3.9 5.5-0.2 5.2 5 1.8 6.5 7.3 1.1 7.8 5.7 1.6 7.6 3.9 3.9 2.9 1.2 6.9 0.5 3.9 6.6 4.3-3.2 7.7 4.9 2 6.2-3.9-0.1-3.2 3.6 6.5 3.2-7.2 3.5 0.4 4.2-1.7 1.4-7-0.9-7.5 7.4-7-4.2-5.9-0.7-3.2 2-15.2-9.5-1.5-3.8-2.9 0.6-2-5.9 2.4-1.9-1.7-0.8 1.3-2.8-3.2 0.7-4.4-2.5-0.1-1.9-3.7 0-1.5-4.3 1.7-1.3-2.1-1.4zM128.4 87.6l-0.3-4 6-1.5 1.6 3.1-1.5 3.9-3.7 0.8-2.1-2.3zM151.4 108.6l-2.7-1.1-0.5-1.3 6.5-2.6 6.4 4.8-0.7 1.9-3.3-2.2-5.7 0.5zM144.5 99.1l-0.3-3.1 1.2-0.4 4.3 3.6-0.9 3.4 0.9 2.4-1.8 0.7-2.4-1.8-1-4.8zM142.4 94.8l-2.4-2.7 9.2 1.5 1 5.2-4.5-3.5-3.3-0.5zM157.9 104.8l-3-1.6-2.4 0.4 2.2-2.7 3.2 0.6 5.2 5.5-5.2-2.2zM164.1 113.6l-1.3-1 1.3-2.6 1.9 2.1-1.9 1.5zM149.8 104.5l-0.6-2.1 1.5-1 1.4 2.5-2.3 0.6z","c":[138.6,109.8],"b":[101.1,73,75.1,73.4]},"Papua Selatan":{"d":"M853.6 228.4l4.3-8.8-2.5-2.6 3.1-1.1 3.3-0.6 2.1 3 2.6-0.9 1.5 2.8 3.4-0.3 0.4-1.9 5.3 0 3.9 2.9 2.3-2.1-1.7 4.9 18.1 1.4-1.3 3-2-0.8 2.5 1.1 0.8-2.6 1.2 1.8 1.5-0.6-1.2-2 3.5-0.1 3.1 3.3 12.2 2.7 0 19.5-3.1 7.3 1.4 3.6 2.1 0.5 0 44.7-2.6-0.9-18.8-19.6-12.2 2.1-2.7-2.2-5.9 3.3-1.5-2.7 0.5-0.7 0.9 0 0.5-0.6-0.4-2.5 2.1-1.5 1.9-5.8-8.5-6.8 0.4-3.1-2.8-2.8 7.5-1.8 0.2-0.9-2.4-0.4-0.1-1.7-8.1-7-2.9-10.1-4.2-2.3-0.4-2.7 1.6-1.1-5.2-3.7-2.6 0.4-1.1-3zM854.4 292.2l-1.6 0.2 0.5-2.4 4-8.9 7.1-7.7 10.3-2 6.9 4-1.7 5.6-2 1 0.3 3.5-1.4 0-0.7 1.2-2.4 0.2-4.9 4.2-14.4 1.1zM876.4 286.9l1.5 4.8-6.6-0.7 2.3-3.6 2.8-0.5zM874.2 256.7l2.1 1.3 0.1 1.5 0.5 0.5 2 0.1-2 0.5-3.4-2.1 0.7-1.8zM873.1 258.9l2.8 1.7-2.4 0.8-0.4-2.5z","c":[887,260.9],"b":[852.8,215.3,67.6,91.2]},"DI Yogyakarta":{"d":"M300.1 281.8l2.2-4.3 3.2 0.5 3.4-3.2 0.9 4.5 5.9 1-0.6 4.2 1.6 3.6-16.6-6.3z","c":[308.4,281.4],"b":[300.1,274.8,16.6,13.2]},"Sumatera Barat":{"d":"M103.6 108.8l2.1 1.4-1.7 1.3 1.5 4.3 3.7 0 0.1 1.9 4.4 2.5 3.2-0.7-1.3 2.8 1.7 0.8-2.4 1.9 2 5.9 2.9-0.6 1.5 3.8 15.2 9.5 1.2 3.1-3.7 2.8-0.4 4.5-4.1 3.5-6.8 0.2 3.2 12.1-5.5 3.8-3.9-6 0.9-4.7-4.6-6.7-1.5-5.5-3.3-1.3-1.4-8.2-10.2-11.2-1.8-5.6-7.4-5-3.9 0 6.9-6.2 8 1.4 1.1-1.5-2.7-3 0.1-3.9 6.9 2.6zM85.5 156.8l0 2.1-1.2-2.1 0.6 3.1-2.4 0.3-6-3.9-4.6-8.3 1.8-4.8 4.5-1 7.3 14.6zM105.1 185l-1.3-5.2 5.3 4.5 0.2 2.6-1.7 0.5 1.7 3.5-4.2-5.9zM96.2 170.1l1.1 1.7-5.3-2.1-0.8-4.7 2.6 0.5 2.4 4.6zM102.5 180.7l-2.3 0.2-0.8-6.6 5 4.7-1.9 1.7z","c":[110.5,139.9],"b":[71.9,106.2,65.7,84.8]},"DKI Jakarta":{"d":"M234.5 245.8l4.9 0-1 5.2-2.8-0.7-1.9-2.9 0.8-1.6z","c":[236.6,248.4],"b":[233.7,245.8,5.7,5.2]},"Maluku":{"d":"M657.9 193.8l1-2.8-2.1-3.7 5.5-2-0.7-2.1 2.1-1.9 17.4-1.4 1.5 3.5 7.9-3.9 10 4.5 7.2-0.2 4.3 3.2 0.9 4.5 3.2 0.6 1.5 4.2-1.2 5.1-16-7.7-1.8-2.9-8.1-0.8 0.3 3.4-12.1-2.3 0.6-2.6-1.6-0.4-4.2 4.6-4.1 0.5-4.1-5.1-1.7 0.5 0.1-3.3-1.9 1.3-2.6 8-1.3-0.8zM633.8 201.2l-10.2-4.9-3.5-5.1 0.2-3.7 15.5-2.3 6.4 3.5-1.5 0.6 0.7 2 3.8 0.2-0.7 5.7-10.7 4zM726.6 283.1l-0.6 1.4-0.3-2-3.6 1.4 0-5.8 2.5 0.3-1.5-1 1.7-4 4.1-2.5 1.8-4.1 2.5-0.3 1.7 1.7-2.2 0.9-0.1 7.3-6 6.7zM616.1 284.1l2.8-6.9 4.8 1.3 8.6-3.3 4.6 3.5-5.9 1.8-1.7 3-7.9-1.7-5.3 2.3zM785 261.8l-1.1 0.8-2.8-3.2 1.2-6.4 2 0.8-1.9-1.3-0.1-5.3 8.3 8.4-5.6 6.2zM785.7 246.8l-0.1-1.8 3.2-0.7 1.9-1.9 5 3.5-1.1 4.1-2.3 1.4-6.6-4.6zM786.8 244.5l-0.9-2.2 2-2.5-3.7-1.4 2.7 0.2 2.1-3.6 1.5 0.3 0.2 1.3 0.2 0.4 0.6 0.1 0 0.3 0.4 0.7 0.5 0.4 0.3-0.2 1 1.2 0.1 1.2-7 3.8zM662.5 199.6l2.2-3-4.7 3-1.5-2 8.3-3.6 0.3 2.6-1.9-0.2 0.8 1.5-3.5 1.7zM691.6 281.8l1.9-2.1 3.9 2.4-2.3 3-3.5-3.3zM757 243.9l6.1-14.4-1.1 6.5-5 7.9zM754.8 243l-2.1-5.7 1.5-1.4 2.1 5.1-1.5 2zM661 288.7l-4.6-0.7-1.1-1.8 7.2 0.9-1.5 1.6zM715.9 290.9l2.8-4.4 4.6-0.1-7.4 4.5zM785.9 249.7l-3.6-3.7 0.5-1.7 1.7 0 0.2 2.2 2 2-0.8 1.2zM790.8 236.7l-0.2-1.3 0.5-0.2 4.2 2.1-1.3 1.2-1.2-0.3-0.5 0.3-0.9-1.2-0.5-0.3-0.1-0.3zM792 235.4l-1.9-0.3-0.1-2.7 4 1.8-2 1.2zM789.2 249.5l1.5 1.3-1.1 2.2-2.4-1.7 2-1.8zM673.3 196.1l-2-2.1 3.3 0.3 0.1 2.1-1.4-0.3zM673.4 267.2l-0.9 1.1-2-1.4 1.7-1.7 1.2 2zM739.1 267.3l-0.1 1.7-4.7-1.9 4.8 0.2zM647.1 277l0.2-3 2.2 0.3-2.4 2.7zM668.4 196.7l0.6-2.5 2.4 1.1-3 1.4zM794.3 253.2l1 1.4-1.7 0.7-0.8-1.8 1.5-0.3zM662.8 289.5l-1-1.4 2.6 0.1 0.3 1.2-1.9 0.1zM794.4 240.7l0.3 2.9-2.1-1.2 1.8-1.7zM794.3 258.5l-1.8 0.6 1.6-3.5 0.2 2.9zM791.8 253.3l-1.5 1.3 0.1-3.2 1.4 1.9zM797.5 249.7l-0.6 3.8-1-1.7 1.6-2.1zM658.9 184.3l-2.1 0.2 3-2-0.9 1.8zM722.7 273.2l-3.3 0.6 3.8-1.7-0.5 1.1zM652.5 190.1l0.6 1.2-3.4-1.3 2.8 0.1zM717.2 274.1l2.2 1.2-2.7-0.2 0.5-1zM729 205.3l-1.7-1.8 1.2-0.5 0.5 2.3zM720.5 278.2l-1.2 0.6 3.1-1.9-1.9 1.3z","c":[687.2,190.4],"b":[616.1,179.5,181.3,111.4]},"Bengkulu":{"d":"M120.4 173.6l5.5-3.8 5.2 3.2-0.3 2.4 2.7-0.7 3.7 3.9 4.1 0.8 4.1 5.5 4 0.8 0.5 3.7 9.9 2 0.1 3.1-1.8 1.8-1.9-1.7-0.8 3.6-2.8 2 7.3 4.2-1.5 1.5 3 3.2 7.4 1.5-0.7 3.4 1.6 1.5 2.7-0.9 1.1 3.8 2.3 1.2-3.9 2.8-5.3-2.2-20.5-16.5-1.4-6-12.3-8.8-6-10.2-6-5.1zM143.9 232.3l-2.2-1.5 1-0.9 4.9 1.8-0.1 2-3.6-1.4z","c":[148.1,196.1],"b":[120.4,169.8,55.4,63.9]},"Lampung":{"d":"M171.9 222.4l3.9-2.8 1.5 2.7 9.4-0.9-0.8-4.3 1.8-6.2 12.7-3.6 6-8.6 4 2.1 2.6 4.9 3.4 1.4 0.1 3.9 1.8 1.8-0.3 9.7-3.7 19.6-8.5-9.2-2.5 3.2 0.9 3.3-1.2 0.8-8.8-5.8-3-0.1 3.4 8.4-2.9 0.2-13.6-14.2 0.1-2.2-6.3-4.1z","c":[195.1,220.8],"b":[171.9,198.7,46.3,44.2]},"Papua":{"d":"M820.2 178.1l4.3-1.9 3.3-7.8 7.2 0.6 8.2-3.1 1.4-0.8-2.8-4.1 0.7-1.5 16.2-6.3 2.6 2.8 12.4 4.1 3.8 3.3 17.8 7.8 6.9-0.8 4.8 2.8 0.8-1.2 6.1 1.6 0.2 3 5.9-0.5 0 28.3-6.8-0.7 0.7 1.2-2.2 1.4-3.2-3.7-0.2-3 2.5 1 0 2.7 4.7-0.1 1-1.8-2.5 0.3-0.2-1.8-7.4-1-1-1.5-5.4 0.6-4.9-3.8-3.2 4.3-2.4-5.3-6.7-0.7-1.5-3-3.9 3 0.8-3.4-3.3-1.5-1.7 2.6-1.5-1.7 0.2-5.3-1.4-0.5-3.4 0.2-2.2 2.1-2.2-1.2-1.1 5-1.5-1.1 0.8-4-3.4 1.9-10.2-0.2-5.1 1.3-2.1 3.6-1.1-0.6 1.8-1.5-2.7-1 1.1 4.6-1.2 0.3-1-3-2.1 0.2-1.5-2.6-0.1 1.8-2 0.6 0.1-4.2-4.6-0.3-2.7-4.6-3.9-1.9zM810 157.6l-0.9-1.6 28.9 3.7-13 2.2-15-4.3zM815.5 141.5l-1.1-1.6 1.8-2.2 7 7 4.5 0.9-5 2.4-5.5-0.7-1.7-5.8zM809.4 138.8l0.4 1.3-2.5-3.5 7.6 2.3-2 2.8-3.5-2.9zM797.8 146.8l-1.9-2.2 0.9-1.9 2 0.6-0.3 2.2 1.1-1.2-1.8 2.5z","c":[870.1,179.7],"b":[795.9,136.6,124.1,69.7]},"Kepulauan Riau":{"d":"M262 47.5l-2.5-3.8 4.9-4.3 3.6 5.4-0.1 2.7-2 3.3-2.9 0.5-0.7-2.1 2.8-0.4-3.1-1.3zM184.6 102.9l2.3-2.6 4.8-0.8 1.4 6.4-2 1.8-2.3-1.9 0.2-2.9-2.3 1.2-2.1-1.2zM190.6 129.4l-2.1-1.7 2.7-4.1 3.8 4.2 1.5-1.1 3.1 2.9-2.9 0.7-2.6-2.2-3.5 1.3zM185.2 133.5l1.3-2.5 0 1.7 3.1-2 2.4 2.7-1.9 3.5-1.3-1.1-1.5 1.9-2.1-4.2zM178.9 103.8l-0.5-2.7 4.4-0.5-0.1 2.7-3.8 0.5zM169.3 111.1l-2.1-1.7 0.3-3.3 2.7 2.7-0.9 2.3zM215.7 65.9l-1.2 1.8-0.6-4.6 2.7 1.1-0.9 1.7zM184.8 106.7l-1.2 1.6-2-3.2 3.2 1.6zM168.8 104.2l-2.2-0.6 0.4-2.3 1.8 2.9zM179.3 104.6l-0.5 1.2-2.1-2.2 2.6 1zM185.2 108l-0.1 2.1-1.5-1.6 1.6-0.5zM224.1 61.2l0.5-1.8 1.1 2.6-1.6-0.8zM280.7 74.3l-1.1-1.4 2.7 0.7-1.6 0.7zM188.8 130.5l-1-0.7 1.7-0.2-0.7 0.9z","c":[263.8,45.4],"b":[166.6,39.4,115.8,98.3]},"Nusa Tenggara Barat":{"d":"M439 305.1l-4.2-1.2 1.5-3.5-1.1-2.9 6.9-6 5.8 1.9 3.4-1.2 4.8 6.3 9.4-1.4-1-2.1-10.7-6.2 4.7-3.2 4.4 1.2 2.7 4.5 3.6-2.3 3.7 0.8 0.3 4.8 2.8-4.9 4.1 0.6 0.6 6.5 3-1-1.1 3.2-4.4-1.4-4 1.2 4 0.5-0.1 1.6-3.1-1-6.8 1.5-0.3-5-5.4 5.2-21.4 4.5-2.1-1zM422.1 301.5l-2 0.6-3.6-2.8 5.1-0.7-0.9-5.7 1.3-1.6 5-3.1 7.4 2.8-4.5 9.3 1.5 1.5-2.7 0.6 0.7-1.9-1.2 0.3-0.7 2.3-5.4-1.6zM453.7 287.7l-3.1 4.1-1.2-0.7 0.2-3.4 4.1 0zM481.4 286.6l1.1 1.2-1.5 1.4-1-1.7 1.4-0.9z","c":[459.2,295.8],"b":[416.5,285.6,67.2,20.5]},"Jambi":{"d":"M136.5 143.6l3.2-2 5.9 0.7 7 4.2 7.5-7.4 7 0.9 1.7-1.4 7.4 5.7 11 0.1 2.6 13-1.7-0.8-16.4 4.6-1.7 2 1.3 1.6-2.2 6.4-4.5-4.5-0.4 3.7-7.1 0.3-1.5 4.4-4 2.5-6.2-1.1-4.1 2.9-4.1-0.8-3.7-3.9-2.7 0.7 0.3-2.4-5.2-3.2-3.2-12.1 6.8-0.2 4.1-3.5 0.4-4.5 3.7-2.8-1.2-3.1z","c":[156.3,159],"b":[122.7,138.6,67.1,40.7]},"Bali":{"d":"M398.5 293.4l-6.8-1.4-2.9-6.1 8.4 2 6.5-2.7 10.5 6.4-8.8 5.5-2 3.9-1.7-0.3 1.6-2.6-4.8-4.7zM409.7 299.2l1.6-1.8 1.3 2-2.9-0.2z","c":[401.5,293.1],"b":[388.8,285.2,25.4,15.7]},"Jawa Timur":{"d":"M318 288.2l1.1-3 3.1 0.1 0.9-2.9 2.8-0.9-2.3-3.7-0.6-8.6 6.1 2.2 0-2.3 3.1-2.3-0.7-4.5 2.3-3.2 5.4 0.1 3.3 2.9 8.6-1.2 2.1 7.3 3.7 1.5 0.9 6.6 5.2 2.5 12-0.1 5.9-2.5 1.1 1.8 7.1 2.1-2.1 14.5 4.9 4.4-5-0.2 0.6-1.2-2.5-1.6-5.8 0.3-14.4-6.6-11.8 3.3-17.1-3.9-2.2 2.4-5.2-2.3-10.5-1zM353.8 267.1l-0.1-2.5 3.5-2.7 21-0.6 4.3 2.3-4.7 1.6-0.1 1.5-5.6-0.2-1.8 2.6-16.5-2zM407.1 262.8l1 1-4-1.1 0.8-2.1 6.5 2.2-4.3 0zM351.9 241.1l0.4-2.1 2.2-0.3-0.1 2.2-2.5 0.2zM415.8 266.3l2.2 0.2-0.1 1.3-2.8-0.4 0.7-1.1zM366 292.9l2.2 0.7-2.8 0.3 0.6-1z","c":[355,279],"b":[318,238.7,100,60.3]},"Papua Barat Daya":{"d":"M769.7 138.8l-1.1 8.8-3.6 0.1-4.6 3.3-2.1-1.3-3.6 11.3-2.1 1.2 1.3 3.2-1.9 2.6-5.7 1.7-5.5-4.3 1-0.8-2.3-1.1-1.1-3.2 2.1-2-2.2 0.1-1.2-3-2.8 0.2 0.6-1.7 0-0.7-0.1-0.3-0.4-0.4-5.5 1.6-1.8-3.7-1.5 3.7-6.7-1.3 6.1-7.1-0.3-5.1 12.2-2.5 6.3-5.4 5.2-1.8 10.7 2.2 10.6 5.7zM704.7 128l3 0.6 1.2-0.8-3.3-1.6 10.3-2.1 6.8 1.3 4.1 4.3-1.9 1.9-2.8-1.4-2.4 1-7-5.3 2.2 3.9 3.7 0.8-3.6 2.3-1.1-2.9-2.3 0.4-0.2 1.7-1.1-3.3-3.6 0.5-2-1.3zM696.6 160.6l10.4-3.2 1.9 3.1-1.8 1.9 1.7 1.3-6 1.4-8.2-3.1 2-1.4zM715 148.7l-2.1-5.6 7.7-0.8 1 2.4-1.8 6-2.7 0.2-2.1-2.2zM713.8 141.8l-5-0.3 0.9-1.7 8.6-0.1-4.5 2.1zM734.8 153.1l-0.1 1.1-1.5 0.7-1.5-1.2 2.6-1.1 0.5 0.5zM712.3 133.7l-2.9 0.7 0.7-1.6 3.8 0.2-1.6 0.7zM695.8 148.1l-1.1-0.3 4.9-0.4-3.8 0.7z","c":[744.3,150.3],"b":[694.6,124.1,75.1,45.6]},"Sumatera Utara":{"d":"M65.1 38.2l-1.6 3.5 7.3 2.1 3.3 4.8 21 12 4.7 4.6-0.1 3.6 4.7 1.1 2 3.1 1.1 6.5-1.9 8.3 2.2 1 0.9 4.8-7.6 2.8 2.2 4.2-0.9 7 1.2 1.2-6.9-2.6-0.1 3.9 2.7 3-1.1 1.5-8-1.4-6.9 6.2-2.1-10.2-6.6-15.8 2-2.9-14.1-9.9 1.4-2.9-2.3-4.1 0.6-5.1-3.2-2.4 0.6-4.4-1.4-2.7 2.4-1.6-4.6-7.9 2-3.7 3.7-0.9-0.3-5.9 3.7-0.8zM50.3 105.9l-9.1-10 4.5-0.4 1.3-2.3 2.8 1.3 4 5.9 4.6 3.1-0.7 8.4-3.5 0.9-3.9-6.9zM67.2 134.9l1.6-6 1.3 6-2.9 0zM66.9 124.8l0.7-1 1.8 2.1 1.3 5.1-3.8-6.2zM72 122.1l-1.5-0.9 6.6 0.5-5.1 0.4z","c":[82.3,78.8],"b":[41.2,38.2,67.5,96.7]},"Sulawesi Tenggara":{"d":"M520.2 181.3l1.4-1.8 6.2 4.8 5.6-2.3 11.8 4 1 3.5 1.4 3.5-2-1.7 0 3.8-1.7 1.1 5 2.8 1.6 2.9 2.8 0-2.5 1.5 2.4 0.7 0.4 3.1 3.5-1.8 0.7 6.6-1.4 0.9-2.9-2.4 1.3 3.7-3-2.3-7.4 1.7-3.1 2.1 0.6 4.8-1.4 1.4-6.8-0.9-4.3-3.6 2.8-12.1-5.3-1.6-9.3-9.1-0.3-1.9 3.8-5 0.7-5.2-1.6-1.2zM551.5 234.7l1.6-4.2 3.1-2.1-1.3-0.1 0.1-3.7 2.4-10.1 4.2-3.2 2.7 9.9-1.5-2.7-2.2 0.8-2.2 8.2 2.5-0.7 3.5 3.2-7 3.1 0.5 2.2-2.2 2.7-1.7-1.4-1.3 1.3-1.2-3.2zM546.6 231.9l-1.3-1.4 2.3-4.7-1.2-5.2 7.6-4.3 1.3 5.7-3.5 5.2 1 3.9-2.4 1.7 0.1-3.3-1.2 2.6-1.6-1.7-1.1 1.5zM536.8 230.7l0-4.5 2.4-1 2 2.9-0.3 5-2 0.6-2.1-3zM558.8 206.1l1.5-2.5 4.9 2.3-2.8 3.3-3.6-3.1zM571.9 231.7l-1.2-2.7 2.2 0.9-1 1.8zM578.7 239.6l-0.6-1.2 1.8 1-1.2 0.2zM561.8 219.9l0.5 1-1.5-0.2 1-0.8z","c":[537.6,200.7],"b":[517.3,179.5,62.6,60.1]},"Nusa Tenggara Timur":{"d":"M500.2 300.4l-2.4 0.8-1.8-1.9 1.5-6.1 2.9-1.6 1.9 1.2 1.7-2.7 4.6-1.3 10.9 2.1 10.8 5.4 2.1-2.8 7.6-0.5 5.9 3.8 3.7-0.7 0.2-2.6 8.1-4 0.1-1.9-3.4 0.7 2.7-3 3.1 4.3-2.6 3.3-2.1-0.3 0.7 3.3-8.9 3.1-5.2-0.4-6.8 3.1-7.7-1.9-1 2.3-6.2 1-3.8-2.5-1.7 1.3-3.1-1.6-11.8 0.1zM570.3 330.8l-1.2 0.2 0.7-2.5 5.6-3.6-3.7-0.2-0.1-1.8 4.3-9.1 5.7-3.3 0.4 1.7 2.3-0.9 2.8 2.4 2.5-6.2 8.9-4.2 1.2 2 2.6-1.9 1.3 1-0.1 3.1-3.8 0.3 2 5.5-2 3.4-10.1 9.7-6.8 0.8-7 3.9-5.5-0.3zM486.6 319.3l-6.1-1.8-2-2.5 0.8-1.4 6.7-2.5 10.1 0.8 2.6-2.4 2.9 3.8 2.6 0.5 0.7 2.9 4.3-0.4 2.7 2.3 4.9 7.3-7.7 4.4-5.8-1.6-9.9-9.1-6.8-0.3zM589.4 292.7l-2.7-0.3 4.1-3.6-2.7 0.6 1.3-2.8 2.6-0.1 0.2 1.4 9.5-1 1 1.5-0.2 2.4-13.1 1.9zM556.7 342.6l-0.5-3 10-3.7-1.9-0.3 3.8-2.5-0.1 4.6-3.5 2.8-7.8 2.1zM565.8 295l-1.6-0.8 5.1-3.3-1.5-1.7 3.4-0.4-1.2 2.2 1.3 0.3 0.8-2.9 1.6 0.8 2.1-1.8 2.7 1.5-6.1 3.2-1.2 3.1-5.4-0.2zM582 294.9l-1.3-2.5-2.4 0.3 1-1.7 1.9-1.1 0.6 1.6 4.7-3.8-0.5 2.9-4 4.3zM560 292.1l2.9-3.3 3.8 0.5-0.8 2.5-5.9 0.3zM535.1 336.3l-1.4-0.8 3.3-2.7 3 0.1-0.3 2.1-4.6 1.3zM489.3 292.7l2.1 1.4-2.7 4.9-1-2.5 1.6-3.8zM558.9 295.7l-1.5 0 2.1-3 3.8-0.1-4.4 3.1zM492.9 296.2l0.5 1.5 2.5-1.4-2 3.9-1.8-1.1 0.8-2.9zM567 330.1l-1-0.7 3-3.1 1.1 1.4-2.2 0.4 0.2 2.7-1.1-0.7zM531.7 336.7l-1.3 0 2.2-0.7-0.9 0.7z","c":[528.2,294.2],"b":[478.5,285.3,125.1,57.3]},"Kalimantan Selatan":{"d":"M387 193.3l5-13 3.2-1.9 3.5-5.6 7.2-4.5 2.4-4 0.5-1.5-2.6-1.8 1.6-6.6 7.4-4.1-2.8 3.5 2.2 6.1-0.7 4.9 2.3 0.4 0.5 6.6 6.5-1.7 7.9 2.1-0.9 3-3.9-0.6 1.9 1.2-2.8 8.3-2.4-1.4-0.2-2.1-1 3.2 3.5 2.4-4.7 5.1-1.3 4.9-26.5 11.3-0.5-10.5-5.3-3.7zM422 205.2l-2-8.4 2.3-6.6 2.8-2 1.1 14.1-4.2 2.9zM428.1 195.9l-0.9 1.1-0.9-2 1.9-3.8-0.1 4.7z","c":[409.1,178.9],"b":[387,150.3,44.1,57.2]},"Aceh":{"d":"M65.1 38.2l-3.7 0.8 0.3 5.9-3.7 0.9-2 3.7 4.6 7.9-2.4 1.6 1.4 2.7-0.6 4.4 3.2 2.4-0.6 5.1 2.3 4.1-1.4 2.9-3.5-2-3.3 0.8-2.3-3.2-1.6-9.8-4.5-2.3-9.7-13.6-7.6-1.4-19.2-18.2-6.4-12.6-0.5-4.8 4.7-2.6 3.6 0.5 5.6 2.6 3.8 4.2 6.3 1.6 9.3-1.3 6.9 2.6 5.8-2.1 8.2 7.2 1.6 7.1 6 2.4-0.6 2.5zM16.1 71.3l-2.3-2.8 1.9-3 6.1 3.5 0.4 2.3 6.9 3.2 0.9 2.2-3.1 0.5-5.3-4.5-5.5-1.4zM43.6 79.3l2.4 0.4 0.8 3.2-4.5-3.2 1.3-0.4zM6.5 8.5l-2.2-2.6 2.7 0.4-0.5 2.2z","c":[34.8,45.7],"b":[3.9,5.9,61.9,77]},"Kalimantan Tengah":{"d":"M314.7 183.9l8.8-6.1-1.2-7.3-1.8-2 1.5-4.7-2.7-1.6 1.1-3.9-2.7-2.3 6.3-2.5 7-5.4 1.8-4.7 8.9-5.4 1.8 0.5 0.8-2.2 1.9 2.1 5-0.5 11.4-4.9 1.8 1.1 0-3.4 4.5-5.4-3.2-6.3 5.4-1.7 5.7-6.5 5.7-0.7 1.6 3.1 3.2 0.2 5.9-3.4 6.5-0.6 2.8 7.2-4.4 1-3.9 4.9 3.6 2 1.8 5 3.7-3.8 2.9-0.1-1.5 5.7 1.1 3.8 1.8 0.3-1.8 4.5 1.7 1.6 3.6-0.3 4.2 5.6 1.5-0.9-1.6 4.4-7.4 4.1-1.6 6.6 2.6 1.8-0.5 1.5-2.4 4-7.2 4.5-3.5 5.6-3.2 1.9-5 13-6.1-2.9-8.3 2.9-0.6-6-5.3 2.2-5.8-6-2 2.5 1.3 1.2-8.9 5.7-6.2-2.6-8.3 4.5-1.4-0.6 1.1-9.2-2.1-4.1-3.3 3.3-2.9-2.1-8.7 3.2-4.8-1.4z","c":[365.8,152.1],"b":[314.7,109.4,102.2,85.4]},"Papua Pegunungan":{"d":"M858.5 215.9l-1.8-1.8 2.7-5.7-1.9 1.1-0.5-1.4-2.3 0.3 0-2 3.8 1.4 1.5-5.9 7.1-1.4-1.9-1 0.1-2.9-3.8-0.9 0.1-6.9 1.1-5 2.2 1.2 2.2-2.1 3.4-0.2 1.4 0.5-0.2 5.3 1.5 1.7 1.7-2.6 3.3 1.5-0.8 3.4 3.9-3 1.5 3 6.7 0.7 2.4 5.3 3.2-4.3 4.9 3.8 5.4-0.6 1 1.5 7.4 1 0.2 1.8 2.5-0.3-1 1.8-4.7 0.1 0-2.7-2.5-1 0.2 3 3.2 3.7 2.2-1.4-0.7-1.2 6.8 0.7 0 26.5-12.2-2.7-3.1-3.3-3.5 0.1 1.2 2-1.5 0.6-1.2-1.8-0.8 2.6-2.5-1.1 2 0.8 1.3-3-18.1-1.4 1.7-4.9-2.3 2.1-3.9-2.9-5.3 0-0.4 1.9-3.4 0.3-1.5-2.8-2.6 0.9-2.1-3-3.3 0.6z","c":[887.3,206.8],"b":[854.7,182.7,65.4,48.1]},"Kepulauan Bangka Belitung":{"d":"M208 166.5l-2 0.6-3.8-2.6 5.5-4.5 0.2-3.9 4.2-1.5 2.2 2.5-1.2 1.8 3.1 1.4-1.8-5.5 3.4-0.8 3.2 2 5 16.4 10.8 3-2.6 1.5-2.4 5.5 3 1.7-0.1 1.6-4.4 0.6-1.7-2.8-9.6-3.1-0.3-6.8-2.6-2.3-0.4-4-4.9-1.7-2.8 0.9zM253.3 188.3l-1.4 0.2 0.1-5.8-1.4-0.3 2.6-7.2 6.6 0.2 5.6 3.6 0.5 2.6-4.4 7.3-1.8 0.5-2.9-4.1-0.1 1.8-3.4 1.2zM236.9 182.4l0.8 2.2-3.3-1.2 2.5-1zM248.5 182.6l-0.9-1.6 1.8-0.5-0.9 2.1z","c":[219.5,170.2],"b":[202.2,154,63.7,35.4]},"Sumatera Selatan":{"d":"M141.3 179.4l4.1-2.9 6.2 1.1 4-2.5 1.5-4.4 7.1-0.3 0.4-3.7 4.5 4.5 2.2-6.4-1.3-1.6 1.7-2 16.4-4.6 1.7 0.8 0.7 0.8-1.1 3.1 0.7 2.1 1.5 0.7 0.6 0 0.9-0.8 3.5 0.8 1.4 2-4 5.1 4-1.6 2.9 1.9 11.5 0.3-0.2 4.2 3.4 1.8 0.7 4.6 4.6 1.5 1 4.9-3.6 2.9-1.9 5.1 2.8 3.7-2.8 6.6-3.4-1.4-2.6-4.9-4-2.1-6 8.6-12.7 3.6-1.8 6.2 0.8 4.3-9.4 0.9-1.5-2.7-2.3-1.2-1.1-3.8-2.7 0.9-1.6-1.5 0.7-3.4-7.4-1.5-3-3.2 1.5-1.5-7.3-4.2 2.8-2 0.8-3.6 1.9 1.7 1.8-1.8-0.1-3.1-9.9-2-0.5-3.7-4-0.8-4.1-5.5zM191.1 161.1l1.7 1.2-0.7 1.7-2.1-1.1 1.1-1.8z","c":[181.6,189.5],"b":[141.3,156.6,80.7,65.8]},"Banten":{"d":"M234.5 245.8l-0.8 1.6 1.9 2.9-7.1 0.7 0.1 6.6 1.9 1.8-2.6 4.2-8-3.3-9.1 1.2-5.5-0.6-0.7-1.8 2.9-2 1.9 3.5 3.6-7 2.4 0.7 2.2-8.8 2.8-3.7 3 2.8 3.6-1.3 2.7 1.7 3.9-0.7 0.9 1.5zM205.2 254.4l-1.8 2.9-1-1.5 2.8-1.4z","c":[220.1,252.7],"b":[202.4,241.8,33.2,21.7]},"Sulawesi Utara":{"d":"M569.5 117.6l1.2-5.1-5.2-2.5-0.1-2.1-3-2.4 16.3 1.8 7.2-3.5 1.8-3.4 3.8-0.2-0.9-3.3 5.7-2.1-0.2-2.3 3.5-3.5 3.7 1.2 1.3 4.5-3 2-3.9 7.9-4.9 3.5-2.6 6.4-20.7 3.1zM633.8 44l2-4.3-2.2-2.4 1.2-4.2 2.3 1.2 1.1 4.3-2.4 5.1-2 0.3zM610 54.6l-1.5-5.3 2.6 1.4 2.4 4.8-1.4 1.1-2.1-2zM607.5 70.5l1.1-2.6 0 3.1-1.1-0.5zM635.6 49l-0.5-2.1 1.9 2-1.4 0.1z","c":[583.5,103.3],"b":[562.4,33.1,75.8,84.5]},"Kalimantan Utara":{"d":"M391.3 95.5l2.8-4.2 0-3.7 3.5-2-2.8-5.4 10.2-6.4-3.2-2.1 1.3-3.6-1.1-0.7 3.7-4.3 2.2 1.3 3.3-3.4-0.3-4.2 2.2-1.6-1.8-9.6 6.2-9.4 3.9 2.3 2.1-2.1 3.5-0.2 1.8 2 2.5-2 9.1 1.4 4.6-1.1 4.4 4 2.5 0.1-1.6 1.4-2-0.8 0.9 4.2 4.9 1.4 1.6 2.1-2-0.2 2.5 1.2-2.8 1.8-3.7-2-1.1 1.8-8.3 0.6 4.2-0.2-0.1 2.2 6.1 3.9-4.1 2.7 2.5 0.1-0.2 2.2 3.8 0-1 1.4 2.3 0.4 0 3.5 6 7-4.9 2.2-2.6-3.9-4.5-0.8-3.2 1.6-0.3-1.7-3.3 0.3-1.4 2.3-3.7-1.5-1.6 2.4-4.2-1.3-0.6 3.3-3.7 1.1 1.1 1.5-2.5 1.3-1.2 7-2.4 3.8-5.5 5.9-5.6 0.2-2.1 2.6-5.6-1.6-4-4.4-3.6 2.1-3.1-2.2zM450.8 43.5l2.8 2.7-4.4-0.8-0.3-1.5 1.9-0.4zM451.7 58.1l-0.7-2.9 2.3 0.5-0.3 3.5-1.3-1.1zM454.9 43.1l-1.5 1.6-1.6-2.3 1.6-1.3 1.5 2zM445 52.2l5.4 2.2-5.8-0.3 0.4-1.9zM458.5 42.8l-4.8-2.1 4.3 0 0.5 2.1z","c":[425.5,68.9],"b":[391.3,36.2,68.5,65.5]},"Kalimantan Timur":{"d":"M376.8 110.8l1.7-3.6-0.7-4.2 4.8-2.1 1.5-5.1 3.6-2.2 3.6 1.9 3.1 2.2 3.6-2.1 4 4.4 5.6 1.6 2.1-2.6 5.6-0.2 5.5-5.9 2.4-3.8 1.2-7 2.5-1.3-1.1-1.5 3.7-1.1 0.6-3.3 4.2 1.3 1.6-2.4 3.7 1.5 1.4-2.3 3.3-0.3 0.3 1.7 3.2-1.6 4.5 0.8 2.6 3.9 4.9-2.2 2.2 3-1.6 1.7-6.6 0.4 0.2 2.9 2.4 0.5 1.8 3.8 21.5 16.7-3.8 3.7-8.5-0.1-6.1-2-3.4-4.4 2.6 7-2.2-1.2-3.3 1.6-3.8 6.7-0.8 9-2 3.7 0.7 4.9-3.6 2.3-0.5 6.6-7.3 7.4-1.5 0.1-1.8-4.8 0.8 6.4-4.1 1.8 0.1 3-6.3 3.6 4.1-0.1 0.2 5.7-2 1 0.8 2.1 3.7-0.9-0.6 4.8-7.9-2.1-6.5 1.7-0.5-6.6-2.3-0.4 0.7-4.9-2.2-6.1 2.8-3.5 1.6-4.4-1.5 0.9-4.2-5.6-3.6 0.3-1.7-1.6 1.8-4.5-1.8-0.3-1.1-3.8 1.5-5.7-2.9 0.1-3.7 3.8-1.8-5-3.6-2 3.9-4.9 4.4-1-2.8-7.2-6.5 0.6-5.9 3.4-3.2-0.2-1.6-3.1-5.7 0.7zM447.5 138.4l1.2 3-2.7-4.8 1.5 1.8zM456.1 80.9l-1.5 1.3 0-1.6 1.5 0.3zM450.1 134.9l1.6-0.5-0.7 1.6-0.9-1.1zM448.3 136.5l1.2 0.8-3.8-1.6 2.6 0.8zM457.8 80.9l1.2 0.8-3-1.4 1.8 0.6zM450 132.6l-0.7 1 1.1-2.6-0.4 1.6zM450.2 132.9l-0.9 0.7 1.4-1.7-0.5 1z","c":[428.3,122.4],"b":[376.8,72.7,102.9,99.5]},"Jawa Tengah":{"d":"M276 277.5l-2.5-6.3-2.4-1.5 0.1-2.3 4.1-1.1 1.3-6.6 4.7-0.5 0.7 1.6 4.1 0.6 4-1.6 9.4 2.7 4.1-1.5 2.8 2.3 2.7-0.2 5.2-9.9 3.7-1.1 2.9 0.4 2.2 4.6 4.5 0.9 2.3-1.6 3.9 2.7-2.3 3.2 0.7 4.5-3.1 2.3 0 2.3-6.1-2.2 0.6 8.6 2.3 3.7-2.8 0.9-0.9 2.9-3.1-0.1-1.1 3-1.3-0.1-1.6-3.6 0.6-4.2-5.9-1-0.9-4.5-3.4 3.2-3.2-0.5-2.2 4.3-14.3-3.8-5.8 0.9-4-1.4zM277.4 278.1l3.6 1.4-5.2-1.6 1.6 0.2z","c":[302.5,270.2],"b":[271.1,252.1,62.7,36.1]},"Maluku Utara":{"d":"M648.5 103.1l-0.3-3.8 3.3-10.4 8.1-9 1.7 0.7-4.5 6.4 3.4 2.2 0 8.6-2.1 3.2-5.1 2.6 0.3 2.9 4.4 0.9 2.1-5.2 4.1-1.5-2.2-1.9 1.6-2.1 6.1-3.7 5.1-0.4-0.8 10-9.7 5.6 2.4 2.7 7.2 2.1 0 4.3 3.8 1.9-15.8-4.7-3.3 0.4-0.9 2.9 0.4 6.3 3.2 8.3 7.4 9.6-8.2-4.4-2.9-6.3-3.6-1.9 1-11.6-4.2-4.9 2.3-5.2-4.3-4.6zM588.7 164.5l-2-2.7 1.3-4.6 5.4-0.3 8 2.6 1.3-1.8 0.9 2 1.2-1.2 1.6 1.2-0.2 2.1-9 0-8.5 2.7zM649.3 157.9l-1.3-1.4 0.7-3.8 4.1-2.1 10.6 6.1-3 1.8-11.1-0.6zM663.9 78.4l7.4-7.3 2.4 2.9-3.3 8.7-4.4 0.6-2.1-4.9zM647 135.1l-0.4-4.1 2.5 1.3 2.3-2 2.4 3-1.8 3 6 3.1-2.7 1.9-2.7-2.5-3.1 1.7 0.1-3.9-2.6-1.5zM614 162.6l-5.5 0.4-1.9-2.5 19.9 0.3-12.5 1.8zM621.5 172.7l-1.7 0.1-2.2-4.6 0.5-4.7 1.7 1.1-0.5 3.1 2.2 5zM644.6 134.2l-2.2-0.4 0.6-4.6 2.8 0.6-1.2 4.4zM650 149.4l0.2-1.8 3.7 1-0.5 1.2-3.4-0.4zM644.9 139.3l-1.6-0.3 1.1-2.9 2.3 3.6-1.8-0.4zM646.5 108.9l0-2.2 1.3 1.5-1.3 0.7zM647 117.7l1.8-0.7-0.5 1.4-1.3-0.7zM647 152.7l-1.4-0.4 2-0.9-0.6 1.3z","c":[662.8,110.9],"b":[586.7,71.1,90.6,101.7]},"Kalimantan Barat":{"d":"M384.1 95.8l-1.5 5.1-4.8 2.1 0.7 4.2-1.7 3.6-5.7 6.5-5.4 1.7 3.2 6.3-4.5 5.4 0 3.4-1.8-1.1-11.4 4.9-5 0.5-1.9-2.1-0.8 2.2-1.8-0.5-8.9 5.4-1.8 4.7-7 5.4-6.3 2.5 2.7 2.3-1.1 3.9 2.7 1.6-1.5 4.7 1.8 2 1.2 7.3-8.8 6.1-2.2 0.7-1.2-3.8-6.2 2.3-3.4-14.3 0.4-5-4.1-3.2 2.7-3.3 0.3-6.8-2.9-2.4 0.7-1.6-4.2-2.7 0.6-1.7-2.5-2.2 0.7-2.2-11.1-3.6-0.5-4.6 2.1-1.1 0-5.6-2.2-3.8-3.4-1.8 0.3-5.7-1.8-3.8 2.6-2.5-1.3-4.5 1.5-0.4 1.2-6 4.2-3.5 1.8-5.7 5.7-2.4-1.7 2.8 0.9 2.7 2 0.2-0.5 3.3 3.6 3.9 2.5 0.3 2 3.9 2.6 0.5 1.6 3.8 5.6 2.7 13.5-4.5 5.2 1 0.6 1.5 3-1.7 3 1.2 2.3-2.7 4.2-0.3 1.3-6.3 5.5-2.6 11 0.3-1.1 3.1 11.2 1.7 1.9 2.1 6.8-4.6 4.6 0.8zM293.7 148.1l-3.6 2.1-2.5-1.1 2.2-5.6 1.2 0.6 1.8-0.4 0.9 0.7 0.7-0.6 0.7 0.5 0.5 2.6-1.9 1.2zM284.8 140.4l0.2-3.2 6.2 1.8 3.7 3-1.2 2.3-2.6-2.5-2.5-0.7-2.6 0.9-1.2-1.6zM279 155.3l0.2 1.5-2.6 0.5-0.6-1.9 3-0.1zM282.6 128.1l1.3 0.3-2.2 1 0.2 1.2-0.8-2.1 1.5-0.4zM287.3 141.6l0.8 1-2-0.6 1.2-0.4zM283.6 126.4l-0.1 1.5-0.2-2.7 0.3 1.2z","c":[330.5,133.6],"b":[276,82.7,108.1,101.9]},"Jawa Barat":{"d":"M227.9 263.6l2.6-4.2-1.9-1.8-0.1-6.6 7.1-0.7 2.8 0.7 1.8-8.6 6.7 1 2.6 3.6 4.1 1.7 4.4-0.9 4 2.8 2.2-1.9 3 0.5 3.5 4.4 1.3 5.6 4.6 0.5-1.3 6.6-4.1 1.1-0.1 2.3 2.4 1.5 2.5 6.3-5.7 0.5-0.4 1.9-3 0.5-10-1.7-8-4.6-18.4-1.9-3.1-2.6 3.4-5.9-2.9-0.1z","c":[252,261.4],"b":[227.4,242.4,49.2,38]}}};
+
+/* ===================== UTIL ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const byName = Object.fromEntries(DATA.map(d => [d.p, d]));
+
+// Fisher–Yates: acak tanpa bias
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+const settings = {
+  mode:  store.get("provinsi_mode", "single"),
+  count: store.get("provinsi_count", 10),
+  time:  store.get("provinsi_time", 15),
+  level: store.get("provinsi_level", "sedang"),
+  area:  store.get("provinsi_area", "all"),
+  sound: store.get("provinsi_sound", true),
+};
+
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.id); toast.id = setTimeout(() => t.classList.remove("show"), 3500);
+}
+function replay(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+/* ===================== KOMPAS (maskot SVG) ===================== */
+function compass(){
+  const L = (t, x, y) => `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-family="Lilita One, sans-serif" font-size="13" fill="#2b1a0e">${t}</text>`;
+  return `<svg class="compass" viewBox="0 0 120 120" aria-hidden="true">
+    <circle cx="60" cy="60" r="55" fill="#fbf1d9" stroke="#2b1a0e" stroke-width="5"/>
+    <g class="rose">
+      <circle cx="60" cy="60" r="44" fill="none" stroke="#c9a86a" stroke-width="3" stroke-dasharray="4 6"/>
+      <path d="M60 22l7 38-7 38-7-38z" fill="#2b1a0e" opacity=".12"/><path d="M22 60l38-7 38 7-38 7z" fill="#2b1a0e" opacity=".12"/>
+    </g>
+    ${L("U", 60, 15)}${L("S", 60, 105)}${L("B", 15, 60)}${L("T", 105, 60)}
+    <g class="needle">
+      <path d="M60 24l9 36H51z" fill="#c0392b" stroke="#2b1a0e" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M60 96l-9-36h18z" fill="#fff" stroke="#2b1a0e" stroke-width="3" stroke-linejoin="round"/>
+      <circle cx="60" cy="60" r="7" fill="#f2a516" stroke="#2b1a0e" stroke-width="3"/>
+    </g>
+  </svg>`;
+}
+
+/* ===================== SUARA (Web Audio, tanpa file) ===================== */
+let actx;
+function sfx(type){
+  if(!settings.sound) return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === "suspended") actx.resume();
+    const seq = {
+      ok:[[587,.09],[784,.09],[988,.16]], bad:[[196,.3]], tick:[[440,.08]], go:[[659,.12],[880,.25]],
+      hint:[[740,.07],[554,.07]], win:[[523,.12],[659,.12],[784,.12],[1047,.35]]
+    }[type];
+    let t = actx.currentTime;
+    for(const [f, d] of seq){
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type === "bad" ? "square" : "sine";
+      o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(type === "bad" ? .12 : .3, t + .01);
+      g.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(g).connect(actx.destination);
+      o.start(t); o.stop(t + d + .02);
+      t += d;
+    }
+  }catch(e){}
+  if(type === "bad" && navigator.vibrate) navigator.vibrate(120);
+}
+
+/* ===================== FULLSCREEN ===================== */
+const ICON_FS_ON  = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const ICON_FS_OFF = '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+const ICON_SND_ON  = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>';
+const ICON_SND_OFF = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+const isFs = () => document.fullscreenElement || document.webkitFullscreenElement;
+
+function toggleFs(){
+  const el = document.documentElement;
+  if(isFs()){
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    return;
+  }
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if(!req){ toast("Browser ini tidak mendukung layar penuh. Di iPhone: Bagikan → Tambah ke Layar Utama."); return; }
+  const p = req.call(el);
+  if(p && p.catch) p.catch(() => toast("Layar penuh ditolak oleh browser."));
+}
+function updFs(){ $$('[data-act="fs"]').forEach(b => b.innerHTML = isFs() ? ICON_FS_OFF : ICON_FS_ON); }
+function updSound(){ $$('[data-act="sound"]').forEach(b => b.innerHTML = settings.sound ? ICON_SND_ON : ICON_SND_OFF); }
+document.addEventListener("fullscreenchange", updFs);
+document.addEventListener("webkitfullscreenchange", updFs);
+
+/* ===================== TIMER & PENJADWALAN ===================== */
+let pending = [], raf = 0, timer = {t0:0, dur:0};
+function later(fn, ms){ pending.push(setTimeout(fn, ms)); }
+function stopAll(){ pending.forEach(clearTimeout); pending = []; cancelAnimationFrame(raf); raf = 0; }
+function stopTimer(){ cancelAnimationFrame(raf); raf = 0; }
+function timeLeft(){ return timer.dur ? Math.max(0, 1 - (performance.now() - timer.t0) / timer.dur) : 0; }
+
+// frac = sisa waktu awal (1 = penuh); dipakai saat melanjutkan timer yang dijeda
+function startTimer(seconds, el, onEnd, frac = 1){
+  stopTimer();
+  el.classList.toggle("off", !seconds);
+  el.classList.remove("low");
+  el.style.setProperty("--t", frac);
+  timer = {t0: performance.now() - (1 - frac) * seconds * 1000, dur: seconds * 1000, seconds, el, onEnd};
+  if(!seconds) return;
+  const tick = () => {
+    const left = timeLeft();
+    el.style.setProperty("--t", left);
+    el.classList.toggle("low", left < .3);
+    if(left <= 0){ raf = 0; onEnd(); return; }
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+}
+function pauseTimer(){
+  if(!raf) return null;
+  const frac = timeLeft();
+  stopTimer();
+  return frac;
+}
+function resumeTimer(frac){
+  if(frac !== null) startTimer(timer.seconds, timer.el, timer.onEnd, frac);
+}
+
+/* ===================== MODAL (pengganti confirm) ===================== */
+// ask({...}) → Promise<boolean>; timer soal dijeda selama modal terbuka
+let modalDone = null;
+function ask({ title, text, yes = "Ya", no = "Batal", danger = false }){
+  if(modalDone) modalDone(false);
+  const frac = pauseTimer();
+  $("#mTitle").textContent = title;
+  $("#mText").textContent = text;
+  $("#mYes").textContent = yes;
+  $("#mNo").textContent = no;
+  $("#mYes").className = "btn " + (danger ? "danger" : "primary");
+  $("#mIcon").innerHTML = compass();
+  $("#modal").hidden = false;
+  $("#mYes").focus();
+  return new Promise(resolve => {
+    modalDone = ok => {
+      modalDone = null;
+      $("#modal").hidden = true;
+      if(!ok) resumeTimer(frac);
+      resolve(ok);
+    };
+  });
+}
+$("#mYes").addEventListener("click", () => modalDone && modalDone(true));
+$("#mNo").addEventListener("click", () => modalDone && modalDone(false));
+$("#modal").addEventListener("click", e => { if(e.target.id === "modal" && modalDone) modalDone(false); });
+
+/* ===================== PANGGUNG PETA & KAMERA ===================== */
+const stage = $("#stage");
+let mapEl, pinEl, cam = MAP.vb.slice(), camRaf = 0;
+
+function buildMap(){
+  let grid = "";
+  for(let lon = 95; lon <= 145; lon += 5){ const x = (lon - 95) * 20; grid += `<line x1="${x}" y1="-400" x2="${x}" y2="800"/>`; }
+  for(let lat = 10; lat >= -20; lat -= 5){ const y = (6.2 - lat) * 20; grid += `<line x1="-400" y1="${y}" x2="1400" y2="${y}"/>`; }
+  stage.insertAdjacentHTML("afterbegin", `<svg class="map" viewBox="${MAP.vb.join(" ")}" aria-hidden="true">
+    <g class="grid">${grid}</g>
+    ${DATA.map(d => `<path data-p="${d.p}" d="${MAP.p[d.p].d}"/>`).join("")}
+    <g class="pin"><circle class="ping" r="28"/><circle class="dot" r="9"/></g>
+  </svg>`);
+  stage.insertAdjacentHTML("beforeend", compass());
+  mapEl = stage.querySelector(".map");
+  pinEl = stage.querySelector(".pin");
+}
+// Kotak kamera di sekitar provinsi, menyesuaikan rasio layar panggung
+function focusBox(prov, pad, minSize){
+  const [x, y, w, h] = MAP.p[prov].b;
+  const A = Math.max(.3, stage.clientWidth / Math.max(1, stage.clientHeight));
+  let W = Math.max(w * (1 + 2 * pad), minSize), H = Math.max(h * (1 + 2 * pad), minSize / A);
+  if(W / H < A) W = H * A; else H = W / A;
+  return [x + w / 2 - W / 2, y + h / 2 - H / 2, W, H];
+}
+function setCam(v){
+  cam = v;
+  mapEl.setAttribute("viewBox", v.map(n => n.toFixed(2)).join(" "));
+  // penanda tetap berukuran sama di layar walau kamera memperbesar
+  const prov = stage.dataset.prov;
+  if(prov){ const [px, py] = MAP.p[prov].c; pinEl.setAttribute("transform", `translate(${px} ${py}) scale(${(v[2] / MAP.vb[2]).toFixed(4)})`); }
+}
+// "Terbang" mulus dari posisi kamera sekarang ke kotak tujuan
+function fly(to, ms = 850){
+  cancelAnimationFrame(camRaf);
+  if(ms <= 0 || matchMedia("(prefers-reduced-motion: reduce)").matches){ setCam(to); return; }
+  const from = cam.slice(), t0 = performance.now();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / ms), e = k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    setCam(from.map((f, i) => f + (to[i] - f) * e));
+    if(k < 1) camRaf = requestAnimationFrame(step);
+  };
+  camRaf = requestAnimationFrame(step);
+}
+// Tampilkan soal sesuai tingkat: mudah = peta utuh, sedang = zoom + tetangga samar, sulit = bentuk saja
+function stageAsk(prov){
+  stage.dataset.prov = prov;
+  stage.className = `stage ${settings.level} asking`;
+  $("#revealTag").hidden = true;
+  mapEl.querySelectorAll("path").forEach(p => p.classList.toggle("tg", p.dataset.p === prov));
+  if(settings.level === "mudah") fly(MAP.vb.slice(), 700);
+  else if(settings.level === "sedang") fly(focusBox(prov, .45, 70), 900);
+  else { fly(focusBox(prov, .12, 4), 0); replay(mapEl, "pop"); }
+}
+// Buka jawaban: kamera mundur memperlihatkan letak provinsi + label nama & ibukota
+function stageReveal(prov, ok){
+  stage.className = `stage ${settings.level} reveal${ok ? "" : " bad"}`;
+  const d = byName[prov];
+  $("#rvName").textContent = prov;
+  $("#rvInfo").textContent = `Ibukota: ${d.c} • ${REGION_LABEL[d.r]}`;
+  $("#revealTag").hidden = false;
+  // geser kamera ke bawah sedikit agar provinsi berada di atas label
+  const box = focusBox(prov, 1.1, 300);
+  box[1] += box[3] * .16;
+  fly(box, 900);
+}
+function stageIdle(){
+  stage.dataset.prov = "";
+  stage.className = "stage mudah reveal";
+  $("#revealTag").hidden = true;
+  mapEl.querySelectorAll("path.tg").forEach(p => p.classList.remove("tg"));
+  setCam(MAP.vb.slice());
+}
+function thumb(prov){
+  const [x, y, w, h] = MAP.p[prov].b, s = Math.max(w, h) * 1.15;
+  return `<svg class="thumb" viewBox="${x + w / 2 - s / 2} ${y + h / 2 - s / 2} ${s} ${s}"><path d="${MAP.p[prov].d}"/></svg>`;
+}
+
+/* ===================== GENERATOR SOAL ===================== */
+// 1 jawaban benar + 3 pengecoh (maks. 2 dari wilayah yang sama → bentuknya mirip, lebih menantang)
+function makeQuestion(item){
+  const others = DATA.filter(d => d !== item);
+  const same = shuffle(others.filter(d => d.r === item.r)).slice(0, 2);
+  const rest = shuffle(others.filter(d => !same.includes(d)));
+  const distractors = [...same, ...rest].slice(0, 3).map(d => d.p);
+  return { prov: item.p, options: shuffle([item.p, ...distractors]) };
+}
+function buildQuiz(){
+  const regions = AREAS[settings.area];
+  const pool = regions ? DATA.filter(d => regions.includes(d.r)) : DATA;
+  return shuffle(pool).slice(0, Math.min(settings.count, pool.length)).map(makeQuestion);
+}
+
+function renderOpts(box, options, keys){
+  box.innerHTML = "";
+  options.forEach((o, i) => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.dataset.val = o;
+    b.innerHTML = `<span class="lt">${"ABCD"[i]}</span><span>${o}</span><kbd>${keys[i]}</kbd>`;
+    box.appendChild(b);
+  });
+}
+function revealOpts(box, answer){
+  box.querySelectorAll(".opt").forEach(b => {
+    if(b.dataset.val === answer) b.classList.add("correct");
+    else if(!b.classList.contains("wrong")) b.classList.add("dim");
+  });
+}
+function setFb(el, text, cls){ el.textContent = text; el.className = "fb " + (cls || ""); }
+
+/* ===================== NAVIGASI & MENU ===================== */
+let lastMode = "single";
+function show(id){
+  $$(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+  // pindahkan peta tunggal ke layar yang aktif
+  const slot = id === "single" ? $("#sSlot") : id === "vs" ? $("#vSlot") : null;
+  if(slot) slot.appendChild(stage);
+}
+function goHome(keepSave){
+  stopAll();
+  if(!keepSave) clearGame();
+  $("#overlay").classList.remove("show");
+  const best = store.get("provinsi_best", null);
+  $("#best").textContent = best ? `🏆 Skor terbaik Single: ${best.score}${best.name ? " — " + best.name : ""}` : "";
+  show("home");
+}
+// Single → 1 kotak nama; VS → 2 kotak nama tim
+function setMode(m){
+  settings.mode = m;
+  store.set("provinsi_mode", m);
+  $$(".tile").forEach(t => t.classList.toggle("on", t.dataset.mode === m));
+  $("#nameSingle").hidden = m !== "single";
+  $("#nameVs").hidden = m !== "vs";
+}
+function startGame(){ settings.mode === "vs" ? startVs() : startSingle(); }
+
+/* ===================== SIMPAN & LANJUTKAN (tahan refresh) ===================== */
+const SAVE_KEY = "provinsi_game", SAVE_TTL = 6 * 3600 * 1000;   // simpanan kedaluwarsa setelah 6 jam
+function saveGame(mode){
+  const st = mode === "single" ? S : V;
+  store.set(SAVE_KEY, { mode, t: Date.now(), time: settings.time, level: settings.level, state: { ...st, lock: true } });
+}
+function clearGame(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function resumeGame(g){
+  settings.time = g.time;
+  settings.level = g.level;
+  stopAll();
+  if(g.mode === "single"){
+    lastMode = "single";
+    Object.assign(S, g.state);
+    $("#sName").textContent = S.name;
+    $("#sTot").textContent = S.qs.length;
+    show("single");
+    nextSingle();
+  }else{
+    lastMode = "vs";
+    Object.assign(V, g.state, { state: [null, null] });
+    PL.forEach((p, k) => p.el.querySelector(".pl-name").textContent = V.names[k]);
+    updVsScore();
+    $("#vRound").textContent = `${V.i}/${V.qs.length}`;
+    show("vs");
+    stageIdle();
+    countdown(nextVs);
+  }
+}
+function offerResume(){
+  const g = store.get(SAVE_KEY, null);
+  if(!g || !g.state || !g.state.qs || Date.now() - g.t > SAVE_TTL || g.state.i >= g.state.qs.length){ clearGame(); return; }
+  const st = g.state, who = g.mode === "single" ? st.name : st.names.join(" vs ");
+  ask({ title: "Lanjutkan ekspedisi?", text: `${g.mode === "single" ? "Single" : "VS"} — ${who}, soal ${st.i + 1} dari ${st.qs.length}.`,
+        yes: "⛵ Lanjutkan", no: "Mulai baru" })
+    .then(ok => ok ? resumeGame(g) : clearGame());
+}
+
+/* ===================== SINGLE MODE ===================== */
+const S = {};
+function startSingle(){
+  stopAll();
+  lastMode = "single";
+  const name = $("#nSolo").value.trim() || "Penjelajah";
+  store.set("provinsi_solo", $("#nSolo").value.trim());
+  Object.assign(S, { name, qs: buildQuiz(), i: 0, score: 0, streak: 0, maxStreak: 0, correct: 0, hints: 3, hintUsed: false, log: [], lock: true });
+  $("#sName").textContent = name;
+  $("#sTot").textContent = S.qs.length;
+  show("single");
+  nextSingle();
+}
+function updHud(){
+  $("#sNum").textContent = Math.min(S.i + 1, S.qs.length);
+  $("#sScore").textContent = S.score;
+  $("#sStreak").textContent = S.streak;
+  $("#sHintN").textContent = S.hints;
+  $("#sHint").disabled = S.lock || S.hints <= 0 || S.hintUsed;
+}
+function nextSingle(){
+  if(S.i >= S.qs.length) return endSingle();
+  saveGame("single");
+  const q = S.qs[S.i];
+  S.lock = false;
+  S.hintUsed = false;
+  updHud();
+  stageAsk(q.prov);
+  renderOpts($("#sOpts"), q.options, ["1","2","3","4"]);
+  setFb($("#sFb"), "");
+  startTimer(settings.time, $("#sTimer"), () => answerSingle(null, null));
+}
+// 50:50 — hapus 2 jawaban salah; poin soal ini jadi setengah
+function useHint(){
+  if(S.lock || S.hints <= 0 || S.hintUsed) return;
+  const q = S.qs[S.i];
+  S.hints--; S.hintUsed = true;
+  shuffle([...$$("#sOpts .opt")].filter(b => b.dataset.val !== q.prov)).slice(0, 2).forEach(b => b.classList.add("gone"));
+  sfx("hint");
+  updHud();
+}
+function answerSingle(val, btn){
+  if(S.lock || (btn && btn.classList.contains("gone"))) return;
+  S.lock = true;
+  const frac = timeLeft();
+  stopTimer();
+  const q = S.qs[S.i];
+  const ok = val === q.prov;
+  if(btn && !ok) btn.classList.add("wrong");
+  revealOpts($("#sOpts"), q.prov);
+  stageReveal(q.prov, ok);
+
+  if(ok){
+    S.correct++; S.streak++; S.maxStreak = Math.max(S.maxStreak, S.streak);
+    // skor = (100 dasar + bonus kecepatan maks 50 + bonus beruntun maks 50) × ½ jika memakai 50:50
+    const pts = Math.round((100 + Math.round(50 * frac) + Math.min(S.streak - 1, 5) * 10) * (S.hintUsed ? .5 : 1));
+    S.score += pts;
+    setFb($("#sFb"), `✅ Benar! +${pts}`, "ok");
+    sfx("ok");
+  }else{
+    S.streak = 0;
+    setFb($("#sFb"), val === null ? "⏰ Waktu habis!" : "❌ Kurang tepat!", "bad");
+    sfx("bad");
+  }
+  S.log.push({ prov: q.prov, val, ok });
+  S.i++;
+  updHud();
+  later(nextSingle, ok ? 1900 : 2800);
+}
+function endSingle(){
+  clearGame();
+  const n = S.qs.length, pct = Math.round(S.correct / n * 100);
+  const best = store.get("provinsi_best", null), isBest = !best || S.score > best.score;
+  if(isBest && S.score > 0) store.set("provinsi_best", { score: S.score, name: S.name });
+  $("#rIcon").textContent = pct >= 90 ? "🏆" : pct >= 70 ? "🗺️" : pct >= 50 ? "⛵" : "🧭";
+  $("#rTitle").textContent = (isBest && S.score > 0) ? `Rekor Baru, ${S.name}!` : pct >= 70 ? `Penjelajah Hebat, ${S.name}!` : `Ayo Jelajahi Lagi, ${S.name}!`;
+  const wrong = S.log.filter(l => !l.ok);
+  $("#rBody").innerHTML = `
+    <div class="stats">
+      <div class="stat"><b>${S.score}</b><span>Skor</span></div>
+      <div class="stat"><b>${S.correct}/${n}</b><span>Benar</span></div>
+      <div class="stat"><b>${pct}%</b><span>Akurasi</span></div>
+      <div class="stat"><b>🔥${S.maxStreak}</b><span>Beruntun</span></div>
+    </div>
+    ${wrong.length ? `<h3 style="margin:20px 0 10px">Bentuk yang perlu diingat lagi</h3><div class="review">${
+      wrong.map(l => `<div class="rv">${thumb(l.prov)}<b>${l.prov}</b><span>${l.val === null ? "waktu habis" : "jawabanmu: " + l.val}</span></div>`).join("")
+    }</div>` : ""}`;
+  show("result");
+  sfx(pct >= 70 ? "win" : "tick");
+}
+
+/* ===================== VS MODE ===================== */
+const PL = [
+  { el: $("#p1"), keys: ["1","2","3","4"] },
+  { el: $("#p2"), keys: ["7","8","9","0"] },
+];
+const V = { lock: true };
+
+function startVs(){
+  stopAll();
+  lastMode = "vs";
+  const names = [$("#n1").value.trim() || "Tim A", $("#n2").value.trim() || "Tim B"];
+  store.set("provinsi_names", names);
+  Object.assign(V, { qs: buildQuiz(), i: 0, score: [0, 0], state: [null, null], names, lock: true });
+  PL.forEach((p, k) => {
+    p.el.querySelector(".pl-name").textContent = names[k];
+    p.el.querySelector(".opts").innerHTML = "";
+    p.el.classList.remove("win", "out");
+    setFb(p.el.querySelector(".fb"), "");
+  });
+  updVsScore();
+  $("#vRound").textContent = `0/${V.qs.length}`;
+  show("vs");
+  stageIdle();
+  countdown(nextVs);
+}
+function countdown(done){
+  const ov = $("#overlay");
+  let n = 3;
+  ov.classList.add("show");
+  const step = () => {
+    // span baru tiap angka → animasi pop hanya pada angka, bukan latar overlay
+    if(n === 0){
+      ov.innerHTML = '<span class="pop">Berlayar!</span>'; sfx("go");
+      later(() => { ov.classList.remove("show"); done(); }, 650);
+      return;
+    }
+    ov.innerHTML = `<span class="pop">${n--}</span>`; sfx("tick");
+    later(step, 700);
+  };
+  step();
+}
+function updVsScore(){ PL.forEach((p, k) => p.el.querySelector(".pl-score").textContent = V.score[k]); }
+
+function nextVs(){
+  if(V.i >= V.qs.length) return endVs();
+  saveGame("vs");
+  const q = V.qs[V.i];
+  V.state = [null, null];
+  V.lock = false;
+  $("#vRound").textContent = `${V.i + 1}/${V.qs.length}`;
+  stageAsk(q.prov);
+  PL.forEach((p, k) => {
+    p.el.classList.remove("win", "out");
+    // urutan pilihan tiap tim diacak berbeda supaya tidak bisa menyontek posisi tombol lawan
+    renderOpts(p.el.querySelector(".opts"), k === 0 ? q.options : shuffle(q.options), p.keys);
+    setFb(p.el.querySelector(".fb"), "");
+  });
+  startTimer(settings.time, $("#vTimer"), () => revealVs(null, "⏰ Waktu habis!"));
+}
+function answerVs(k, btn){
+  if(V.lock || V.state[k]) return;            // ronde terkunci / tim sudah menjawab
+  const q = V.qs[V.i], me = PL[k].el, foe = PL[1 - k].el;
+  if(btn.dataset.val === q.prov){
+    // tim pertama yang benar memenangkan ronde
+    V.state[k] = "right";
+    V.score[k]++;
+    me.classList.add("win");
+    setFb(me.querySelector(".fb"), "✅ Benar! +1", "ok");
+    setFb(foe.querySelector(".fb"), `${V.names[k]} lebih cepat!`, "bad");
+    sfx("ok");
+    updVsScore();
+    revealVs(k);
+  }else{
+    // salah → tim ini dikunci untuk ronde ini, lawan masih boleh menjawab
+    V.state[k] = "wrong";
+    btn.classList.add("wrong");
+    me.classList.add("out");
+    setFb(me.querySelector(".fb"), "❌ Salah! Tunggu lawan…", "bad");
+    sfx("bad");
+    if(V.state[1 - k] === "wrong") revealVs(null, "Dua-duanya salah!");
+  }
+}
+function revealVs(winner, msg){
+  if(V.lock) return;
+  V.lock = true;
+  stopTimer();
+  const q = V.qs[V.i];
+  stageReveal(q.prov, winner !== null);
+  PL.forEach(p => {
+    revealOpts(p.el.querySelector(".opts"), q.prov);
+    if(winner === null) setFb(p.el.querySelector(".fb"), msg, "bad");
+  });
+  V.i++;
+  later(nextVs, 2600);
+}
+function endVs(){
+  clearGame();
+  const [a, b] = V.score;
+  const w = a === b ? -1 : a > b ? 0 : 1;
+  $("#rIcon").textContent = w < 0 ? "🤝" : "🏆";
+  $("#rTitle").textContent = w < 0 ? "Seri! Sama Hebat" : `${V.names[w]} Menang!`;
+  $("#rBody").innerHTML = `<div class="stats">${[0, 1].map(k => `
+    <div class="stat p${k + 1} ${w === k ? "lead" : ""}"><b>${V.score[k]}</b><span>${esc(V.names[k])}</span></div>`).join("")}
+  </div><p style="color:var(--muted);margin-top:10px">${V.qs.length - a - b} provinsi belum berhasil ditebak</p>`;
+  show("result");
+  sfx("win");
+}
+
+/* ===================== INPUT ===================== */
+// Tombol toolbar (fullscreen, suara, menu) — dipakai di semua layar
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]");
+  if(!b) return;
+  const act = b.dataset.act;
+  if(act === "fs") toggleFs();
+  if(act === "sound"){ settings.sound = !settings.sound; store.set("provinsi_sound", settings.sound); updSound(); }
+  if(act === "home"){
+    ask({ title: "Kembali ke pelabuhan?", text: "Ekspedisi yang sedang berjalan akan dihentikan dan skornya tidak disimpan.",
+          yes: "Ya, keluar", no: "Lanjut main", danger: true })
+      .then(ok => { if(ok) goHome(); });
+  }
+});
+
+// Single: click biasa
+$("#sOpts").addEventListener("click", e => {
+  const b = e.target.closest(".opt");
+  if(b) answerSingle(b.dataset.val, b);
+});
+$("#sHint").addEventListener("click", useHint);
+
+// VS: pointerdown → responsif & mendukung multi-touch (2 siswa menekan bersamaan di flat panel)
+PL.forEach((p, k) => {
+  p.el.querySelector(".opts").addEventListener("pointerdown", e => {
+    const b = e.target.closest(".opt");
+    if(!b) return;
+    e.preventDefault();
+    answerVs(k, b);
+  });
+});
+
+// Keyboard (laptop): Single 1–4 / A–D, H = 50:50; VS Tim A = 1–4, Tim B = 7 8 9 0; F = fullscreen
+document.addEventListener("keydown", e => {
+  if(modalDone){
+    if(e.key === "Escape") modalDone(false);
+    if(e.key === "Enter"){ e.preventDefault(); modalDone(true); }
+    return;
+  }
+  if(e.target.matches("input")){
+    if(e.key === "Enter"){ e.target.blur(); startGame(); }
+    return;
+  }
+  if(e.repeat) return;
+  const k = e.key.toLowerCase();
+  if(k === "f"){ toggleFs(); return; }
+  const cur = $(".screen.active").id;
+  if(cur === "single"){
+    if(k === "h"){ useHint(); return; }
+    let i = ["1","2","3","4"].indexOf(k);
+    if(i < 0) i = ["a","b","c","d"].indexOf(k);
+    const b = $("#sOpts").children[i];
+    if(b) answerSingle(b.dataset.val, b);
+  }else if(cur === "vs"){
+    PL.forEach((p, pi) => {
+      const i = p.keys.indexOf(k);
+      const b = i >= 0 && p.el.querySelector(".opts").children[i];
+      if(b) answerVs(pi, b);
+    });
+  }
+});
+
+// Pengaturan di menu (nilai angka atau teks)
+$$(".seg").forEach(seg => {
+  const key = seg.dataset.key;
+  seg.querySelectorAll("button").forEach(b => {
+    b.classList.toggle("on", b.dataset.v === String(settings[key]));
+    b.addEventListener("click", () => {
+      settings[key] = isNaN(b.dataset.v) ? b.dataset.v : +b.dataset.v;
+      store.set("provinsi_" + key, settings[key]);
+      seg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      if(key === "level") $("#levelNote").textContent = LEVEL_NOTE[settings.level];
+    });
+  });
+});
+
+$$(".tile").forEach(t => t.addEventListener("click", () => setMode(t.dataset.mode)));
+$("#btnStart").addEventListener("click", startGame);
+$("#rAgain").addEventListener("click", () => lastMode === "vs" ? startVs() : startSingle());
+$("#rHome").addEventListener("click", () => goHome());
+
+/* ===================== INIT ===================== */
+buildMap();
+$(".brand-ic").innerHTML = compass();
+$(".hero-compass").innerHTML = compass();
+$("#levelNote").textContent = LEVEL_NOTE[settings.level] || "";
+
+// kartu misteri di menu: bentuk provinsi acak berganti-ganti
+function cycleHeroShape(){
+  const prov = DATA[Math.floor(Math.random() * DATA.length)].p;
+  const [x, y, w, h] = MAP.p[prov].b, s = Math.max(w, h) * 1.1;
+  const svg = $("#heroShape");
+  svg.setAttribute("viewBox", `${x + w / 2 - s / 2} ${y + h / 2 - s / 2} ${s} ${s}`);
+  svg.querySelector("path").setAttribute("d", MAP.p[prov].d);
+  replay($(".mystery"), "pop");
+}
+cycleHeroShape();
+setInterval(() => { if($("#home").classList.contains("active")) cycleHeroShape(); }, 2600);
+
+const savedNames = store.get("provinsi_names", null);
+if(savedNames){ $("#n1").value = savedNames[0] || "Tim A"; $("#n2").value = savedNames[1] || "Tim B"; }
+$("#nSolo").value = store.get("provinsi_solo", "");
+setMode(settings.mode === "vs" ? "vs" : "single");
+updFs();
+updSound();
+goHome(true);
+offerResume();
+
+// PWA: service worker hanya jalan lewat http(s) / localhost, tidak lewat file://
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>

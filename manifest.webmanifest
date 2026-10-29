@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "Jelajah Nusantara — Kuis Interaktif Indonesia",
+  "short_name": "Jelajah Nusantara",
+  "description": "Kumpulan kuis interaktif tentang ibukota, bentuk provinsi, dan budaya 38 provinsi Indonesia. Mode Single & VS untuk flat panel, laptop, dan HP.",
+  "lang": "id",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fdf6ec",
+  "theme_color": "#1f2340",
+  "icons": [
+    { "src": "ikon/nusantara.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "ikon/nusantara.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Kuis Ibukota Provinsi", "url": "./ibukota.html", "icons": [{ "src": "ikon/ibukota.svg", "sizes": "any" }] },
+    { "name": "Tebak Provinsi", "url": "./provinsi.html", "icons": [{ "src": "ikon/provinsi.svg", "sizes": "any" }] },
+    { "name": "Kuis Budaya Nusantara", "url": "./budaya.html", "icons": [{ "src": "ikon/budaya.svg", "sizes": "any" }] }
+  ]
+}

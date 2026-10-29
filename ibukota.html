@@ -1,0 +1,1111 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3bb8f5">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="ikon/ibukota.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="ikon/ibukota.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<title>Kuis Ibukota Provinsi</title>
+<style>
+  :root{
+    --ink:#1e1b4b; --muted:#56607a; --line:#dfe7f3; --line-d:#c3d2e8;
+    --sky1:#3bb8f5; --sky2:#c4ecff;
+    --yellow:#ffc928; --yellow-d:#e09f00; --yellow-l:#fff8e1;
+    --blue:#0ea5e9; --blue-d:#0369a1; --blue-l:#eaf7ff;
+    --purple:#6d4aff; --purple-d:#4b2fd1; --pink:#ec4899;
+    --green:#16a34a; --green-d:#166534; --red:#dc2626; --red-d:#991b1b;
+    --p1:#ff8a1f; --p1-d:#c25e00; --p2:#8b5cf6; --p2-d:#5b33c9;
+    --r:clamp(14px,2vmin,24px);
+    --lift:clamp(4px,.6vmin,6px);
+    --head:"Fredoka","Nunito","Segoe UI Rounded",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{
+    background:linear-gradient(180deg,var(--sky1),var(--sky2) 75%);
+    color:var(--ink);font-family:"Nunito","Segoe UI",system-ui,sans-serif;font-weight:700;
+    overflow:hidden;overscroll-behavior:none;
+    user-select:none;-webkit-user-select:none;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  }
+  button,input{font:inherit;color:inherit}
+  button{border:0;cursor:pointer;touch-action:manipulation;background:none}
+
+  /* ---------- latar animasi: matahari, awan, bukit ---------- */
+  .scene{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .sun{position:absolute;top:7vh;right:10vw;width:clamp(60px,10vmin,120px);aspect-ratio:1;border-radius:50%;
+    background:#ffe066;box-shadow:0 0 0 14px rgba(255,224,102,.35),0 0 0 32px rgba(255,224,102,.15);animation:glow 4s ease-in-out infinite}
+  .cloud{position:absolute;left:0;fill:#fff;animation:drift linear infinite}
+  .c1{top:5vh;width:clamp(120px,18vw,260px);animation-duration:70s;animation-delay:-25s;opacity:.95}
+  .c2{top:24vh;width:clamp(90px,12vw,180px);animation-duration:95s;animation-delay:-70s;opacity:.7}
+  .c3{top:13vh;width:clamp(150px,22vw,320px);animation-duration:120s;animation-delay:-100s;opacity:.85}
+  .grass{position:absolute;left:0;bottom:0;width:100%;height:24vh}
+  @keyframes drift{from{transform:translateX(-35vw)}to{transform:translateX(110vw)}}
+  @keyframes glow{50%{box-shadow:0 0 0 20px rgba(255,224,102,.3),0 0 0 44px rgba(255,224,102,.1)}}
+
+  .screen{
+    position:fixed;inset:0;z-index:1;display:none;flex-direction:column;
+    padding:max(14px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right))
+            max(14px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+  }
+  .screen.active{display:flex}
+
+  /* ---------- tombol 3D datar (warna isi --f, warna tepi/bayangan --d) ---------- */
+  .tb,.tile,.seg button,.start,.opt,.btn{
+    background:var(--f,#fff);border:3px solid var(--d,var(--line-d));border-radius:var(--r);
+    box-shadow:0 var(--lift) 0 var(--d,var(--line-d));
+    transition:transform .08s,box-shadow .08s,background .15s,opacity .2s;
+  }
+  .tb:active,.tile:active,.seg button:active,.start:active,.opt:active,.btn:active{
+    transform:translateY(var(--lift));box-shadow:0 0 0 var(--d,var(--line-d));
+  }
+
+  /* ---------- toolbar ---------- */
+  .tools{display:flex;gap:10px}
+  .tb{--f:#fff;--d:#f5a300;color:#b35c00;border-radius:16px;
+    width:clamp(46px,6.4vmin,62px);height:clamp(46px,6.4vmin,62px);display:grid;place-items:center;font-size:clamp(18px,2.8vmin,28px)}
+  .tb[data-act="fs"]{--f:var(--yellow);--d:var(--yellow-d);color:#5a3500}
+  .tb svg{width:56%;height:56%;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .tb.home-link{width:auto;padding:0 16px 0 10px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;font-weight:900;font-size:clamp(14px,2vmin,18px)}
+  .tb.home-link svg{width:22px;height:22px}
+  @media (max-width:420px){.tb.home-link span{display:none}.tb.home-link{padding:0;width:clamp(46px,6.4vmin,62px);justify-content:center}}
+
+  /* ---------- maskot SVG ---------- */
+  .masc{width:clamp(64px,10vmin,104px);overflow:visible}
+  .m-body{animation:bob 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center bottom}
+  .m-shadow{fill:rgba(0,0,0,.18);animation:shadow 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  .m-eyes{animation:blink 4s infinite;transform-box:fill-box;transform-origin:center}
+  .m-cloth{animation:wave .9s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:left center}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-12px) rotate(3deg)}}
+  @keyframes shadow{0%,100%{transform:scale(1)}50%{transform:scale(.7);opacity:.6}}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+  @keyframes wave{from{transform:skewY(-10deg)}to{transform:skewY(10deg)}}
+
+  /* ---------- menu utama ---------- */
+  #home{overflow-y:auto}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;width:100%;max-width:1180px;margin:0 auto;flex:none}
+  .brand{display:flex;align-items:center;gap:12px;background:#fffdf3;border:3px solid var(--yellow);border-radius:18px;
+    padding:6px 16px 6px 6px;box-shadow:0 5px 0 var(--yellow-d);min-width:0}
+  .brand-ic{flex:none;width:52px;height:52px;border-radius:14px;background:var(--yellow);display:grid;place-items:center}
+  .brand-ic .masc{width:36px}
+  .brand b{display:block;font-family:var(--head);font-weight:700;font-size:clamp(16px,2.4vmin,24px);color:#7a3e00;line-height:1.1}
+  .brand small{display:block;color:#b45309;font-weight:800;font-size:12px}
+  .main{
+    flex:none;width:100%;max-width:1180px;margin:18px auto 8px;
+    background:rgba(255,255,255,.94);border:4px solid var(--yellow);border-radius:28px;
+    box-shadow:0 8px 0 var(--yellow-d),0 24px 48px rgba(0,60,120,.18);
+    padding:clamp(14px,2.6vmin,28px);display:flex;flex-direction:column;gap:clamp(14px,2.4vmin,24px);
+  }
+  .hero{
+    display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    background:linear-gradient(115deg,#0ea5e9,#6d4aff 60%,#9333ea);color:#fff;
+    border-radius:22px;padding:clamp(16px,3vmin,32px);box-shadow:0 6px 0 var(--purple-d);
+  }
+  .hero-text{flex:1 1 320px}
+  .chip{display:inline-block;background:var(--yellow);color:#4a2a00;font-weight:800;font-size:12px;letter-spacing:.5px;padding:4px 12px;border-radius:99px}
+  .hero h1{font-family:var(--head);font-weight:700;font-size:clamp(28px,5.4vmin,54px);line-height:1.05;margin:.25em 0 .2em;text-shadow:0 3px 0 rgba(0,0,0,.2)}
+  .hero p{max-width:580px;font-size:clamp(14px,2vmin,18px);font-weight:600}
+  .crew{display:flex;gap:clamp(8px,1.6vmin,18px);background:rgba(255,255,255,.16);border:2px solid rgba(255,255,255,.4);border-radius:20px;padding:12px 18px;margin:0 auto}
+  .crew figure{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .crew figure:nth-child(2) .m-body,.crew figure:nth-child(2) .m-shadow{animation-delay:-.6s}
+  .crew figure:nth-child(3) .m-body,.crew figure:nth-child(3) .m-shadow{animation-delay:-1.2s}
+  .crew figcaption{background:#fff;color:var(--ink);font-weight:800;font-size:12px;padding:1px 10px;border-radius:99px}
+
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:clamp(14px,2.4vmin,24px)}
+  .sec{border-radius:22px;border:3px solid;padding:clamp(14px,2.4vmin,24px);display:flex;flex-direction:column;gap:10px}
+  .sec.y{background:var(--yellow-l);border-color:#ffe08a}
+  .sec.b{background:var(--blue-l);border-color:#b9e3fb}
+  .sec h2{font-family:var(--head);font-weight:600;font-size:clamp(19px,2.6vmin,25px);display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .sec.y h2{color:#7a3e00} .sec.b h2{color:#0c4a6e}
+  .num{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:16px;background:var(--yellow);color:#4a2a00}
+  .sec.b .num{background:var(--blue);color:#fff}
+  .lbl{font-size:13px;font-weight:800;letter-spacing:.6px;color:var(--muted);text-transform:uppercase;margin-top:4px}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:var(--lift)}
+  .tile{padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;
+    font-family:var(--head);font-size:clamp(20px,3vmin,28px);font-weight:600;color:var(--ink)}
+  .tile .ic{font-size:1.3em;line-height:1.2}
+  .tile small{font-family:"Nunito",sans-serif;font-size:12px;font-weight:800;color:var(--muted)}
+  .tile.on{--f:var(--yellow);--d:var(--yellow-d);color:#4a2a00}
+  .tile.on small{color:#6b4400}
+  .field{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .field label{font-weight:800;font-size:14px}
+  .field input{
+    width:100%;min-height:52px;padding:10px 14px;border:3px solid var(--fc,var(--yellow));border-radius:14px;background:#fff;
+    font-weight:800;font-size:clamp(16px,2.2vmin,20px);color:var(--ink);outline:none;user-select:text;-webkit-user-select:text;
+  }
+  .field input:focus{box-shadow:0 0 0 4px rgba(14,165,233,.25)}
+  .field input::placeholder{color:#8a93a8;font-weight:700}
+  .names{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .team-a{--fc:var(--p1)} .team-a label{color:var(--p1-d)}
+  .team-b{--fc:var(--p2)} .team-b label{color:var(--p2-d)}
+  .seg{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:var(--lift)}
+  .seg button{flex:1;min-width:56px;min-height:48px;padding:6px 10px;border-radius:14px;font-weight:800;font-size:clamp(15px,2vmin,18px)}
+  .seg button.on{--f:var(--blue);--d:var(--blue-d);color:#fff}
+  .start{
+    --f:var(--green);--d:var(--green-d);color:#fff;
+    font-family:var(--head);font-weight:700;font-size:clamp(26px,4.4vmin,44px);letter-spacing:1px;
+    padding:clamp(10px,1.8vmin,18px);display:flex;align-items:center;justify-content:center;gap:14px;
+    text-shadow:0 2px 0 rgba(0,0,0,.25);border-radius:20px;
+  }
+  .start .play{display:grid;place-items:center;width:1.3em;height:1.3em;border-radius:50%;background:#fff;color:var(--green);font-size:.7em;text-shadow:none;animation:nudge 1.2s ease-in-out infinite}
+  @keyframes nudge{50%{transform:translateX(5px) scale(1.08)}}
+  .best{text-align:center;color:#9a5b00;min-height:1.2em}
+
+  /* ---------- bagian permainan ---------- */
+  .timer{--t:1;background:#fff;border:3px solid var(--line-d);border-radius:99px;overflow:hidden;position:relative}
+  .timer .bar{position:absolute;inset:0;background:linear-gradient(90deg,var(--yellow),#ff9d00);transform-origin:left;transform:scaleX(var(--t))}
+  .timer.low .bar{background:var(--red)}
+  .timer.off{opacity:.4}
+  .opts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:1fr;gap:clamp(10px,2vmin,20px);flex:1;min-height:0;padding-bottom:var(--lift)}
+  .opt{
+    position:relative;font-family:var(--head);font-weight:600;color:var(--ink);
+    padding:.4em .6em;display:flex;align-items:center;justify-content:center;gap:.5em;
+    min-height:56px;min-width:0;overflow-wrap:break-word;flex-wrap:wrap;text-align:center;line-height:1.15;
+  }
+  .opt .lt{flex:none;width:1.75em;height:1.75em;border-radius:50%;display:grid;place-items:center;font-size:.72em;background:var(--yellow);color:#4a2a00}
+  .opt:nth-child(2) .lt{background:var(--blue);color:#fff}
+  .opt:nth-child(3) .lt{background:var(--pink);color:#fff}
+  .opt:nth-child(4) .lt{background:var(--green);color:#fff}
+  .opt kbd{position:absolute;top:6px;right:10px;font-size:12px;opacity:.5;font-family:inherit}
+  .opt.correct{--f:var(--green);--d:var(--green-d);color:#fff;animation:pulse .5s}
+  .opt.wrong{--f:var(--red);--d:var(--red-d);color:#fff;animation:shake .4s}
+  .opt.correct .lt,.opt.wrong .lt{background:#fff;color:var(--ink)}
+  .opt.dim{opacity:.4}
+  @media (hover:none){.opt kbd{display:none}}
+  .fb{min-height:1.5em;text-align:center;font-weight:800}
+  .fb.ok,.fb.bad{align-self:center;padding:.1em .9em;border-radius:99px;color:#fff}
+  .fb.ok{background:var(--green)} .fb.bad{background:var(--red)}
+  @keyframes pulse{50%{transform:scale(1.05)}}
+  @keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+  @keyframes pop{0%{transform:scale(.7)}70%{transform:scale(1.08)}100%{transform:none}}
+  .pop{animation:pop .35s ease-out}
+
+  /* ---------- peta ---------- */
+  .map-box{background:#bfe9ff;border:3px solid #8fd0f2;border-radius:14px;padding:4px;min-height:0;overflow:hidden}
+  .map{display:block;width:100%;height:100%}
+  .map path{fill:#e3f6d8;stroke:#7cc46d;stroke-width:.8;stroke-linejoin:round;transition:fill .3s}
+  .map path.hl{fill:#ff8a1f;stroke:var(--ink);stroke-width:1.6}
+  .map .dot{fill:var(--red);stroke:#fff;stroke-width:4}
+  .map .ping{fill:none;stroke:var(--red);stroke-width:5;transform-box:fill-box;transform-origin:center;animation:ping 1.4s ease-out infinite}
+  @keyframes ping{from{transform:scale(.3);opacity:1}to{transform:scale(1.8);opacity:0}}
+  .credit{text-align:center;font-size:12px;font-weight:600;color:var(--muted)}
+  .credit a{color:var(--blue-d)}
+  .credit.dev{font-size:14px;color:var(--ink);margin-bottom:-8px}
+  .credit.dev b{color:var(--purple-d)}
+
+  /* ---------- modal konfirmasi ---------- */
+  .modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;
+    background:rgba(30,27,75,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:fade .2s}
+  .modal-card{width:min(440px,100%);background:#fff;border:4px solid var(--yellow);border-radius:28px;
+    box-shadow:0 8px 0 var(--yellow-d),0 24px 60px rgba(0,0,0,.25);padding:clamp(18px,3vmin,28px);text-align:center;
+    display:flex;flex-direction:column;gap:10px;animation:pop .3s ease-out}
+  .modal-masc .masc{width:clamp(70px,12vmin,100px)}
+  .modal-card h3{font-family:var(--head);font-weight:700;font-size:clamp(22px,3.6vmin,32px);color:var(--purple-d)}
+  .modal-card p{color:var(--muted);font-size:clamp(15px,2.2vmin,19px)}
+  .modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;padding-bottom:var(--lift)}
+  .modal-btns .btn{padding:10px 12px}
+  .btn.danger{--f:var(--red);--d:var(--red-d);color:#fff}
+  @keyframes fade{from{opacity:0}}
+
+  /* ---------- single ---------- */
+  .game{flex:1;display:flex;flex-direction:column;gap:clamp(10px,2vmin,20px);width:100%;max-width:1200px;margin:0 auto;min-height:0}
+  .hud{display:flex;align-items:center;gap:clamp(8px,1.6vmin,16px);font-size:clamp(15px,2.4vmin,24px);flex-wrap:wrap}
+  .hud>div:not(.tools){background:#fff;border:3px solid var(--line-d);border-radius:99px;padding:.15em .8em;font-weight:800}
+  .hud .who{max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-color:var(--yellow)!important}
+  .hud .tools{margin-left:auto}
+  #single .timer{height:clamp(18px,2.4vmin,26px)}
+  .qcard{background:#fff;border:4px solid var(--yellow);border-radius:var(--r);box-shadow:0 6px 0 var(--yellow-d);padding:clamp(14px,3.6vmin,36px);text-align:center}
+  .qlabel{color:var(--muted);font-size:clamp(15px,2.6vmin,26px)}
+  .qtext{font-family:var(--head);font-weight:700;font-size:clamp(28px,7.5vmin,80px);line-height:1.1;margin:.12em 0;color:var(--purple-d)}
+  #single .qcard{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);align-items:center;gap:clamp(10px,2vmin,24px);padding:clamp(10px,2.4vmin,24px)}
+  #single .map-box{height:clamp(110px,28vh,300px)}
+  @media (orientation:portrait){
+    #single .qcard{grid-template-columns:minmax(0,1fr)}
+    #single .map-box{height:clamp(90px,20vh,240px)}
+  }
+  .nomap #single .qcard{grid-template-columns:minmax(0,1fr)}
+  .nomap .map-box{display:none}
+  #single .opts{max-height:60vh}
+  #single .opt{font-size:clamp(18px,4vmin,42px)}
+  #single .fb{font-size:clamp(16px,3vmin,30px)}
+
+  /* ---------- VS ---------- */
+  .arena{flex:1;display:grid;min-height:0;gap:clamp(8px,1.6vmin,18px);
+    grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-areas:"p1 mid p2"}
+  .pl{
+    --pc:var(--p1);--pcd:var(--p1-d);min-width:0;min-height:0;display:flex;flex-direction:column;gap:clamp(6px,1.2vmin,14px);
+    background:#fff;border:4px solid var(--pc);border-radius:var(--r);box-shadow:0 6px 0 var(--pcd);
+    padding:clamp(8px,1.6vmin,18px);transition:background .2s;
+  }
+  #p1{grid-area:p1} #p2{grid-area:p2;--pc:var(--p2);--pcd:var(--p2-d)}
+  .pl.win{background:#e6f9ed}
+  .pl.out .opts{opacity:.55}
+  .pl-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--head);font-weight:700;font-size:clamp(17px,2.8vmin,30px)}
+  .pl-name{color:var(--pcd);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pl-score{background:var(--pc);color:#fff;border-radius:99px;padding:0 .6em;min-width:2.2em;text-align:center;box-shadow:0 3px 0 var(--pcd)}
+  .pl-q{text-align:center}
+  .pl-q small{display:block;color:var(--muted);font-size:clamp(12px,2vmin,20px)}
+  .pl-qtext{font-family:var(--head);font-weight:700;font-size:clamp(20px,4.8vmin,54px);line-height:1.1;color:var(--purple-d)}
+  .pl .map-box{flex:none;height:clamp(56px,14vh,170px)}
+  .pl .opt{font-size:clamp(14px,3.1vmin,34px);min-height:48px}
+  .pl .fb{font-size:clamp(13px,2.4vmin,24px)}
+  .mid{grid-area:mid;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .round{font-family:var(--head);font-weight:700;font-size:clamp(14px,2.4vmin,24px);text-align:center;background:var(--yellow);color:#4a2a00;border-radius:12px;padding:.1em .5em;box-shadow:0 4px 0 var(--yellow-d)}
+  .mid .timer{width:clamp(18px,2.4vmin,26px);flex:1}
+  .mid .timer .bar{transform-origin:bottom;transform:scaleY(var(--t));background:linear-gradient(0deg,var(--yellow),#ff9d00)}
+  .mid .timer.low .bar{background:var(--red)}
+  .mid .tools{flex-direction:column}
+  @media (orientation:portrait){
+    .arena{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto minmax(0,1fr);grid-template-areas:"p2" "mid" "p1"}
+    #p2{transform:rotate(180deg)}  /* berhadapan: HP/tablet diletakkan di meja */
+    .mid{flex-direction:row}
+    .mid .timer{width:auto;height:clamp(18px,2.4vmin,26px);flex:1}
+    .mid .timer .bar{transform-origin:left;transform:scaleX(var(--t));background:linear-gradient(90deg,var(--yellow),#ff9d00)}
+    .mid .tools{flex-direction:row}
+  }
+
+  /* ---------- hasil ---------- */
+  #result{overflow-y:auto}
+  .res-wrap{
+    margin:auto;width:100%;max-width:720px;text-align:center;display:flex;flex-direction:column;gap:16px;
+    background:rgba(255,255,255,.95);border:4px solid var(--yellow);border-radius:28px;box-shadow:0 8px 0 var(--yellow-d);
+    padding:clamp(18px,3vmin,32px);
+  }
+  .res-masc .masc{width:clamp(100px,18vmin,160px)}
+  .res-wrap h2{font-family:var(--head);font-weight:700;font-size:clamp(28px,5.6vmin,54px);color:var(--purple-d);line-height:1.1}
+  .res-wrap h3{font-family:var(--head);font-weight:600}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px}
+  .stat{--sc:var(--yellow);--sd:var(--yellow-d);background:#fff;border:3px solid var(--sc);border-radius:var(--r);box-shadow:0 5px 0 var(--sd);padding:14px}
+  .stat:nth-child(4n+2){--sc:var(--blue);--sd:var(--blue-d)}
+  .stat:nth-child(4n+3){--sc:var(--pink);--sd:#be185d}
+  .stat:nth-child(4n+4){--sc:var(--green);--sd:var(--green-d)}
+  .stat.p1{--sc:var(--p1);--sd:var(--p1-d)} .stat.p2{--sc:var(--p2);--sd:var(--p2-d)}
+  .stat b{display:block;font-family:var(--head);font-weight:700;font-size:clamp(26px,4.8vmin,46px)}
+  .stat span{color:var(--muted)}
+  .stat.lead{background:var(--yellow-l);transform:scale(1.05)}
+  .review{list-style:none;text-align:left;background:var(--yellow-l);border:3px solid #ffe08a;border-radius:var(--r);padding:8px 16px}
+  .review li{padding:8px 0;border-bottom:2px dashed #ffe08a}
+  .review li:last-child{border:0}
+  .review span{color:var(--muted);font-size:.9em}
+  .res-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding-bottom:var(--lift)}
+  .btn{padding:12px 28px;font-family:var(--head);font-weight:600;font-size:clamp(18px,2.8vmin,26px);min-height:56px}
+  .btn.primary{--f:var(--green);--d:var(--green-d);color:#fff}
+
+  /* ---------- overlay & toast ---------- */
+  #overlay{
+    position:fixed;inset:0;z-index:20;display:none;place-items:center;background:rgba(59,184,245,.55);
+    font-family:var(--head);font-weight:700;font-size:clamp(90px,24vmin,240px);color:#fff;
+    -webkit-text-stroke:clamp(4px,.8vmin,8px) var(--purple-d);paint-order:stroke fill;text-shadow:0 10px 0 var(--purple-d);
+  }
+  #overlay.show{display:grid}
+  #overlay span{display:inline-block}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:14px;z-index:30;max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s}
+  #toast.show{opacity:1}
+
+  @media (max-width:520px){
+    .names{grid-template-columns:1fr}
+    .brand small{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= LATAR ================= -->
+<div class="scene" aria-hidden="true">
+  <div class="sun"></div>
+  <svg class="cloud c1" viewBox="0 0 200 90"><path d="M45 82H160a28 28 0 0 0-2-56A42 42 0 0 0 80 18 30 30 0 0 0 30 50a16 16 0 0 0 15 32z"/></svg>
+  <svg class="cloud c2" viewBox="0 0 200 90"><path d="M45 82H160a28 28 0 0 0-2-56A42 42 0 0 0 80 18 30 30 0 0 0 30 50a16 16 0 0 0 15 32z"/></svg>
+  <svg class="cloud c3" viewBox="0 0 200 90"><path d="M45 82H160a28 28 0 0 0-2-56A42 42 0 0 0 80 18 30 30 0 0 0 30 50a16 16 0 0 0 15 32z"/></svg>
+  <svg class="grass" viewBox="0 0 1440 200" preserveAspectRatio="none">
+    <path d="M0 90Q360 10 720 80T1440 50V200H0z" fill="#8ee07f"/>
+    <path d="M0 135Q300 80 640 122T1440 108V200H0z" fill="#5cc75a"/>
+  </svg>
+</div>
+
+<!-- ================= MENU ================= -->
+<section id="home" class="screen active">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-ic" id="brandIc"></div>
+      <div><b>KUIS IBUKOTA PROVINSI</b><small>Media Pembelajaran Interaktif Kelas (IFP Ready)</small></div>
+    </div>
+    <div class="tools">
+      <a class="tb home-link" href="index.html" aria-label="Kembali ke Beranda"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Beranda</span></a>
+      <button class="tb" data-act="sound" aria-label="Suara"></button>
+      <button class="tb" data-act="fs" aria-label="Layar penuh"></button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="hero">
+      <div class="hero-text">
+        <span class="chip">EDISI KELAS INTERAKTIF • 38 PROVINSI</span>
+        <h1>Ayo Tebak Ibukota! 🗺️</h1>
+        <p>Pilih ibukota yang tepat untuk setiap provinsi. Jawab <b>cepat</b> untuk bonus poin, jawab <b>beruntun</b> untuk jadi juara kelas!</p>
+      </div>
+      <div class="crew" id="crew"></div>
+    </div>
+
+    <div class="grid2">
+      <section class="sec y">
+        <h2><span class="num">1</span> Mode &amp; Pemain</h2>
+        <p class="lbl">Pilih mode permainan</p>
+        <div class="tiles">
+          <button class="tile" data-mode="single"><span class="ic">👤</span>Single<small>Main sendiri</small></button>
+          <button class="tile" data-mode="vs"><span class="ic">⚔️</span>VS<small>2 tim, 1 layar</small></button>
+        </div>
+        <div class="field" id="nameSingle">
+          <label for="nSolo">Nama Siswa</label>
+          <input id="nSolo" maxlength="16" placeholder="Tulis namamu…" autocomplete="off">
+        </div>
+        <div class="names" id="nameVs" hidden>
+          <div class="field team-a"><label for="n1">Tim A</label><input id="n1" maxlength="14" value="Tim A" autocomplete="off"></div>
+          <div class="field team-b"><label for="n2">Tim B</label><input id="n2" maxlength="14" value="Tim B" autocomplete="off"></div>
+        </div>
+      </section>
+
+      <section class="sec b">
+        <h2><span class="num">2</span> Pengaturan Kuis</h2>
+        <p class="lbl">Jumlah soal</p>
+        <div class="seg" data-key="count">
+          <button data-v="10">10</button><button data-v="20">20</button><button data-v="38">38</button>
+        </div>
+        <p class="lbl">Waktu per soal</p>
+        <div class="seg" data-key="time">
+          <button data-v="10">10 dtk</button><button data-v="15">15 dtk</button><button data-v="25">25 dtk</button>
+          <button data-v="30">30 dtk</button><button data-v="0">Bebas</button>
+        </div>
+        <p class="lbl">Peta Indonesia</p>
+        <div class="seg" data-key="map">
+          <button data-v="1">🗺️ Tampilkan</button><button data-v="0">Sembunyikan</button>
+        </div>
+      </section>
+    </div>
+
+    <button class="start" id="btnStart"><span class="play">▶</span>MULAI</button>
+    <p class="best" id="best"></p>
+    <p class="credit dev">Development by <b>Andri Fernanda, S.Pd., Gr.</b> © 2026</p>
+    <p class="credit">Data peta: <a href="https://github.com/denyherianto/indonesia-geojson-topojson-maps-with-38-provinces" target="_blank" rel="noopener">Indonesia GeoJSON &amp; TopoJSON Maps (38 Provinces)</a> oleh Deny Herianto, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> — disederhanakan.</p>
+  </main>
+</section>
+
+<!-- ================= SINGLE ================= -->
+<section id="single" class="screen">
+  <div class="game">
+    <header class="hud">
+      <div class="who">👤 <span id="sName"></span></div>
+      <div>Soal <b id="sNum">1</b>/<span id="sTot">10</span></div>
+      <div>Skor <b id="sScore">0</b></div>
+      <div>🔥 <b id="sStreak">0</b></div>
+      <div class="tools">
+        <button class="tb" data-act="sound" aria-label="Suara"></button>
+        <button class="tb" data-act="fs" aria-label="Layar penuh"></button>
+        <button class="tb" data-act="home" aria-label="Menu">🏠</button>
+      </div>
+    </header>
+    <div class="timer" id="sTimer"><div class="bar"></div></div>
+    <div class="qcard" id="sCard">
+      <div>
+        <p class="qlabel">Ibukota provinsi</p>
+        <h2 class="qtext" id="sQ"></h2>
+        <p class="qlabel">adalah …</p>
+      </div>
+      <div class="map-box" id="sMap"></div>
+    </div>
+    <div class="opts" id="sOpts"></div>
+    <div class="fb" id="sFb"></div>
+  </div>
+</section>
+
+<!-- ================= VS ================= -->
+<section id="vs" class="screen">
+  <div class="arena">
+    <div class="pl" id="p1">
+      <div class="pl-head"><span class="pl-name">Tim A</span><span class="pl-score">0</span></div>
+      <div class="pl-q"><small>Ibukota provinsi</small><b class="pl-qtext"></b></div>
+      <div class="map-box"></div>
+      <div class="opts"></div>
+      <div class="fb"></div>
+    </div>
+    <div class="mid">
+      <div class="round" id="vRound">1/10</div>
+      <div class="timer" id="vTimer"><div class="bar"></div></div>
+      <div class="tools">
+        <button class="tb" data-act="sound" aria-label="Suara"></button>
+        <button class="tb" data-act="fs" aria-label="Layar penuh"></button>
+        <button class="tb" data-act="home" aria-label="Menu">🏠</button>
+      </div>
+    </div>
+    <div class="pl" id="p2">
+      <div class="pl-head"><span class="pl-name">Tim B</span><span class="pl-score">0</span></div>
+      <div class="pl-q"><small>Ibukota provinsi</small><b class="pl-qtext"></b></div>
+      <div class="map-box"></div>
+      <div class="opts"></div>
+      <div class="fb"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HASIL ================= -->
+<section id="result" class="screen">
+  <div class="res-wrap">
+    <div class="res-masc" id="rMasc"></div>
+    <h2 id="rTitle"></h2>
+    <div id="rBody"></div>
+    <div class="res-btns">
+      <button class="btn primary" id="rAgain">🔁 Main Lagi</button>
+      <button class="btn" id="rHome">🏠 Menu</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="modal-masc" id="mMasc"></div>
+    <h3 id="mTitle"></h3>
+    <p id="mText"></p>
+    <div class="modal-btns">
+      <button class="btn" id="mNo"></button>
+      <button class="btn primary" id="mYes"></button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay"></div>
+<div id="toast"></div>
+
+<script>
+/* ===================== DATA: 38 provinsi ===================== */
+// r = wilayah, dipakai agar pilihan pengecoh berasal dari pulau yang sama (lebih menantang)
+const DATA = [
+  {p:"Aceh", c:"Banda Aceh", r:"Sumatera"},
+  {p:"Sumatera Utara", c:"Medan", r:"Sumatera"},
+  {p:"Sumatera Barat", c:"Padang", r:"Sumatera"},
+  {p:"Riau", c:"Pekanbaru", r:"Sumatera"},
+  {p:"Kepulauan Riau", c:"Tanjungpinang", r:"Sumatera"},
+  {p:"Jambi", c:"Jambi", r:"Sumatera"},
+  {p:"Sumatera Selatan", c:"Palembang", r:"Sumatera"},
+  {p:"Kepulauan Bangka Belitung", c:"Pangkalpinang", r:"Sumatera"},
+  {p:"Bengkulu", c:"Bengkulu", r:"Sumatera"},
+  {p:"Lampung", c:"Bandar Lampung", r:"Sumatera"},
+  {p:"DKI Jakarta", c:"Jakarta", r:"Jawa"},
+  {p:"Jawa Barat", c:"Bandung", r:"Jawa"},
+  {p:"Banten", c:"Serang", r:"Jawa"},
+  {p:"Jawa Tengah", c:"Semarang", r:"Jawa"},
+  {p:"DI Yogyakarta", c:"Yogyakarta", r:"Jawa"},
+  {p:"Jawa Timur", c:"Surabaya", r:"Jawa"},
+  {p:"Bali", c:"Denpasar", r:"Nusa"},
+  {p:"Nusa Tenggara Barat", c:"Mataram", r:"Nusa"},
+  {p:"Nusa Tenggara Timur", c:"Kupang", r:"Nusa"},
+  {p:"Kalimantan Barat", c:"Pontianak", r:"Kalimantan"},
+  {p:"Kalimantan Tengah", c:"Palangka Raya", r:"Kalimantan"},
+  {p:"Kalimantan Selatan", c:"Banjarbaru", r:"Kalimantan"},
+  {p:"Kalimantan Timur", c:"Samarinda", r:"Kalimantan"},
+  {p:"Kalimantan Utara", c:"Tanjung Selor", r:"Kalimantan"},
+  {p:"Sulawesi Utara", c:"Manado", r:"Sulawesi"},
+  {p:"Gorontalo", c:"Gorontalo", r:"Sulawesi"},
+  {p:"Sulawesi Tengah", c:"Palu", r:"Sulawesi"},
+  {p:"Sulawesi Barat", c:"Mamuju", r:"Sulawesi"},
+  {p:"Sulawesi Selatan", c:"Makassar", r:"Sulawesi"},
+  {p:"Sulawesi Tenggara", c:"Kendari", r:"Sulawesi"},
+  {p:"Maluku", c:"Ambon", r:"Maluku"},
+  {p:"Maluku Utara", c:"Sofifi", r:"Maluku"},
+  {p:"Papua", c:"Jayapura", r:"Papua"},
+  {p:"Papua Barat", c:"Manokwari", r:"Papua"},
+  {p:"Papua Barat Daya", c:"Sorong", r:"Papua"},
+  {p:"Papua Tengah", c:"Nabire", r:"Papua"},
+  {p:"Papua Pegunungan", c:"Wamena", r:"Papua"},
+  {p:"Papua Selatan", c:"Merauke", r:"Papua"},
+];
+
+/* ===================== PETA (path SVG per provinsi) ===================== */
+// Disederhanakan dari "Indonesia GeoJSON & TopoJSON Maps (38 Provinces)" — Deny Herianto, CC BY 4.0.
+// vb = viewBox, p[nama] = { d: path SVG, c: [x, y] titik penanda }
+const MAP = {"vb":[-1,1,925,345],"p":{"Sulawesi Tengah":{"d":"M491.2 141l3.3-3.8 3.1 4.1-2.4-7.5 1-7.1-2.7-0.3-1.4-2.2 4.7 1.8 0.8-3.5-1.9-3 2.3 0.2-0.3-4.9 3.2-1.1-0.1-3.9 3.8-1.7 1.1-3.8 2.3 3.9 3.8 0.7 0.9-3.7 3.5-1.8 0-5.9 1.9-0.6 7 2.5 4.2-1.5-0.9 2.4 2.6 2.4 12.9 0.5-3.6 2.6-3-1.6-12.9 4-1.1 2.4 3.3 1.9 0.1 2-5.1 1.5-8.7-2.4-5.4 1.2-4.8 5.4-2 5.3 1 12.3 4.5 5.5 2-0.8 1.9 1.4 3.4 8.4 3-1.2 5.5 1.7 4.7-7.5 6-5.2 1.7 3 4.5 0.8 3.1-0.7 2-3.4 15.2-0.7-4.3-1.6 6.3-2.2 4.1 0.3 3.5 2.8-1.8 6.3-1.9 0-3-4-6 2.1-8.3 11.1-10.9 4.1-3.4 4.9-7.4-3 0.7 3.8 1.5-1.5 2.7 5.2 5.5 2.5 3.7 8.5 6.2 4-1.4 2.1 4.7 3.1-3.5 1.9-1-3.5-11.8-4 2.3-5.2-6.3-4.5-7.3-0.3 0.1-2.4-7.3-0.8-6.5-5.2-2.6 1.2-4.3-1.8-4.1 1.4 0-4.7-4-4.8 0.3-2-5.1-2.1 3.3-4.3-0.7-5.5zM557.6 156l-1.9-3.1 2.5-5.3 5.6-0.6 1.1 4.8 2.4-3.3 3.8 1-2 4.9-4-1.6-0.3 4.2-2.8-1 1.7-1.7-1-4.3-5.1 6zM533.4 135.5l1.7-3 3.2 0.3-0.6 2-3-0.9-1.3 1.6zM569.8 158.1l1.1-4.3 1.4 4.2-2.5 0.1zM547.7 131.3l-3.1-3 3.1 1.4 0 1.6zM539.5 132.5l-2.3-0.9 4-0.6-1.7 1.5zM562.5 196.2l-1.6-0.3 2.3-0.7-0.7 1z","c":[528.7,143.2]},"Sulawesi Barat":{"d":"M491.2 141l0.7 5.5-3.3 4.3 5.1 2.1-0.3 2 4 4.8 0 4.7-3.8 5.2 1.6 6.1-0.2 2.6-3.4 0.8 1.1 7.1-5 2.1 1.8 5.7-3.3-1.5-6.3 2.8-1.8-0.8-2.5-8.9 2-4-2.2-0.3-0.3-1.6 1.4-3.3 2 0.8 4.3-3.7 1.4-9.6 3.1-2.7-1.7-3.4 0.5-8.3 5.1-8.5z","c":[486.3,168.1]},"Sulawesi Selatan":{"d":"M489.5 194l-1.8-5.7 5-2.1-1.1-7.1 3.4-0.8 0.2-2.6-1.6-6.1 3.8-5.2 4.1-1.4 4.3 1.8 2.6-1.2 6.5 5.2 7.3 0.8-0.1 2.4 7.3 0.3 6.3 4.5-2.3 5.2-5.6 2.3-6.2-4.8-1.4 1.8 1.4-3.3-6.6-1.6-11.2 7.1 1.3 3.7 3.3 2.1 0.4 9.6-2 6.9 0.2 6.7 2 4.6-2.9 4.3-0.7 5.4 3.9 9.4-3.1-2.1-3.6 1.7-4-0.9-4.5 3.2-5.7-2.9-1.3-4.7 3.4-8-0.9-3.5 3.1-8.6 0-7.1-3.6-5 0.4-4.3zM508.8 247.9l1.1-8.5 1.5 5.7-1.8 8.7-0.8-5.9zM515.5 266.4l-2.8 0.2-0.3-2.5 3.1 2.3zM522 271.9l-0.3-1.8 1.6 0.9-1.3 0.9z","c":[511.4,200.5]},"Papua Tengah":{"d":"M797.7 209l4.2-5.7-1.5-4.9 3.6-2.5-3.7 0.1-1.9-3.2-3.9-1.6-2.3-4.6-0.5-6.5 1.5-1 0.5 4.2 3.2-1.3 0.3 7 5.1 2.6 4.7 0.2 3.1-0.7 8.4-7.9 1.7-5.1 3.9 1.9 2.7 4.6 4.6 0.3-0.1 4.2 2-0.6 0.1-1.8 1.5 2.6 2.1-0.2 1 3 1.2-0.3-1.1-4.6 2.7 1-1.8 1.5 1.1 0.6 2.1-3.6 5.1-1.3 10.2 0.2 3.4-1.9-0.8 4 1.5 1.1-0.1 6.9 3.8 0.9-0.1 2.9 1.9 1-7.1 1.4-1.5 5.9-3.8-1.4 0 2 2.3-0.3 0.5 1.4 1.9-1.1-2.7 5.7 1.8 1.8-3.1 1.1 2.5 2.6-4.3 8.8-35-14.5-14.4-0.6-6.5-4.3z","c":[829.4,203.2]},"Papua Barat":{"d":"M752 168l1.9-2.6-1.3-3.2 2.1-1.2 3.6-11.3 2.1 1.3 4.6-3.3 3.6-0.1 1.1-8.8 9.7-0.4 3.3 3-2.5 1.9 5.3 7.4-4.1 6.8 0.9 9.7 6.9 14.1 1.5-8.3 2.1 1.1 0.4 5-1.5 1 0.5 6.5 2.3 4.6 3.9 1.6 1.9 3.2 3.7-0.1-3.6 2.5 1.5 4.9-4.2 5.7-5.1-2.6 1.4-1-0.8-1.7 6-0.7-5.7-0.6-3.4 2.5-3.1-3 0 1.4-1.6-0.4 0.7 2.1-3.8-2.9 1.5-1.4-1-1.8-3.9 2-2.2-5.7-0.4 3.3-2.5-1.1-1.4-3.9 1.6-1.4-0.7-3.2 4.2-4-0.7-2.2-3.8 3.7-0.4 5.9-2.7-0.8 2.1 3.1-3.8 3.2 0.9 3.4-4.1 4.2-6.7 0.3-3.6-8 4.1-2.7-2.5-2.1-0.1-3.7-2.9 1.1-3.9-5.7-3.7-2-3.9 0.6-1.8-2.7 1.1-0.9-2.1-0.2 5.6-2.3 7.2 0.8 2.8 2.2 9.6-7.9 3.3 1.9 0.7 3.8 4.6-3.2 0.4 2.5 2.2 0.1 0.7-0.4-0.4-3.1 0.8-0.9 1.5 0.7 1.5 0-0.5-1.7 0.8-0.1-0.1-0.5-0.7-0.8 1-1.7-1-3.2-6.6 3-8.8-0.7-4.4 1.9-6.4-0.1-0.8-1.7zM766.8 206l4.4 2.8-2 0.2-2.4-3zM778.7 170.6l1 0.7 0 0.5-2.9-0.6 1.9-0.6zM783.5 162.3l-0.6-1.7 1.9-1.7-1.3 3.4zM774.6 175.1l0.9 0.6 0.2 1.4-0.6 0-0.1-0.7-1.1-0.1 0.7-1.2zM776.6 172.2l0.7 1.2-0.8-0.5-1 0.7-0.9-0.8 2-0.6zM788.1 165.2l-1.1 2.1 0.3-3.3 0.8 1.2zM782 202.3l1.7 1.9-2-0.5 0.3-1.4zM791.2 172.1l-1.1-0.3 1.4-1.5-0.3 1.8z","c":[771.5,173.7]},"Gorontalo":{"d":"M526.7 114.5l-0.1-2-3.3-1.9 1.1-2.4 12.9-4 3 1.6 3.6-2.6 5.2 0.2 7.5 4.2 2.2-2.8 3.6 0.7 3 2.4 0.1 2.1 5.2 2.5-1.2 5.1-4.1 0-4.1-3.7-13.4-0.3-11.6 2-5.8-2.6-3.8 1.5z","c":[547,110.4]},"Riau":{"d":"M103.6 108.8l-1.2-1.2 0.9-7-2.2-4.2 7.6-2.8-0.9-4.8-2.2-1 1.9-8.3-1.1-6.5 1.5 4.6 3.5 3.3 3.9 1.4 0.1-3.9 5.5-0.2 5.2 5 1.8 6.5 7.3 1.1 7.8 5.7 1.6 7.6 3.9 3.9 2.9 1.2 6.9 0.5 3.9 6.6 4.3-3.2 7.7 4.9 2 6.2-3.9-0.1-3.2 3.6 6.5 3.2-7.2 3.5 0.4 4.2-1.7 1.4-7-0.9-7.5 7.4-7-4.2-5.9-0.7-3.2 2-15.2-9.5-1.5-3.8-2.9 0.6-2-5.9 2.4-1.9-1.7-0.8 1.3-2.8-3.2 0.7-4.4-2.5-0.1-1.9-3.7 0-1.5-4.3 1.7-1.3-2.1-1.4zM128.4 87.6l-0.3-4 6-1.5 1.6 3.1-1.5 3.9-3.7 0.8-2.1-2.3zM151.4 108.6l-2.7-1.1-0.5-1.3 6.5-2.6 6.4 4.8-0.7 1.9-3.3-2.2-5.7 0.5zM144.5 99.1l-0.3-3.1 1.2-0.4 4.3 3.6-0.9 3.4 0.9 2.4-1.8 0.7-2.4-1.8-1-4.8zM142.4 94.8l-2.4-2.7 9.2 1.5 1 5.2-4.5-3.5-3.3-0.5zM157.9 104.8l-3-1.6-2.4 0.4 2.2-2.7 3.2 0.6 5.2 5.5-5.2-2.2zM164.1 113.6l-1.3-1 1.3-2.6 1.9 2.1-1.9 1.5zM149.8 104.5l-0.6-2.1 1.5-1 1.4 2.5-2.3 0.6z","c":[138.6,109.8]},"Papua Selatan":{"d":"M853.6 228.4l4.3-8.8-2.5-2.6 3.1-1.1 3.3-0.6 2.1 3 2.6-0.9 1.5 2.8 3.4-0.3 0.4-1.9 5.3 0 3.9 2.9 2.3-2.1-1.7 4.9 18.1 1.4-1.3 3-2-0.8 2.5 1.1 0.8-2.6 1.2 1.8 1.5-0.6-1.2-2 3.5-0.1 3.1 3.3 12.2 2.7 0 19.5-3.1 7.3 1.4 3.6 2.1 0.5 0 44.7-2.6-0.9-18.8-19.6-12.2 2.1-2.7-2.2-5.9 3.3-1.5-2.7 1.9-1.3-0.4-2.5 2.1-1.5 1.9-5.8-8.5-6.8 0.4-3.1-2.8-2.8 7.5-1.8 0.2-0.9-2.4-0.4-0.1-1.7-8.1-7-2.9-10.1-4.2-2.3-0.4-2.7 1.6-1.1-5.2-3.7-2.6 0.4-1.1-3zM854.4 292.2l-1.6 0.2 0.5-2.4 4-8.9 7.1-7.7 10.3-2 6.9 4-1.7 5.6-2 1 0.3 3.5-1.4 0-0.7 1.2-2.4 0.2-4.9 4.2-14.4 1.1zM876.4 286.9l1.5 4.8-6.6-0.7 2.3-3.6 2.8-0.5zM874.2 256.7l2.1 1.3 0.1 1.5 0.5 0.5 2 0.1-2 0.5-3.4-2.1 0.7-1.8zM873.1 258.9l2.8 1.7-2.4 0.8-0.4-2.5z","c":[887,260.9]},"DI Yogyakarta":{"d":"M300.1 281.8l2.2-4.3 3.2 0.5 3.4-3.2 0.9 4.5 5.9 1-0.6 4.2 1.6 3.6-16.6-6.3z","c":[308.4,281.4]},"Sumatera Barat":{"d":"M103.6 108.8l2.1 1.4-1.7 1.3 1.5 4.3 3.7 0 0.1 1.9 4.4 2.5 3.2-0.7-1.3 2.8 1.7 0.8-2.4 1.9 2 5.9 2.9-0.6 1.5 3.8 15.2 9.5 1.2 3.1-3.7 2.8-0.4 4.5-4.1 3.5-6.8 0.2 3.2 12.1-5.5 3.8-3.9-6 0.9-4.7-4.6-6.7-1.5-5.5-3.3-1.3-1.4-8.2-10.2-11.2-1.8-5.6-7.4-5-3.9 0 6.9-6.2 8 1.4 1.1-1.5-2.7-3 0.1-3.9 6.9 2.6zM85.5 156.8l0 2.1-1.2-2.1 0.6 3.1-2.4 0.3-6-3.9-4.6-8.3 1.8-4.8 4.5-1 7.3 14.6zM105.1 185l-1.3-5.2 5.3 4.5 0.2 2.6-1.7 0.5 1.7 3.5-4.2-5.9zM96.2 170.1l1.1 1.7-5.3-2.1-0.8-4.7 2.6 0.5 2.4 4.6zM102.5 180.7l-2.3 0.2-0.8-6.6 5 4.7-1.9 1.7z","c":[110.5,139.9]},"DKI Jakarta":{"d":"M234.5 245.8l4.9 0-1 5.2-2.8-0.7-1.9-2.9 0.8-1.6z","c":[236.6,248.4]},"Maluku":{"d":"M657.9 193.8l1-2.8-2.1-3.7 5.5-2-0.7-2.1 2.1-1.9 17.4-1.4 1.5 3.5 7.9-3.9 10 4.5 7.2-0.2 4.3 3.2 0.9 4.5 3.2 0.6 1.5 4.2-1.2 5.1-16-7.7-1.8-2.9-8.1-0.8 0.3 3.4-12.1-2.3 0.6-2.6-1.6-0.4-4.2 4.6-4.1 0.5-4.1-5.1-1.7 0.5 0.1-3.3-1.9 1.3-2.6 8-1.3-0.8zM633.8 201.2l-10.2-4.9-3.5-5.1 0.2-3.7 15.5-2.3 6.4 3.5-1.5 0.6 0.7 2 3.8 0.2-0.7 5.7-10.7 4zM726.6 283.1l-0.6 1.4-0.3-2-3.6 1.4 0-5.8 2.5 0.3-1.5-1 1.7-4 4.1-2.5 1.8-4.1 2.5-0.3 1.7 1.7-2.2 0.9-0.1 7.3-6 6.7zM616.1 284.1l2.8-6.9 4.8 1.3 8.6-3.3 4.6 3.5-5.9 1.8-1.7 3-7.9-1.7-5.3 2.3zM785 261.8l-1.1 0.8-2.8-3.2 1.2-6.4 2 0.8-1.9-1.3-0.1-5.3 8.3 8.4-5.6 6.2zM785.7 246.8l-0.1-1.8 3.2-0.7 1.9-1.9 5 3.5-1.1 4.1-2.3 1.4-6.6-4.6zM786.8 244.5l-0.9-2.2 2-2.5-3.7-1.4 2.7 0.2 2.1-3.6 1.5 0.3 0.4 1.7 2.8 2.5 0.1 1.2-7 3.8zM662.5 199.6l2.2-3-4.7 3-1.5-2 8.3-3.6 0.3 2.6-1.9-0.2 0.8 1.5-3.5 1.7zM691.6 281.8l1.9-2.1 3.9 2.4-2.3 3-3.5-3.3zM757 243.9l6.1-14.4-1.1 6.5-5 7.9zM754.8 243l-2.1-5.7 1.5-1.4 2.1 5.1-1.5 2zM661 288.7l-4.6-0.7-1.1-1.8 7.2 0.9-1.5 1.6zM715.9 290.9l2.8-4.4 4.6-0.1-7.4 4.5zM785.9 249.7l-3.6-3.7 0.5-1.7 1.7 0 0.2 2.2 2 2-0.8 1.2zM790.8 236.7l-0.2-1.3 0.5-0.2 4.2 2.1-1.3 1.2-1.7 0-1.5-1.8zM792 235.4l-1.9-0.3-0.1-2.7 4 1.8-2 1.2zM789.2 249.5l1.5 1.3-1.1 2.2-2.4-1.7 2-1.8zM673.3 196.1l-2-2.1 3.3 0.3 0.1 2.1-1.4-0.3zM673.4 267.2l-0.9 1.1-2-1.4 1.7-1.7 1.2 2zM739.1 267.3l-0.1 1.7-4.7-1.9 4.8 0.2zM647.1 277l0.2-3 2.2 0.3-2.4 2.7zM668.4 196.7l0.6-2.5 2.4 1.1-3 1.4zM794.3 253.2l1 1.4-1.7 0.7-0.8-1.8 1.5-0.3zM662.8 289.5l-1-1.4 2.6 0.1 0.3 1.2-1.9 0.1zM794.4 240.7l0.3 2.9-2.1-1.2 1.8-1.7zM794.3 258.5l-1.8 0.6 1.6-3.5 0.2 2.9zM791.8 253.3l-1.5 1.3 0.1-3.2 1.4 1.9zM797.5 249.7l-0.6 3.8-1-1.7 1.6-2.1zM658.9 184.3l-2.1 0.2 3-2-0.9 1.8zM722.7 273.2l-3.3 0.6 3.8-1.7-0.5 1.1zM652.5 190.1l0.6 1.2-3.4-1.3 2.8 0.1zM717.2 274.1l2.2 1.2-2.7-0.2 0.5-1zM729 205.3l-1.7-1.8 1.2-0.5 0.5 2.3z","c":[687.2,190.4]},"Bengkulu":{"d":"M120.4 173.6l5.5-3.8 5.2 3.2-0.3 2.4 2.7-0.7 3.7 3.9 4.1 0.8 4.1 5.5 4 0.8 0.5 3.7 9.9 2 0.1 3.1-1.8 1.8-1.9-1.7-0.8 3.6-2.8 2 7.3 4.2-1.5 1.5 3 3.2 7.4 1.5-0.7 3.4 1.6 1.5 2.7-0.9 1.1 3.8 2.3 1.2-3.9 2.8-5.3-2.2-20.5-16.5-1.4-6-12.3-8.8-6-10.2-6-5.1zM143.9 232.3l-2.2-1.5 1-0.9 4.9 1.8-0.1 2-3.6-1.4z","c":[148.1,196.1]},"Lampung":{"d":"M171.9 222.4l3.9-2.8 1.5 2.7 9.4-0.9-0.8-4.3 1.8-6.2 12.7-3.6 6-8.6 4 2.1 2.6 4.9 3.4 1.4 0.1 3.9 1.8 1.8-0.3 9.7-3.7 19.6-8.5-9.2-2.5 3.2 0.9 3.3-1.2 0.8-8.8-5.8-3-0.1 3.4 8.4-2.9 0.2-13.6-14.2 0.1-2.2-6.3-4.1z","c":[195.1,220.8]},"Papua":{"d":"M820.2 178.1l4.3-1.9 3.3-7.8 7.2 0.6 8.2-3.1 1.4-0.8-2.8-4.1 0.7-1.5 16.2-6.3 2.6 2.8 12.4 4.1 3.8 3.3 17.8 7.8 6.9-0.8 4.8 2.8 0.8-1.2 6.1 1.6 0.2 3 5.9-0.5 0 28.3-6.8-0.7 0.7 1.2-2.2 1.4-3.2-3.7-0.2-3 2.5 1 0 2.7 4.7-0.1 1-1.8-2.5 0.3-0.2-1.8-7.4-1-1-1.5-5.4 0.6-4.9-3.8-3.2 4.3-2.4-5.3-6.7-0.7-1.5-3-3.9 3 0.8-3.4-3.3-1.5-1.7 2.6-1.5-1.7 0.2-5.3-1.4-0.5-3.4 0.2-2.2 2.1-2.2-1.2-1.1 5-1.5-1.1 0.8-4-3.4 1.9-10.2-0.2-5.1 1.3-2.1 3.6-1.1-0.6 1.8-1.5-2.7-1 1.1 4.6-1.2 0.3-1-3-2.1 0.2-1.5-2.6-0.1 1.8-2 0.6 0.1-4.2-4.6-0.3-2.7-4.6-3.9-1.9zM810 157.6l-0.9-1.6 28.9 3.7-13 2.2-15-4.3zM815.5 141.5l-1.1-1.6 1.8-2.2 7 7 4.5 0.9-5 2.4-5.5-0.7-1.7-5.8zM809.4 138.8l0.4 1.3-2.5-3.5 7.6 2.3-2 2.8-3.5-2.9zM797.8 146.8l-1.9-2.2 0.9-1.9 2 0.6-0.3 2.2 1.1-1.2-1.8 2.5z","c":[870.1,179.7]},"Kepulauan Riau":{"d":"M262 47.5l-2.5-3.8 4.9-4.3 3.6 5.4-0.1 2.7-2 3.3-2.9 0.5-0.7-2.1 2.8-0.4-3.1-1.3zM184.6 102.9l2.3-2.6 4.8-0.8 1.4 6.4-2 1.8-2.3-1.9 0.2-2.9-2.3 1.2-2.1-1.2zM190.6 129.4l-2.1-1.7 2.7-4.1 3.8 4.2 1.5-1.1 3.1 2.9-2.9 0.7-2.6-2.2-3.5 1.3zM185.2 133.5l1.3-2.5 0 1.7 3.1-2 2.4 2.7-1.9 3.5-1.3-1.1-1.5 1.9-2.1-4.2zM178.9 103.8l-0.5-2.7 4.4-0.5-0.1 2.7-3.8 0.5zM169.3 111.1l-2.1-1.7 0.3-3.3 2.7 2.7-0.9 2.3zM215.7 65.9l-1.2 1.8-0.6-4.6 2.7 1.1-0.9 1.7zM184.8 106.7l-1.2 1.6-2-3.2 3.2 1.6zM168.8 104.2l-2.2-0.6 0.4-2.3 1.8 2.9zM179.3 104.6l-0.5 1.2-2.1-2.2 2.6 1zM185.2 108l-0.1 2.1-1.5-1.6 1.6-0.5zM224.1 61.2l0.5-1.8 1.1 2.6-1.6-0.8zM280.7 74.3l-1.1-1.4 2.7 0.7-1.6 0.7z","c":[263.8,45.4]},"Nusa Tenggara Barat":{"d":"M439 305.1l-4.2-1.2 1.5-3.5-1.1-2.9 6.9-6 5.8 1.9 3.4-1.2 4.8 6.3 9.4-1.4-1-2.1-10.7-6.2 4.7-3.2 4.4 1.2 2.7 4.5 3.6-2.3 3.7 0.8 0.3 4.8 2.8-4.9 4.1 0.6 0.6 6.5 3-1-1.1 3.2-4.4-1.4-4 1.2 4 0.5-0.1 1.6-3.1-1-6.8 1.5-0.3-5-5.4 5.2-21.4 4.5-2.1-1zM422.1 301.5l-2 0.6-3.6-2.8 5.1-0.7-0.9-5.7 1.3-1.6 5-3.1 7.4 2.8-4.5 9.3 1.5 1.5-2.7 0.6 0.7-1.9-1.2 0.3-0.7 2.3-5.4-1.6zM453.7 287.7l-3.1 4.1-1.2-0.7 0.2-3.4 4.1 0zM481.4 286.6l1.1 1.2-1.5 1.4-1-1.7 1.4-0.9z","c":[459.2,295.8]},"Jambi":{"d":"M136.5 143.6l3.2-2 5.9 0.7 7 4.2 7.5-7.4 7 0.9 1.7-1.4 7.4 5.7 11 0.1 2.6 13-1.7-0.8-16.4 4.6-1.7 2 1.3 1.6-2.2 6.4-4.5-4.5-0.4 3.7-7.1 0.3-1.5 4.4-4 2.5-6.2-1.1-4.1 2.9-4.1-0.8-3.7-3.9-2.7 0.7 0.3-2.4-5.2-3.2-3.2-12.1 6.8-0.2 4.1-3.5 0.4-4.5 3.7-2.8-1.2-3.1z","c":[156.3,159]},"Bali":{"d":"M398.5 293.4l-6.8-1.4-2.9-6.1 8.4 2 6.5-2.7 10.5 6.4-8.8 5.5-2 3.9-1.7-0.3 1.6-2.6-4.8-4.7zM409.7 299.2l1.6-1.8 1.3 2-2.9-0.2z","c":[401.5,293.1]},"Jawa Timur":{"d":"M318 288.2l1.1-3 3.1 0.1 0.9-2.9 2.8-0.9-2.3-3.7-0.6-8.6 6.1 2.2 0-2.3 3.1-2.3-0.7-4.5 2.3-3.2 5.4 0.1 3.3 2.9 8.6-1.2 2.1 7.3 3.7 1.5 0.9 6.6 5.2 2.5 12-0.1 5.9-2.5 1.1 1.8 7.1 2.1-2.1 14.5 4.9 4.4-5-0.2 0.6-1.2-2.5-1.6-5.8 0.3-14.4-6.6-11.8 3.3-17.1-3.9-2.2 2.4-5.2-2.3-10.5-1zM353.8 267.1l-0.1-2.5 3.5-2.7 21-0.6 4.3 2.3-4.7 1.6-0.1 1.5-5.6-0.2-1.8 2.6-16.5-2zM407.1 262.8l1 1-4-1.1 0.8-2.1 6.5 2.2-4.3 0zM351.9 241.1l0.4-2.1 2.2-0.3-0.1 2.2-2.5 0.2zM415.8 266.3l2.2 0.2-0.1 1.3-2.8-0.4 0.7-1.1zM366 292.9l2.2 0.7-2.8 0.3 0.6-1z","c":[355,279]},"Papua Barat Daya":{"d":"M769.7 138.8l-1.1 8.8-3.6 0.1-4.6 3.3-2.1-1.3-3.6 11.3-2.1 1.2 1.3 3.2-1.9 2.6-5.7 1.7-5.5-4.3 1-0.8-2.3-1.1-1.1-3.2 2.1-2-2.2 0.1-1.2-3-2.8 0.2 0.6-1.7-0.5-1.4-5.5 1.6-1.8-3.7-1.5 3.7-6.7-1.3 6.1-7.1-0.3-5.1 12.2-2.5 6.3-5.4 5.2-1.8 10.7 2.2 10.6 5.7zM704.7 128l3 0.6 1.2-0.8-3.3-1.6 10.3-2.1 6.8 1.3 4.1 4.3-1.9 1.9-2.8-1.4-2.4 1-7-5.3 2.2 3.9 3.7 0.8-3.6 2.3-1.1-2.9-2.3 0.4-0.2 1.7-1.1-3.3-3.6 0.5-2-1.3zM696.6 160.6l10.4-3.2 1.9 3.1-1.8 1.9 1.7 1.3-6 1.4-8.2-3.1 2-1.4zM715 148.7l-2.1-5.6 7.7-0.8 1 2.4-1.8 6-2.7 0.2-2.1-2.2zM713.8 141.8l-5-0.3 0.9-1.7 8.6-0.1-4.5 2.1zM734.8 153.1l-0.1 1.1-1.5 0.7-1.5-1.2 2.6-1.1 0.5 0.5zM712.3 133.7l-2.9 0.7 0.7-1.6 3.8 0.2-1.6 0.7zM695.8 148.1l-1.1-0.3 4.9-0.4-3.8 0.7z","c":[744.3,150.3]},"Sumatera Utara":{"d":"M65.1 38.2l-1.6 3.5 7.3 2.1 3.3 4.8 21 12 4.7 4.6-0.1 3.6 4.7 1.1 2 3.1 1.1 6.5-1.9 8.3 2.2 1 0.9 4.8-7.6 2.8 2.2 4.2-0.9 7 1.2 1.2-6.9-2.6-0.1 3.9 2.7 3-1.1 1.5-8-1.4-6.9 6.2-2.1-10.2-6.6-15.8 2-2.9-14.1-9.9 1.4-2.9-2.3-4.1 0.6-5.1-3.2-2.4 0.6-4.4-1.4-2.7 2.4-1.6-4.6-7.9 2-3.7 3.7-0.9-0.3-5.9 3.7-0.8zM50.3 105.9l-9.1-10 4.5-0.4 1.3-2.3 2.8 1.3 4 5.9 4.6 3.1-0.7 8.4-3.5 0.9-3.9-6.9zM67.2 134.9l1.6-6 1.3 6-2.9 0zM66.9 124.8l0.7-1 1.8 2.1 1.3 5.1-3.8-6.2zM72 122.1l-1.5-0.9 6.6 0.5-5.1 0.4z","c":[82.3,78.8]},"Sulawesi Tenggara":{"d":"M520.2 181.3l1.4-1.8 6.2 4.8 5.6-2.3 11.8 4 2.4 7-2-1.7 0 3.8-1.7 1.1 5 2.8 1.6 2.9 2.8 0-2.5 1.5 2.4 0.7 0.4 3.1 3.5-1.8 0.7 6.6-1.4 0.9-2.9-2.4 1.3 3.7-3-2.3-7.4 1.7-3.1 2.1 0.6 4.8-1.4 1.4-6.8-0.9-4.3-3.6 2.8-12.1-5.3-1.6-9.3-9.1-0.3-1.9 3.8-5 0.7-5.2-1.6-1.2zM551.5 234.7l1.6-4.2 3.1-2.1-1.3-0.1 0.1-3.7 2.4-10.1 4.2-3.2 2.7 9.9-1.5-2.7-2.2 0.8-2.2 8.2 2.5-0.7 3.5 3.2-7 3.1 0.5 2.2-2.2 2.7-1.7-1.4-1.3 1.3-1.2-3.2zM546.6 231.9l-1.3-1.4 2.3-4.7-1.2-5.2 7.6-4.3 1.3 5.7-3.5 5.2 1 3.9-2.4 1.7 0.1-3.3-1.2 2.6-1.6-1.7-1.1 1.5zM536.8 230.7l0-4.5 2.4-1 2 2.9-0.3 5-2 0.6-2.1-3zM558.8 206.1l1.5-2.5 4.9 2.3-2.8 3.3-3.6-3.1zM571.9 231.7l-1.2-2.7 2.2 0.9-1 1.8z","c":[537.6,200.7]},"Nusa Tenggara Timur":{"d":"M500.2 300.4l-2.4 0.8-1.8-1.9 1.5-6.1 2.9-1.6 1.9 1.2 1.7-2.7 4.6-1.3 10.9 2.1 10.8 5.4 2.1-2.8 7.6-0.5 5.9 3.8 3.7-0.7 0.2-2.6 8.1-4 0.1-1.9-3.4 0.7 2.7-3 3.1 4.3-2.6 3.3-2.1-0.3 0.7 3.3-8.9 3.1-5.2-0.4-6.8 3.1-7.7-1.9-1 2.3-6.2 1-3.8-2.5-1.7 1.3-3.1-1.6-11.8 0.1zM570.3 330.8l-1.2 0.2 0.7-2.5 5.6-3.6-3.7-0.2-0.1-1.8 4.3-9.1 5.7-3.3 0.4 1.7 2.3-0.9 2.8 2.4 2.5-6.2 8.9-4.2 1.2 2 2.6-1.9 1.3 1-0.1 3.1-3.8 0.3 2 5.5-2 3.4-10.1 9.7-6.8 0.8-7 3.9-5.5-0.3zM486.6 319.3l-6.1-1.8-2-2.5 0.8-1.4 6.7-2.5 10.1 0.8 2.6-2.4 2.9 3.8 2.6 0.5 0.7 2.9 4.3-0.4 2.7 2.3 4.9 7.3-7.7 4.4-5.8-1.6-9.9-9.1-6.8-0.3zM589.4 292.7l-2.7-0.3 4.1-3.6-2.7 0.6 1.3-2.8 2.6-0.1 0.2 1.4 9.5-1 1 1.5-0.2 2.4-13.1 1.9zM556.7 342.6l-0.5-3 10-3.7-1.9-0.3 3.8-2.5-0.1 4.6-3.5 2.8-7.8 2.1zM565.8 295l-1.6-0.8 5.1-3.3-1.5-1.7 3.4-0.4-1.2 2.2 1.3 0.3 0.8-2.9 1.6 0.8 2.1-1.8 2.7 1.5-6.1 3.2-1.2 3.1-5.4-0.2zM582 294.9l-1.3-2.5-2.4 0.3 1-1.7 1.9-1.1 0.6 1.6 4.7-3.8-0.5 2.9-4 4.3zM560 292.1l2.9-3.3 3.8 0.5-0.8 2.5-5.9 0.3zM535.1 336.3l-1.4-0.8 3.3-2.7 3 0.1-0.3 2.1-4.6 1.3zM489.3 292.7l2.1 1.4-2.7 4.9-1-2.5 1.6-3.8zM558.9 295.7l-1.5 0 2.1-3 3.8-0.1-4.4 3.1zM492.9 296.2l0.5 1.5 2.5-1.4-2 3.9-1.8-1.1 0.8-2.9zM567 330.1l-1-0.7 3-3.1 1.1 1.4-2.2 0.4 0.2 2.7-1.1-0.7z","c":[528.2,294.2]},"Kalimantan Selatan":{"d":"M387 193.3l5-13 3.2-1.9 3.5-5.6 7.2-4.5 2.4-4 0.5-1.5-2.6-1.8 1.6-6.6 7.4-4.1-2.8 3.5 2.2 6.1-0.7 4.9 2.3 0.4 0.5 6.6 6.5-1.7 7.9 2.1-0.9 3-3.9-0.6 1.9 1.2-2.8 8.3-2.4-1.4-0.2-2.1-1 3.2 3.5 2.4-4.7 5.1-1.3 4.9-26.5 11.3-0.5-10.5-5.3-3.7zM422 205.2l-2-8.4 2.3-6.6 2.8-2 1.1 14.1-4.2 2.9zM428.1 195.9l-0.9 1.1-0.9-2 1.9-3.8-0.1 4.7z","c":[409.1,178.9]},"Aceh":{"d":"M65.1 38.2l-3.7 0.8 0.3 5.9-3.7 0.9-2 3.7 4.6 7.9-2.4 1.6 1.4 2.7-0.6 4.4 3.2 2.4-0.6 5.1 2.3 4.1-1.4 2.9-3.5-2-3.3 0.8-2.3-3.2-1.6-9.8-4.5-2.3-9.7-13.6-7.6-1.4-19.2-18.2-6.4-12.6-0.5-4.8 4.7-2.6 3.6 0.5 5.6 2.6 3.8 4.2 6.3 1.6 9.3-1.3 6.9 2.6 5.8-2.1 8.2 7.2 1.6 7.1 6 2.4-0.6 2.5zM16.1 71.3l-2.3-2.8 1.9-3 6.1 3.5 0.4 2.3 6.9 3.2 0.9 2.2-3.1 0.5-5.3-4.5-5.5-1.4zM43.6 79.3l2.4 0.4 0.8 3.2-4.5-3.2 1.3-0.4zM6.5 8.5l-2.2-2.6 2.7 0.4-0.5 2.2z","c":[34.8,45.7]},"Kalimantan Tengah":{"d":"M314.7 183.9l8.8-6.1-1.2-7.3-1.8-2 1.5-4.7-2.7-1.6 1.1-3.9-2.7-2.3 6.3-2.5 7-5.4 1.8-4.7 8.9-5.4 1.8 0.5 0.8-2.2 1.9 2.1 5-0.5 11.4-4.9 1.8 1.1 0-3.4 4.5-5.4-3.2-6.3 5.4-1.7 5.7-6.5 5.7-0.7 1.6 3.1 3.2 0.2 5.9-3.4 6.5-0.6 2.8 7.2-4.4 1-3.9 4.9 3.6 2 1.8 5 3.7-3.8 2.9-0.1-1.5 5.7 1.1 3.8 1.8 0.3-1.8 4.5 1.7 1.6 3.6-0.3 4.2 5.6 1.5-0.9-1.6 4.4-7.4 4.1-1.6 6.6 2.6 1.8-0.5 1.5-2.4 4-7.2 4.5-3.5 5.6-3.2 1.9-5 13-6.1-2.9-8.3 2.9-0.6-6-5.3 2.2-5.8-6-2 2.5 1.3 1.2-8.9 5.7-6.2-2.6-8.3 4.5-1.4-0.6 1.1-9.2-2.1-4.1-3.3 3.3-2.9-2.1-8.7 3.2-4.8-1.4z","c":[365.8,152.1]},"Papua Pegunungan":{"d":"M858.5 215.9l-1.8-1.8 2.7-5.7-1.9 1.1-0.5-1.4-2.3 0.3 0-2 3.8 1.4 1.5-5.9 7.1-1.4-1.9-1 0.1-2.9-3.8-0.9 0.1-6.9 1.1-5 2.2 1.2 2.2-2.1 3.4-0.2 1.4 0.5-0.2 5.3 1.5 1.7 1.7-2.6 3.3 1.5-0.8 3.4 3.9-3 1.5 3 6.7 0.7 2.4 5.3 3.2-4.3 4.9 3.8 5.4-0.6 1 1.5 7.4 1 0.2 1.8 2.5-0.3-1 1.8-4.7 0.1 0-2.7-2.5-1 0.2 3 3.2 3.7 2.2-1.4-0.7-1.2 6.8 0.7 0 26.5-12.2-2.7-3.1-3.3-3.5 0.1 1.2 2-1.5 0.6-1.2-1.8-0.8 2.6-2.5-1.1 2 0.8 1.3-3-18.1-1.4 1.7-4.9-2.3 2.1-3.9-2.9-5.3 0-0.4 1.9-3.4 0.3-1.5-2.8-2.6 0.9-2.1-3-3.3 0.6z","c":[887.3,206.8]},"Kepulauan Bangka Belitung":{"d":"M208 166.5l-2 0.6-3.8-2.6 5.5-4.5 0.2-3.9 4.2-1.5 2.2 2.5-1.2 1.8 3.1 1.4-1.8-5.5 3.4-0.8 3.2 2 5 16.4 10.8 3-2.6 1.5-2.4 5.5 3 1.7-0.1 1.6-4.4 0.6-1.7-2.8-9.6-3.1-0.3-6.8-2.6-2.3-0.4-4-4.9-1.7-2.8 0.9zM253.3 188.3l-1.4 0.2 0.1-5.8-1.4-0.3 2.6-7.2 6.6 0.2 5.6 3.6 0.5 2.6-4.4 7.3-1.8 0.5-2.9-4.1-0.1 1.8-3.4 1.2zM236.9 182.4l0.8 2.2-3.3-1.2 2.5-1zM248.5 182.6l-0.9-1.6 1.8-0.5-0.9 2.1z","c":[219.5,170.2]},"Sumatera Selatan":{"d":"M141.3 179.4l4.1-2.9 6.2 1.1 4-2.5 1.5-4.4 7.1-0.3 0.4-3.7 4.5 4.5 2.2-6.4-1.3-1.6 1.7-2 16.4-4.6 1.7 0.8 0.7 0.8-1.1 3.1 0.7 2.1 1.5 0.7 0.6 0 0.9-0.8 3.5 0.8 1.4 2-4 5.1 4-1.6 2.9 1.9 11.5 0.3-0.2 4.2 3.4 1.8 0.7 4.6 4.6 1.5 1 4.9-3.6 2.9-1.9 5.1 2.8 3.7-2.8 6.6-3.4-1.4-2.6-4.9-4-2.1-6 8.6-12.7 3.6-1.8 6.2 0.8 4.3-9.4 0.9-1.5-2.7-2.3-1.2-1.1-3.8-2.7 0.9-1.6-1.5 0.7-3.4-7.4-1.5-3-3.2 1.5-1.5-7.3-4.2 2.8-2 0.8-3.6 1.9 1.7 1.8-1.8-0.1-3.1-9.9-2-0.5-3.7-4-0.8-4.1-5.5zM191.1 161.1l1.7 1.2-0.7 1.7-2.1-1.1 1.1-1.8z","c":[181.6,189.5]},"Banten":{"d":"M234.5 245.8l-0.8 1.6 1.9 2.9-7.1 0.7 0.1 6.6 1.9 1.8-2.6 4.2-8-3.3-9.1 1.2-5.5-0.6-0.7-1.8 2.9-2 1.9 3.5 3.6-7 2.4 0.7 2.2-8.8 2.8-3.7 3 2.8 3.6-1.3 2.7 1.7 3.9-0.7 0.9 1.5zM205.2 254.4l-1.8 2.9-1-1.5 2.8-1.4z","c":[220.1,252.7]},"Sulawesi Utara":{"d":"M569.5 117.6l1.2-5.1-5.2-2.5-0.1-2.1-3-2.4 16.3 1.8 7.2-3.5 1.8-3.4 3.8-0.2-0.9-3.3 5.7-2.1-0.2-2.3 3.5-3.5 3.7 1.2 1.3 4.5-3 2-3.9 7.9-4.9 3.5-2.6 6.4-20.7 3.1zM633.8 44l2-4.3-2.2-2.4 1.2-4.2 2.3 1.2 1.1 4.3-2.4 5.1-2 0.3zM610 54.6l-1.5-5.3 2.6 1.4 2.4 4.8-1.4 1.1-2.1-2zM607.5 70.5l1.1-2.6 0 3.1-1.1-0.5zM635.6 49l-0.5-2.1 1.9 2-1.4 0.1z","c":[583.5,103.3]},"Kalimantan Utara":{"d":"M391.3 95.5l2.8-4.2 0-3.7 3.5-2-2.8-5.4 10.2-6.4-3.2-2.1 1.3-3.6-1.1-0.7 3.7-4.3 2.2 1.3 3.3-3.4-0.3-4.2 2.2-1.6-1.8-9.6 6.2-9.4 3.9 2.3 2.1-2.1 3.5-0.2 1.8 2 2.5-2 9.1 1.4 4.6-1.1 4.4 4 2.5 0.1-1.6 1.4-2-0.8 0.9 4.2 4.9 1.4 1.6 2.1-2-0.2 2.5 1.2-2.8 1.8-3.7-2-1.1 1.8-8.3 0.6 4.2-0.2-0.1 2.2 6.1 3.9-4.1 2.7 2.5 0.1-0.2 2.2 3.8 0-1 1.4 2.3 0.4 0 3.5 6 7-4.9 2.2-2.6-3.9-4.5-0.8-3.2 1.6-0.3-1.7-3.3 0.3-1.4 2.3-3.7-1.5-1.6 2.4-4.2-1.3-0.6 3.3-3.7 1.1 1.1 1.5-2.5 1.3-1.2 7-2.4 3.8-5.5 5.9-5.6 0.2-2.1 2.6-5.6-1.6-4-4.4-3.6 2.1-3.1-2.2zM450.8 43.5l2.8 2.7-4.4-0.8-0.3-1.5 1.9-0.4zM451.7 58.1l-0.7-2.9 2.3 0.5-0.3 3.5-1.3-1.1zM454.9 43.1l-1.5 1.6-1.6-2.3 1.6-1.3 1.5 2zM445 52.2l5.4 2.2-5.8-0.3 0.4-1.9zM458.5 42.8l-4.8-2.1 4.3 0 0.5 2.1z","c":[425.5,68.9]},"Kalimantan Timur":{"d":"M376.8 110.8l1.7-3.6-0.7-4.2 4.8-2.1 1.5-5.1 3.6-2.2 6.7 4.1 3.6-2.1 4 4.4 5.6 1.6 2.1-2.6 5.6-0.2 5.5-5.9 2.4-3.8 1.2-7 2.5-1.3-1.1-1.5 3.7-1.1 0.6-3.3 4.2 1.3 1.6-2.4 3.7 1.5 1.4-2.3 3.3-0.3 0.3 1.7 3.2-1.6 4.5 0.8 2.6 3.9 4.9-2.2 2.2 3-1.6 1.7-6.6 0.4 0.2 2.9 2.4 0.5 1.8 3.8 21.5 16.7-3.8 3.7-8.5-0.1-6.1-2-3.4-4.4 2.6 7-2.2-1.2-3.3 1.6-3.8 6.7-0.8 9-2 3.7 0.7 4.9-3.6 2.3-0.5 6.6-7.3 7.4-1.5 0.1-1.8-4.8 0.8 6.4-4.1 1.8 0.1 3-6.3 3.6 4.1-0.1 0.2 5.7-2 1 0.8 2.1 3.7-0.9-0.6 4.8-7.9-2.1-6.5 1.7-0.5-6.6-2.3-0.4 0.7-4.9-2.2-6.1 2.8-3.5 1.6-4.4-1.5 0.9-4.2-5.6-3.6 0.3-1.7-1.6 1.8-4.5-1.8-0.3-1.1-3.8 1.5-5.7-2.9 0.1-3.7 3.8-1.8-5-3.6-2 3.9-4.9 4.4-1-2.8-7.2-6.5 0.6-5.9 3.4-3.2-0.2-1.6-3.1-5.7 0.7zM447.5 138.4l1.2 3-2.7-4.8 1.5 1.8zM456.1 80.9l-1.5 1.3 0-1.6 1.5 0.3zM450.1 134.9l1.6-0.5-0.7 1.6-0.9-1.1z","c":[428.3,122.4]},"Jawa Tengah":{"d":"M276 277.5l-2.5-6.3-2.4-1.5 0.1-2.3 4.1-1.1 1.3-6.6 4.7-0.5 0.7 1.6 4.1 0.6 4-1.6 9.4 2.7 4.1-1.5 2.8 2.3 2.7-0.2 5.2-9.9 3.7-1.1 2.9 0.4 2.2 4.6 4.5 0.9 2.3-1.6 3.9 2.7-2.3 3.2 0.7 4.5-3.1 2.3 0 2.3-6.1-2.2 0.6 8.6 2.3 3.7-2.8 0.9-0.9 2.9-3.1-0.1-1.1 3-1.3-0.1-1.6-3.6 0.6-4.2-5.9-1-0.9-4.5-3.4 3.2-3.2-0.5-2.2 4.3-14.3-3.8-5.8 0.9-4-1.4z","c":[302.5,270.2]},"Maluku Utara":{"d":"M648.5 103.1l-0.3-3.8 3.3-10.4 8.1-9 1.7 0.7-4.5 6.4 3.4 2.2 0 8.6-2.1 3.2-5.1 2.6 0.3 2.9 4.4 0.9 2.1-5.2 4.1-1.5-2.2-1.9 1.6-2.1 6.1-3.7 5.1-0.4-0.8 10-9.7 5.6 2.4 2.7 7.2 2.1 0 4.3 3.8 1.9-15.8-4.7-3.3 0.4-0.9 2.9 0.4 6.3 3.2 8.3 7.4 9.6-8.2-4.4-2.9-6.3-3.6-1.9 1-11.6-4.2-4.9 2.3-5.2-4.3-4.6zM588.7 164.5l-2-2.7 1.3-4.6 5.4-0.3 8 2.6 1.3-1.8 0.9 2 1.2-1.2 1.6 1.2-0.2 2.1-9 0-8.5 2.7zM649.3 157.9l-1.3-1.4 0.7-3.8 4.1-2.1 10.6 6.1-3 1.8-11.1-0.6zM663.9 78.4l7.4-7.3 2.4 2.9-3.3 8.7-4.4 0.6-2.1-4.9zM647 135.1l-0.4-4.1 2.5 1.3 2.3-2 2.4 3-1.8 3 6 3.1-2.7 1.9-2.7-2.5-3.1 1.7 0.1-3.9-2.6-1.5zM614 162.6l-5.5 0.4-1.9-2.5 19.9 0.3-12.5 1.8zM621.5 172.7l-1.7 0.1-2.2-4.6 0.5-4.7 1.7 1.1-0.5 3.1 2.2 5zM644.6 134.2l-2.2-0.4 0.6-4.6 2.8 0.6-1.2 4.4zM650 149.4l0.2-1.8 3.7 1-0.5 1.2-3.4-0.4zM644.9 139.3l-1.6-0.3 1.1-2.9 2.3 3.6-1.8-0.4zM646.5 108.9l0-2.2 1.3 1.5-1.3 0.7zM647 117.7l1.8-0.7-0.5 1.4-1.3-0.7zM647 152.7l-1.4-0.4 2-0.9-0.6 1.3z","c":[662.8,110.9]},"Kalimantan Barat":{"d":"M384.1 95.8l-1.5 5.1-4.8 2.1 0.7 4.2-1.7 3.6-5.7 6.5-5.4 1.7 3.2 6.3-4.5 5.4 0 3.4-1.8-1.1-11.4 4.9-5 0.5-1.9-2.1-0.8 2.2-1.8-0.5-8.9 5.4-1.8 4.7-7 5.4-6.3 2.5 2.7 2.3-1.1 3.9 2.7 1.6-1.5 4.7 1.8 2 1.2 7.3-8.8 6.1-2.2 0.7-1.2-3.8-6.2 2.3-3.4-14.3 0.4-5-4.1-3.2 2.7-3.3 0.3-6.8-2.9-2.4 0.7-1.6-4.2-2.7 0.6-1.7-2.5-2.2 0.7-2.2-11.1-3.6-0.5-4.6 2.1-1.1 0-5.6-2.2-3.8-3.4-1.8 0.3-5.7-1.8-3.8 2.6-2.5-1.3-4.5 1.5-0.4 1.2-6 4.2-3.5 1.8-5.7 5.7-2.4-1.7 2.8 0.9 2.7 2 0.2-0.5 3.3 3.6 3.9 2.5 0.3 2 3.9 2.6 0.5 1.6 3.8 5.6 2.7 13.5-4.5 5.2 1 0.6 1.5 3-1.7 3 1.2 2.3-2.7 4.2-0.3 1.3-6.3 5.5-2.6 11 0.3-1.1 3.1 11.2 1.7 1.9 2.1 6.8-4.6 4.6 0.8zM293.7 148.1l-3.6 2.1-2.5-1.1 2.2-5.6 1.2 0.6 1.8-0.4 0.9 0.7 0.7-0.6 0.7 0.5 0.5 2.6-1.9 1.2zM284.8 140.4l0.2-3.2 6.2 1.8 3.7 3-1.2 2.3-2.6-2.5-2.5-0.7-2.6 0.9-1.2-1.6zM279 155.3l0.2 1.5-2.6 0.5-0.6-1.9 3-0.1zM282.6 128.1l1.3 0.3-2.2 1 0.2 1.2-0.8-2.1 1.5-0.4zM287.3 141.6l0.8 1-2-0.6 1.2-0.4z","c":[330.5,133.6]},"Jawa Barat":{"d":"M227.9 263.6l2.6-4.2-1.9-1.8-0.1-6.6 7.1-0.7 2.8 0.7 1.8-8.6 6.7 1 2.6 3.6 4.1 1.7 4.4-0.9 4 2.8 2.2-1.9 3 0.5 3.5 4.4 1.3 5.6 4.6 0.5-1.3 6.6-4.1 1.1-0.1 2.3 2.4 1.5 2.5 6.3-5.7 0.5-0.4 1.9-3 0.5-10-1.7-8-4.6-18.4-1.9-3.1-2.6 3.4-5.9-2.9-0.1z","c":[252,261.4]}}};
+
+function mapSvg(){
+  return `<svg class="map" viewBox="${MAP.vb.join(" ")}" aria-hidden="true">
+    ${DATA.map(d => `<path data-p="${d.p}" d="${MAP.p[d.p].d}"/>`).join("")}
+    <g class="pin"><circle class="ping" r="28"/><circle class="dot" r="10"/></g>
+  </svg>`;
+}
+// Sorot provinsi + pindahkan penanda berdenyut (penting untuk provinsi kecil seperti DKI Jakarta / DIY)
+function showOnMap(box, prov){
+  box.querySelectorAll("path").forEach(p => p.classList.toggle("hl", p.dataset.p === prov));
+  const [x, y] = MAP.p[prov].c;
+  box.querySelector(".pin").setAttribute("transform", `translate(${x} ${y})`);
+}
+function applyMapSetting(){ document.body.classList.toggle("nomap", !settings.map); }
+
+/* ===================== UTIL ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+
+// Fisher–Yates: acak tanpa bias
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+const settings = {
+  mode:  store.get("ibukota_mode", "single"),
+  count: store.get("ibukota_count", 10),
+  time:  store.get("ibukota_time", 15),
+  sound: store.get("ibukota_sound", true),
+  map:   store.get("ibukota_map", 1),
+};
+
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.id); toast.id = setTimeout(() => t.classList.remove("show"), 3500);
+}
+function replay(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+/* ===================== MASKOT SVG (pin peta) ===================== */
+// acc: "cap" (topi wisuda), "flag" (bendera merah putih), "crown" (mahkota), "" (polos)
+function mascot(fill, dark, acc){
+  const extra = {
+    cap: `<path d="M30 20 60 6l30 14-30 12z" fill="#1e1b4b"/><path d="M44 25v8q16 9 32 0v-8" fill="#1e1b4b"/>
+          <path d="M90 20v14" stroke="#ffc928" stroke-width="3"/><circle cx="90" cy="36" r="3.5" fill="#ffc928"/>`,
+    crown: `<path d="M42 22 46 4l10 11 4-13 4 13 10-11 4 18z" fill="#ffc928" stroke="#b7860b" stroke-width="2.5" stroke-linejoin="round"/>`,
+    flag: `<path d="M94 80l12-2" stroke="${dark}" stroke-width="5" stroke-linecap="round"/>
+           <line x1="106" y1="36" x2="106" y2="112" stroke="#6b4f3a" stroke-width="4" stroke-linecap="round"/>
+           <rect class="m-cloth" x="106" y="36" width="24" height="9" fill="#e11d2a"/>
+           <rect class="m-cloth" x="106" y="45" width="24" height="9" fill="#fff"/>`,
+  }[acc] || "";
+  return `<svg class="masc" viewBox="0 0 130 150" aria-hidden="true">
+    <ellipse class="m-shadow" cx="60" cy="142" rx="26" ry="6"/>
+    <g class="m-body">
+      <path d="M60 14C36 14 18 32 18 56c0 30 42 70 42 70s42-40 42-70C102 32 84 14 60 14z" fill="${fill}" stroke="${dark}" stroke-width="4"/>
+      <ellipse cx="40" cy="36" rx="10" ry="6" fill="#fff" opacity=".45" transform="rotate(-35 40 36)"/>
+      <g class="m-eyes">
+        <circle cx="46" cy="54" r="7" fill="#1e1b4b"/><circle cx="74" cy="54" r="7" fill="#1e1b4b"/>
+        <circle cx="48" cy="51.5" r="2.4" fill="#fff"/><circle cx="76" cy="51.5" r="2.4" fill="#fff"/>
+      </g>
+      <ellipse cx="35" cy="68" rx="6" ry="3.5" fill="#ff7aa8" opacity=".75"/>
+      <ellipse cx="85" cy="68" rx="6" ry="3.5" fill="#ff7aa8" opacity=".75"/>
+      <path d="M52 70q8 8 16 0" fill="none" stroke="#1e1b4b" stroke-width="4" stroke-linecap="round"/>
+      ${extra}
+    </g>
+  </svg>`;
+}
+
+/* ===================== SUARA (Web Audio, tanpa file) ===================== */
+let actx;
+function sfx(type){
+  if(!settings.sound) return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === "suspended") actx.resume();
+    const seq = {
+      ok:[[660,.09],[880,.15]], bad:[[180,.3]], tick:[[520,.08]], go:[[784,.25]],
+      win:[[523,.12],[659,.12],[784,.12],[1047,.35]]
+    }[type];
+    let t = actx.currentTime;
+    for(const [f, d] of seq){
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type === "bad" ? "square" : "triangle";
+      o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(type === "bad" ? .12 : .25, t + .01);
+      g.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(g).connect(actx.destination);
+      o.start(t); o.stop(t + d + .02);
+      t += d;
+    }
+  }catch(e){}
+  if(type === "bad" && navigator.vibrate) navigator.vibrate(120);
+}
+
+/* ===================== FULLSCREEN ===================== */
+const ICON_FS_ON  = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const ICON_FS_OFF = '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+const ICON_SND_ON  = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>';
+const ICON_SND_OFF = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+const isFs = () => document.fullscreenElement || document.webkitFullscreenElement;
+
+function toggleFs(){
+  const el = document.documentElement;
+  if(isFs()){
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    return;
+  }
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if(!req){ toast("Browser ini tidak mendukung layar penuh. Di iPhone: Bagikan → Tambah ke Layar Utama."); return; }
+  const p = req.call(el);
+  if(p && p.catch) p.catch(() => toast("Layar penuh ditolak oleh browser."));
+}
+function updFs(){ $$('[data-act="fs"]').forEach(b => b.innerHTML = isFs() ? ICON_FS_OFF : ICON_FS_ON); }
+function updSound(){ $$('[data-act="sound"]').forEach(b => b.innerHTML = settings.sound ? ICON_SND_ON : ICON_SND_OFF); }
+document.addEventListener("fullscreenchange", updFs);
+document.addEventListener("webkitfullscreenchange", updFs);
+
+/* ===================== TIMER & PENJADWALAN ===================== */
+let pending = [], raf = 0, timer = {t0:0, dur:0};
+function later(fn, ms){ pending.push(setTimeout(fn, ms)); }
+function stopAll(){ pending.forEach(clearTimeout); pending = []; cancelAnimationFrame(raf); raf = 0; }
+function stopTimer(){ cancelAnimationFrame(raf); raf = 0; }
+function timeLeft(){ return timer.dur ? Math.max(0, 1 - (performance.now() - timer.t0) / timer.dur) : 0; }
+
+// frac = sisa waktu awal (1 = penuh); dipakai saat melanjutkan timer yang dijeda
+function startTimer(seconds, el, onEnd, frac = 1){
+  stopTimer();
+  el.classList.toggle("off", !seconds);
+  el.classList.remove("low");
+  el.style.setProperty("--t", frac);
+  timer = {t0: performance.now() - (1 - frac) * seconds * 1000, dur: seconds * 1000, seconds, el, onEnd};
+  if(!seconds) return;
+  const tick = () => {
+    const left = timeLeft();
+    el.style.setProperty("--t", left);
+    el.classList.toggle("low", left < .3);
+    if(left <= 0){ raf = 0; onEnd(); return; }
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+}
+
+function pauseTimer(){
+  if(!raf) return null;
+  const frac = timeLeft();
+  stopTimer();
+  return frac;
+}
+function resumeTimer(frac){
+  if(frac !== null) startTimer(timer.seconds, timer.el, timer.onEnd, frac);
+}
+
+/* ===================== MODAL (pengganti confirm) ===================== */
+// ask({...}) → Promise<boolean>; timer soal dijeda selama modal terbuka
+let modalDone = null;
+function ask({ title, text, yes = "Ya", no = "Batal", danger = false, masc = ["#38bdf8", "#0369a1", "cap"] }){
+  if(modalDone) modalDone(false);
+  const frac = pauseTimer();
+  $("#mTitle").textContent = title;
+  $("#mText").textContent = text;
+  $("#mYes").textContent = yes;
+  $("#mNo").textContent = no;
+  $("#mYes").className = "btn " + (danger ? "danger" : "primary");
+  $("#mMasc").innerHTML = mascot(...masc);
+  $("#modal").hidden = false;
+  $("#mYes").focus();
+  return new Promise(resolve => {
+    modalDone = ok => {
+      modalDone = null;
+      $("#modal").hidden = true;
+      if(!ok) resumeTimer(frac);
+      resolve(ok);
+    };
+  });
+}
+$("#mYes").addEventListener("click", () => modalDone && modalDone(true));
+$("#mNo").addEventListener("click", () => modalDone && modalDone(false));
+$("#modal").addEventListener("click", e => { if(e.target.id === "modal" && modalDone) modalDone(false); });
+
+/* ===================== GENERATOR SOAL ===================== */
+// 1 jawaban benar + 3 pengecoh (maks. 2 dari wilayah yang sama, sisanya acak)
+function makeQuestion(item){
+  const others = DATA.filter(d => d !== item);
+  const same = shuffle(others.filter(d => d.r === item.r)).slice(0, 2);
+  const rest = shuffle(others.filter(d => !same.includes(d)));
+  const distractors = [...same, ...rest].slice(0, 3).map(d => d.c);
+  return { prov: item.p, answer: item.c, options: shuffle([item.c, ...distractors]) };
+}
+// Ambil N provinsi acak tanpa pengulangan
+const buildQuiz = n => shuffle(DATA).slice(0, n).map(makeQuestion);
+
+function renderOpts(box, options, keys){
+  box.innerHTML = "";
+  options.forEach((o, i) => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.dataset.val = o;
+    b.innerHTML = `<span class="lt">${"ABCD"[i]}</span><span>${o}</span><kbd>${keys[i]}</kbd>`;
+    box.appendChild(b);
+  });
+}
+function revealOpts(box, answer){
+  box.querySelectorAll(".opt").forEach(b => {
+    if(b.dataset.val === answer) b.classList.add("correct");
+    else if(!b.classList.contains("wrong")) b.classList.add("dim");
+  });
+}
+function setFb(el, text, cls){ el.textContent = text; el.className = "fb " + (cls || ""); }
+
+/* ===================== NAVIGASI & MENU ===================== */
+let lastMode = "single";
+function show(id){ $$(".screen").forEach(s => s.classList.toggle("active", s.id === id)); }
+function goHome(keepSave){
+  stopAll();
+  if(!keepSave) clearGame();
+  $("#overlay").classList.remove("show");
+  const best = store.get("ibukota_best2", null);
+  $("#best").textContent = best ? `🏆 Skor terbaik Single: ${best.score}${best.name ? " — " + best.name : ""}` : "";
+  show("home");
+}
+// Single → 1 kotak nama siswa; VS → 2 kotak nama tim
+function setMode(m){
+  settings.mode = m;
+  store.set("ibukota_mode", m);
+  $$(".tile").forEach(t => t.classList.toggle("on", t.dataset.mode === m));
+  $("#nameSingle").hidden = m !== "single";
+  $("#nameVs").hidden = m !== "vs";
+}
+function startGame(){ settings.mode === "vs" ? startVs() : startSingle(); }
+
+/* ===================== SIMPAN & LANJUTKAN (tahan refresh) ===================== */
+const SAVE_KEY = "ibukota_game", SAVE_TTL = 6 * 3600 * 1000;   // simpanan kedaluwarsa setelah 6 jam
+function saveGame(mode){
+  const st = mode === "single" ? S : V;
+  store.set(SAVE_KEY, { mode, t: Date.now(), time: settings.time, state: { ...st, lock: true } });
+}
+function clearGame(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function resumeGame(g){
+  settings.time = g.time;
+  if(g.mode === "single"){
+    stopAll();
+    lastMode = "single";
+    Object.assign(S, g.state);
+    $("#sName").textContent = S.name;
+    $("#sTot").textContent = S.qs.length;
+    show("single");
+    nextSingle();
+  }else{
+    stopAll();
+    lastMode = "vs";
+    Object.assign(V, g.state, { state: [null, null] });
+    PL.forEach((p, k) => p.el.querySelector(".pl-name").textContent = V.names[k]);
+    updVsScore();
+    $("#vRound").textContent = `${V.i}/${V.qs.length}`;
+    show("vs");
+    countdown(nextVs);
+  }
+}
+function offerResume(){
+  const g = store.get(SAVE_KEY, null);
+  if(!g || !g.state || !g.state.qs || Date.now() - g.t > SAVE_TTL || g.state.i >= g.state.qs.length){ clearGame(); return; }
+  const st = g.state, who = g.mode === "single" ? st.name : st.names.join(" vs ");
+  ask({ title: "Lanjutkan permainan?", text: `${g.mode === "single" ? "Single" : "VS"} — ${who}, soal ${st.i + 1} dari ${st.qs.length}.`,
+        yes: "▶ Lanjutkan", no: "Mulai baru", masc: ["#22c55e", "#15803d", "flag"] })
+    .then(ok => ok ? resumeGame(g) : clearGame());
+}
+
+/* ===================== SINGLE MODE ===================== */
+const S = {};
+function startSingle(){
+  stopAll();
+  lastMode = "single";
+  const name = $("#nSolo").value.trim() || "Siswa";
+  store.set("ibukota_solo", $("#nSolo").value.trim());
+  Object.assign(S, { name, qs: buildQuiz(settings.count), i: 0, score: 0, streak: 0, maxStreak: 0, correct: 0, log: [], lock: true });
+  $("#sName").textContent = name;
+  $("#sTot").textContent = S.qs.length;
+  show("single");
+  nextSingle();
+}
+function updHud(){
+  $("#sNum").textContent = Math.min(S.i + 1, S.qs.length);
+  $("#sScore").textContent = S.score;
+  $("#sStreak").textContent = S.streak;
+}
+function nextSingle(){
+  if(S.i >= S.qs.length) return endSingle();
+  saveGame("single");
+  const q = S.qs[S.i];
+  S.lock = false;
+  updHud();
+  $("#sQ").textContent = q.prov;
+  showOnMap($("#sMap"), q.prov);
+  replay($("#sCard"), "pop");
+  renderOpts($("#sOpts"), q.options, ["1","2","3","4"]);
+  setFb($("#sFb"), "");
+  startTimer(settings.time, $("#sTimer"), () => answerSingle(null, null));
+}
+function answerSingle(val, btn){
+  if(S.lock) return;
+  S.lock = true;
+  const frac = timeLeft();
+  stopTimer();
+  const q = S.qs[S.i];
+  const ok = val === q.answer;
+  if(btn && !ok) btn.classList.add("wrong");
+  revealOpts($("#sOpts"), q.answer);
+
+  if(ok){
+    S.correct++; S.streak++; S.maxStreak = Math.max(S.maxStreak, S.streak);
+    // skor = 100 dasar + bonus kecepatan (maks 50) + bonus beruntun (maks 50)
+    const pts = 100 + Math.round(50 * frac) + Math.min(S.streak - 1, 5) * 10;
+    S.score += pts;
+    setFb($("#sFb"), `✅ Benar! +${pts}`, "ok");
+    sfx("ok");
+  }else{
+    S.streak = 0;
+    setFb($("#sFb"), `${val === null ? "⏰ Waktu habis!" : "❌ Salah."} Jawaban: ${q.answer}`, "bad");
+    sfx("bad");
+  }
+  S.log.push({ q, val, ok });
+  S.i++;
+  updHud();
+  later(nextSingle, ok ? 1100 : 2000);
+}
+function endSingle(){
+  clearGame();
+  const n = S.qs.length, pct = Math.round(S.correct / n * 100);
+  const best = store.get("ibukota_best2", null), isBest = !best || S.score > best.score;
+  if(isBest && S.score > 0) store.set("ibukota_best2", { score: S.score, name: S.name });
+  $("#rMasc").innerHTML = pct >= 70 ? mascot("#ffc928", "#d99a00", "crown") : mascot("#38bdf8", "#0369a1", "cap");
+  $("#rTitle").textContent = (isBest && S.score > 0) ? `Rekor Baru, ${S.name}!` : pct >= 70 ? `Hebat, ${S.name}!` : `Ayo Belajar Lagi, ${S.name}!`;
+  const wrong = S.log.filter(l => !l.ok);
+  $("#rBody").innerHTML = `
+    <div class="stats">
+      <div class="stat"><b>${S.score}</b><span>Skor</span></div>
+      <div class="stat"><b>${S.correct}/${n}</b><span>Benar</span></div>
+      <div class="stat"><b>${pct}%</b><span>Akurasi</span></div>
+      <div class="stat"><b>🔥${S.maxStreak}</b><span>Beruntun</span></div>
+    </div>
+    ${wrong.length ? `<h3 style="margin:18px 0 8px">Perlu dipelajari lagi</h3><ul class="review">${
+      wrong.map(l => `<li><b>${l.q.prov}</b> → ${l.q.answer} <span>(${l.val === null ? "waktu habis" : "jawabanmu: " + l.val})</span></li>`).join("")
+    }</ul>` : ""}`;
+  show("result");
+  sfx(pct >= 70 ? "win" : "tick");
+}
+
+/* ===================== VS MODE ===================== */
+const PL = [
+  { el: $("#p1"), keys: ["1","2","3","4"] },
+  { el: $("#p2"), keys: ["7","8","9","0"] },
+];
+const V = { lock: true };
+
+function startVs(){
+  stopAll();
+  lastMode = "vs";
+  const names = [$("#n1").value.trim() || "Tim A", $("#n2").value.trim() || "Tim B"];
+  store.set("ibukota_names", names);
+  Object.assign(V, { qs: buildQuiz(settings.count), i: 0, score: [0, 0], state: [null, null], names, lock: true });
+  PL.forEach((p, k) => {
+    p.el.querySelector(".pl-name").textContent = names[k];
+    p.el.querySelector(".pl-qtext").textContent = "";
+    p.el.querySelector(".opts").innerHTML = "";
+    p.el.classList.remove("win", "out");
+    setFb(p.el.querySelector(".fb"), "");
+  });
+  updVsScore();
+  $("#vRound").textContent = `0/${V.qs.length}`;
+  show("vs");
+  countdown(nextVs);
+}
+function countdown(done){
+  const ov = $("#overlay");
+  let n = 3;
+  ov.classList.add("show");
+  const step = () => {
+    // span baru tiap angka → animasi pop hanya pada angka, bukan latar overlay
+    if(n === 0){
+      ov.innerHTML = '<span class="pop">Mulai!</span>'; sfx("go");
+      later(() => { ov.classList.remove("show"); done(); }, 600);
+      return;
+    }
+    ov.innerHTML = `<span class="pop">${n--}</span>`; sfx("tick");
+    later(step, 700);
+  };
+  step();
+}
+function updVsScore(){ PL.forEach((p, k) => p.el.querySelector(".pl-score").textContent = V.score[k]); }
+
+function nextVs(){
+  if(V.i >= V.qs.length) return endVs();
+  saveGame("vs");
+  const q = V.qs[V.i];
+  V.state = [null, null];
+  V.lock = false;
+  $("#vRound").textContent = `${V.i + 1}/${V.qs.length}`;
+  PL.forEach((p, k) => {
+    p.el.classList.remove("win", "out");
+    const qt = p.el.querySelector(".pl-qtext");
+    qt.textContent = q.prov; replay(qt, "pop");
+    showOnMap(p.el.querySelector(".map-box"), q.prov);
+    // urutan pilihan tiap tim diacak berbeda supaya tidak bisa menyontek posisi tombol lawan
+    renderOpts(p.el.querySelector(".opts"), k === 0 ? q.options : shuffle(q.options), p.keys);
+    setFb(p.el.querySelector(".fb"), "");
+  });
+  startTimer(settings.time, $("#vTimer"), () => revealVs(null, "⏰ Waktu habis!"));
+}
+function answerVs(k, btn){
+  if(V.lock || V.state[k]) return;            // ronde terkunci / tim sudah menjawab
+  const q = V.qs[V.i], me = PL[k].el, foe = PL[1 - k].el;
+  if(btn.dataset.val === q.answer){
+    // tim pertama yang benar memenangkan ronde
+    V.state[k] = "right";
+    V.score[k]++;
+    me.classList.add("win");
+    setFb(me.querySelector(".fb"), "✅ Benar! +1", "ok");
+    setFb(foe.querySelector(".fb"), `${V.names[k]} lebih cepat!`, "bad");
+    sfx("ok");
+    updVsScore();
+    revealVs(k);
+  }else{
+    // salah → tim ini dikunci untuk ronde ini, lawan masih boleh menjawab
+    V.state[k] = "wrong";
+    btn.classList.add("wrong");
+    me.classList.add("out");
+    setFb(me.querySelector(".fb"), "❌ Salah! Tunggu lawan…", "bad");
+    sfx("bad");
+    if(V.state[1 - k] === "wrong") revealVs(null, "Dua-duanya salah!");
+  }
+}
+function revealVs(winner, msg){
+  if(V.lock) return;
+  V.lock = true;
+  stopTimer();
+  const q = V.qs[V.i];
+  PL.forEach(p => {
+    revealOpts(p.el.querySelector(".opts"), q.answer);
+    if(winner === null) setFb(p.el.querySelector(".fb"), `${msg} Jawaban: ${q.answer}`, "bad");
+  });
+  V.i++;
+  later(nextVs, 1800);
+}
+function endVs(){
+  clearGame();
+  const [a, b] = V.score;
+  const w = a === b ? -1 : a > b ? 0 : 1;
+  $("#rMasc").innerHTML = w < 0 ? mascot("#38bdf8", "#0369a1", "flag")
+    : w === 0 ? mascot("#ff8a1f", "#c25e00", "crown") : mascot("#8b5cf6", "#5b33c9", "crown");
+  $("#rTitle").textContent = w < 0 ? "Seri! Sama Kuat 🤝" : `${V.names[w]} Menang! 🏆`;
+  $("#rBody").innerHTML = `<div class="stats">${[0, 1].map(k => `
+    <div class="stat p${k + 1} ${w === k ? "lead" : ""}"><b>${V.score[k]}</b><span>${esc(V.names[k])}</span></div>`).join("")}
+  </div><p style="color:var(--muted);margin-top:10px">${V.qs.length - a - b} soal tidak terjawab benar</p>`;
+  show("result");
+  sfx("win");
+}
+
+/* ===================== INPUT ===================== */
+// Tombol toolbar (fullscreen, suara, menu) — dipakai di semua layar
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]");
+  if(!b) return;
+  const act = b.dataset.act;
+  if(act === "fs") toggleFs();
+  if(act === "sound"){ settings.sound = !settings.sound; store.set("ibukota_sound", settings.sound); updSound(); }
+  if(act === "home"){
+    ask({ title: "Keluar ke menu?", text: "Permainan yang sedang berjalan akan dihentikan dan skornya tidak disimpan.",
+          yes: "Ya, keluar", no: "Lanjut main", danger: true, masc: ["#ffc928", "#d99a00", "flag"] })
+      .then(ok => { if(ok) goHome(); });
+  }
+});
+
+// Single: click biasa
+$("#sOpts").addEventListener("click", e => {
+  const b = e.target.closest(".opt");
+  if(b) answerSingle(b.dataset.val, b);
+});
+
+// VS: pointerdown → responsif & mendukung multi-touch (2 siswa menekan bersamaan di flat panel)
+PL.forEach((p, k) => {
+  p.el.querySelector(".opts").addEventListener("pointerdown", e => {
+    const b = e.target.closest(".opt");
+    if(!b) return;
+    e.preventDefault();
+    answerVs(k, b);
+  });
+});
+
+// Keyboard (laptop): Single 1–4 / A–D, VS Tim A = 1–4, Tim B = 7 8 9 0, F = fullscreen
+document.addEventListener("keydown", e => {
+  if(modalDone){
+    if(e.key === "Escape") modalDone(false);
+    if(e.key === "Enter"){ e.preventDefault(); modalDone(true); }
+    return;
+  }
+  if(e.target.matches("input")){
+    if(e.key === "Enter"){ e.target.blur(); startGame(); }
+    return;
+  }
+  if(e.repeat) return;
+  const k = e.key.toLowerCase();
+  if(k === "f"){ toggleFs(); return; }
+  const cur = $(".screen.active").id;
+  if(cur === "single"){
+    let i = ["1","2","3","4"].indexOf(k);
+    if(i < 0) i = ["a","b","c","d"].indexOf(k);
+    const b = $("#sOpts").children[i];
+    if(b) answerSingle(b.dataset.val, b);
+  }else if(cur === "vs"){
+    PL.forEach((p, pi) => {
+      const i = p.keys.indexOf(k);
+      const b = i >= 0 && p.el.querySelector(".opts").children[i];
+      if(b) answerVs(pi, b);
+    });
+  }
+});
+
+// Pengaturan di menu
+$$(".seg").forEach(seg => {
+  const key = seg.dataset.key;
+  seg.querySelectorAll("button").forEach(b => {
+    b.classList.toggle("on", +b.dataset.v === settings[key]);
+    b.addEventListener("click", () => {
+      settings[key] = +b.dataset.v;
+      store.set("ibukota_" + key, settings[key]);
+      seg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      applyMapSetting();
+    });
+  });
+});
+
+$$(".tile").forEach(t => t.addEventListener("click", () => setMode(t.dataset.mode)));
+$("#btnStart").addEventListener("click", startGame);
+$("#rAgain").addEventListener("click", () => lastMode === "vs" ? startVs() : startSingle());
+$("#rHome").addEventListener("click", () => goHome());
+
+/* ===================== INIT ===================== */
+$("#brandIc").innerHTML = mascot("#ff6b6b", "#c23b3b", "");
+$$(".map-box").forEach(b => b.innerHTML = mapSvg());
+applyMapSetting();
+$("#crew").innerHTML = [
+  ["#ff8a1f", "#c25e00", "cap",   "Pintar"],
+  ["#ffc928", "#d99a00", "flag",  "Semangat"],
+  ["#38bdf8", "#0369a1", "crown", "Juara"],
+].map(([f, d, acc, label]) => `<figure>${mascot(f, d, acc)}<figcaption>${label}</figcaption></figure>`).join("");
+
+const savedNames = store.get("ibukota_names", null);
+// nama lama "Pemain 1/2" (versi awal) diganti kembali ke Tim A / Tim B
+if(savedNames){
+  $("#n1").value = /^pemain\s*1$/i.test(savedNames[0]) ? "Tim A" : savedNames[0] || "Tim A";
+  $("#n2").value = /^pemain\s*2$/i.test(savedNames[1]) ? "Tim B" : savedNames[1] || "Tim B";
+}
+$("#nSolo").value = store.get("ibukota_solo", "");
+setMode(settings.mode === "vs" ? "vs" : "single");
+updFs();
+updSound();
+goHome(true);
+offerResume();
+
+// PWA: service worker hanya jalan lewat http(s) / localhost, tidak lewat file://
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>

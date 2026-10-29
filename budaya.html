@@ -1,0 +1,1431 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6b3420">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="ikon/budaya.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="ikon/budaya.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<title>Kuis Budaya Nusantara</title>
+<style>
+  /* Tema: "Batik & Tenun" — latar soga bermotif kawung, merah marun, emas, pinggiran tumpal */
+  :root{
+    --ink:#2a160c; --muted:#76563f; --cream:#fff6e5; --cream2:#f6e3c2; --line:#e9cfa3;
+    --soga:#6b3420; --soga-d:#4a2214; --maroon:#8b1e2d; --maroon-d:#5e1320;
+    --gold:#e3a72f; --gold-d:#a8741a; --indigo:#22386b; --indigo-d:#16244a;
+    --green:#2f7d4f; --green-d:#1d5634; --red:#b3261e; --red-d:#7d1913;
+    --p1:#8b1e2d; --p2:#22386b;
+    --r:clamp(14px,2vmin,22px);
+    --lift:clamp(4px,.6vmin,6px);
+    --head:"Baloo 2","Nunito","Segoe UI",system-ui,sans-serif;
+    /* pinggiran tumpal (deret segitiga) */
+    --tumpal:conic-gradient(from 135deg at 50% 0,var(--gold) 90deg,transparent 0) 0 0/22px 11px repeat-x;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{
+    background-color:var(--soga);
+    background-image:
+      radial-gradient(ellipse 28% 14% at 50% 0%,#7f4129 97%,transparent 100%),
+      radial-gradient(ellipse 28% 14% at 50% 100%,#7f4129 97%,transparent 100%),
+      radial-gradient(ellipse 14% 28% at 0% 50%,#7f4129 97%,transparent 100%),
+      radial-gradient(ellipse 14% 28% at 100% 50%,#7f4129 97%,transparent 100%),
+      radial-gradient(circle at 50% 50%,#8d4b30 6%,transparent 7%);
+    background-size:64px 64px;
+    color:var(--ink);font-family:"Nunito","Segoe UI",system-ui,sans-serif;font-weight:700;
+    overflow:hidden;overscroll-behavior:none;
+    user-select:none;-webkit-user-select:none;
+    touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+  }
+  /* pita tumpal di tepi atas & bawah layar */
+  body::before,body::after{content:"";position:fixed;left:0;right:0;height:12px;z-index:0;background:var(--tumpal);pointer-events:none}
+  body::before{top:0;transform:scaleY(-1)}
+  body::after{bottom:0}
+  button,input{font:inherit;color:inherit}
+  button{border:0;cursor:pointer;touch-action:manipulation;background:none}
+  h1,h2,h3{font-family:var(--head);font-weight:800;line-height:1.1}
+
+  .screen{
+    position:fixed;inset:0;z-index:1;display:none;flex-direction:column;
+    padding:max(18px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right))
+            max(18px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+  }
+  .screen.active{display:flex}
+
+  /* ---------- kain: kartu krem berpinggir tumpal ---------- */
+  .kain{position:relative;background:var(--cream);border:3px solid var(--maroon);border-radius:var(--r);overflow:hidden}
+  .kain::before{content:"";position:absolute;left:0;right:0;top:0;height:11px;background:var(--tumpal);background-color:var(--maroon);pointer-events:none}
+
+  /* ---------- tombol: pinggir marun, bayangan bawah ---------- */
+  .tb,.tile,.seg button,.start,.opt,.btn{
+    background:var(--f,var(--cream));color:var(--c,var(--ink));
+    border:3px solid var(--d,var(--maroon));border-radius:16px;box-shadow:0 var(--lift) 0 var(--d,var(--maroon));
+    transition:transform .08s,box-shadow .08s,background .15s,opacity .2s;
+  }
+  .tb:active,.tile:active,.seg button:active,.start:active,.opt:active,.btn:active{
+    transform:translateY(var(--lift));box-shadow:0 0 0 var(--d,var(--maroon));
+  }
+
+  /* ---------- toolbar ---------- */
+  .tools{display:flex;gap:10px}
+  .tb{width:clamp(46px,6.4vmin,62px);height:clamp(46px,6.4vmin,62px);display:grid;place-items:center;font-size:clamp(18px,2.8vmin,28px)}
+  .tb[data-act="fs"]{--f:var(--gold);--d:var(--gold-d)}
+  .tb svg{width:56%;height:56%;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+  .tb.home-link{width:auto;padding:0 16px 0 10px;display:inline-flex;align-items:center;gap:4px;text-decoration:none;font-weight:900;font-size:clamp(14px,2vmin,18px)}
+  .tb.home-link svg{width:22px;height:22px}
+  @media (max-width:420px){.tb.home-link span{display:none}.tb.home-link{padding:0;width:clamp(46px,6.4vmin,62px);justify-content:center}}
+
+  /* ---------- gunungan (maskot) ---------- */
+  .gunungan{overflow:visible}
+  .gunungan .g-body{transform-origin:60px 134px;animation:gsway 3s ease-in-out infinite}
+  .gunungan .g-eyes{transform-box:fill-box;transform-origin:center;animation:blink 4s infinite}
+  @keyframes gsway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+  @keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+
+  /* ---------- ilustrasi SVG (garis tinta, animasi ringan) ---------- */
+  .art{width:100%;height:100%;display:block;overflow:visible}
+  .art *{stroke:var(--ink);stroke-width:3;stroke-linejoin:round;stroke-linecap:round}
+  .art .ns{stroke:none}
+  .a-sun{animation:sun 4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+  .a-cloud{animation:cloud 9s ease-in-out infinite alternate}
+  .a-sway{transform-origin:100px 136px;animation:sway 1.8s ease-in-out infinite alternate}
+  .a-spin{transform-box:fill-box;transform-origin:center;animation:spin 1.6s linear infinite}
+  .a-wave{transform-box:fill-box;transform-origin:left center;animation:wave 1s ease-in-out infinite alternate}
+  .a-clap{transform-box:fill-box;transform-origin:center bottom;animation:clap .5s ease-in-out infinite alternate}
+  .a-shake{transform-origin:100px 130px;animation:shake2 .35s ease-in-out infinite alternate}
+  .a-hit{transform-box:fill-box;transform-origin:right bottom;animation:hit .45s ease-in-out infinite alternate}
+  .a-swing{transform-origin:100px 40px;animation:swing 1.6s ease-in-out infinite alternate}
+  .a-note{font:800 26px "Baloo 2",sans-serif;fill:var(--maroon);stroke:none;animation:note 2.4s ease-out infinite}
+  .a-note.n2{animation-delay:-1.2s}
+  .a-steam{fill:none;stroke:#b08a6a;stroke-width:3;animation:steam 2.2s ease-in-out infinite}
+  .a-steam.s2{animation-delay:-.7s} .a-steam.s3{animation-delay:-1.4s}
+  @keyframes sun{50%{transform:scale(1.12)}}
+  @keyframes cloud{to{transform:translateX(26px)}}
+  @keyframes sway{from{transform:rotate(-5deg)}to{transform:rotate(5deg)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes wave{from{transform:skewY(-12deg)}to{transform:skewY(12deg)}}
+  @keyframes clap{to{transform:translateY(-6px) rotate(-8deg)}}
+  @keyframes shake2{from{transform:rotate(-4deg)}to{transform:rotate(4deg)}}
+  @keyframes hit{to{transform:rotate(-22deg)}}
+  @keyframes swing{from{transform:rotate(-6deg)}to{transform:rotate(6deg)}}
+  @keyframes note{0%{transform:translateY(10px);opacity:0}30%{opacity:1}100%{transform:translateY(-34px);opacity:0}}
+  @keyframes steam{0%{transform:translateY(8px);opacity:0}40%{opacity:.9}100%{transform:translateY(-16px);opacity:0}}
+
+  /* ---------- menu utama ---------- */
+  #home{overflow-y:auto}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;width:100%;max-width:1180px;margin:0 auto;flex:none}
+  .brand{display:flex;align-items:center;gap:10px;background:var(--cream);border:3px solid var(--gold);border-radius:18px;
+    padding:6px 16px 6px 8px;box-shadow:0 5px 0 var(--gold-d);min-width:0}
+  .brand .gunungan{flex:none;width:40px}
+  .brand b{display:block;font-family:var(--head);font-weight:800;font-size:clamp(17px,2.6vmin,26px);line-height:1.05;color:var(--maroon)}
+  .brand small{display:block;font-size:12px;font-weight:800;color:var(--muted)}
+  .main{
+    flex:none;width:100%;max-width:1180px;margin:18px auto 10px;
+    background:var(--cream);border:4px solid var(--gold);border-radius:28px;box-shadow:0 8px 0 var(--gold-d),0 24px 50px rgba(0,0,0,.35);
+    padding:clamp(18px,3vmin,32px);padding-top:clamp(30px,4vmin,42px);display:flex;flex-direction:column;gap:clamp(14px,2.4vmin,24px);
+    position:relative;overflow:hidden;
+  }
+  .main::before{content:"";position:absolute;left:0;right:0;top:0;height:14px;background:var(--tumpal);background-size:28px 14px;background-color:var(--maroon)}
+  .hero{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+    background:linear-gradient(135deg,var(--maroon),var(--maroon-d));color:#fff;border-radius:22px;padding:clamp(16px,3vmin,30px);
+    box-shadow:0 6px 0 #3d0c15;position:relative;overflow:hidden}
+  .hero::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.12;
+    background-image:radial-gradient(ellipse 28% 14% at 50% 0%,#fff 97%,transparent 100%),radial-gradient(ellipse 28% 14% at 50% 100%,#fff 97%,transparent 100%),
+      radial-gradient(ellipse 14% 28% at 0% 50%,#fff 97%,transparent 100%),radial-gradient(ellipse 14% 28% at 100% 50%,#fff 97%,transparent 100%);
+    background-size:48px 48px}
+  .hero-text{position:relative;z-index:1;flex:1 1 320px}
+  .chip{display:inline-block;background:var(--gold);color:var(--ink);font-weight:900;font-size:12px;letter-spacing:.8px;padding:4px 12px;border-radius:99px}
+  .hero h1{font-size:clamp(30px,5.6vmin,56px);margin:.2em 0 .15em;text-shadow:0 3px 0 rgba(0,0,0,.3)}
+  .hero p{max-width:560px;font-size:clamp(14px,2vmin,18px)}
+  .showcase{position:relative;z-index:1;width:clamp(170px,26vmin,250px);margin:0 auto;background:var(--cream);border:3px solid var(--gold);
+    border-radius:20px;padding:10px;color:var(--ink);text-align:center;box-shadow:0 6px 0 var(--gold-d);transform:rotate(-2deg)}
+  .showcase .art-wrap{aspect-ratio:4/3}
+  .showcase .cat-chip{margin-top:4px}
+
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:clamp(14px,2.4vmin,22px)}
+  .sec{padding:clamp(22px,2.8vmin,28px) clamp(14px,2.2vmin,22px) clamp(14px,2.2vmin,22px);display:flex;flex-direction:column;gap:10px}
+  .sec h2{font-size:clamp(19px,2.6vmin,25px);display:flex;align-items:center;gap:10px;color:var(--maroon)}
+  .num{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:17px;background:var(--gold);color:var(--ink);transform:rotate(45deg)}
+  .num span{transform:rotate(-45deg)}
+  .lbl{font-size:13px;font-weight:900;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-top:2px}
+  .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding-bottom:var(--lift)}
+  .tile{padding:10px 6px;display:flex;flex-direction:column;align-items:center;gap:0;font-family:var(--head);font-weight:800;font-size:clamp(20px,3vmin,28px)}
+  .tile .ic{font-size:1.15em;line-height:1.3}
+  .tile small{font-family:"Nunito",sans-serif;font-size:12px;font-weight:800;color:var(--muted)}
+  .tile.on{--f:var(--gold);--d:var(--gold-d)}
+  .tile.on small{color:var(--ink)}
+  .field{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .field label{font-weight:900;font-size:14px}
+  .field input{width:100%;min-height:52px;padding:10px 14px;border:3px solid var(--fc,var(--gold));border-radius:14px;background:#fff;
+    font-weight:800;font-size:clamp(16px,2.2vmin,20px);color:var(--ink);outline:none;user-select:text;-webkit-user-select:text}
+  .field input:focus{box-shadow:0 0 0 4px rgba(227,167,47,.4)}
+  .field input::placeholder{color:#a88d74}
+  .names{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .team-a{--fc:var(--p1)} .team-a label{color:var(--p1)}
+  .team-b{--fc:var(--p2)} .team-b label{color:var(--p2)}
+  .seg{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:var(--lift)}
+  .seg button{flex:1;min-width:58px;min-height:46px;padding:5px 9px;font-weight:900;font-size:clamp(14px,1.9vmin,17px)}
+  .seg button.on{--f:var(--maroon);--d:var(--maroon-d);--c:#fff}
+  .seg[data-key="cat"] button{flex:1 1 40%}
+  .cat-count{font-size:13px;color:var(--muted)}
+  .start{--f:var(--green);--d:var(--green-d);--c:#fff;font-family:var(--head);font-weight:800;font-size:clamp(20px,2.8vmin,28px);letter-spacing:1px;
+    align-self:center;min-width:min(260px,100%);padding:6px 36px;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:16px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+  .start .play-ic{display:grid;place-items:center;width:1.25em;height:1.25em;border-radius:50%;background:#fff;color:var(--green);font-size:.7em;text-shadow:none;animation:nudge 1.2s ease-in-out infinite}
+  @keyframes nudge{50%{transform:translateX(5px) scale(1.08)}}
+  .best{text-align:center;color:var(--maroon)}
+  .credit{text-align:center;font-size:12px;font-weight:700;color:var(--muted)}
+  .credit a{color:var(--indigo)}
+  .credit.dev{font-size:14px;color:var(--ink);margin-bottom:-8px}
+  .credit.dev b{color:var(--maroon)}
+
+  /* ---------- kartu soal yang bisa dibalik (depan: ilustrasi, belakang: peta) ---------- */
+  .slot{position:relative;min-height:0;min-width:0}
+  body > .card{display:none}
+  .card{position:absolute;inset:0;perspective:1400px}
+  .card-inner{position:relative;width:100%;height:100%;transition:transform .7s cubic-bezier(.4,.2,.2,1);transform-style:preserve-3d}
+  .card.flipped .card-inner{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    background:var(--cream);border:4px solid var(--gold);border-radius:var(--r);box-shadow:0 6px 0 var(--gold-d);overflow:hidden}
+  .face::before{content:"";position:absolute;left:0;right:0;top:0;height:12px;background:var(--tumpal);background-color:var(--maroon);z-index:1}
+  .front{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(4px,1vmin,10px);padding:18px 12px 12px;text-align:center}
+  .front .art-wrap{flex:1;min-height:0;width:100%;max-width:520px}
+  .cat-chip{display:inline-block;background:var(--maroon);color:#fff;font-weight:900;font-size:clamp(12px,1.8vmin,17px);padding:.15em .9em;border-radius:99px}
+  .q-name{font-size:clamp(24px,5.4vmin,58px);color:var(--maroon)}
+  .q-ask{color:var(--muted);font-size:clamp(14px,2.2vmin,22px)}
+  .back{transform:rotateY(180deg);background:#cfe9f1}
+  .back .map{position:absolute;inset:0;width:100%;height:100%}
+  .map *{vector-effect:non-scaling-stroke}
+  .map path{fill:#f3e6c6;stroke:#b28b55;stroke-width:1;stroke-linejoin:round}
+  .map path.tg{fill:var(--green);stroke:var(--ink);stroke-width:2.5}
+  .card.bad .map path.tg{fill:var(--red)}
+  .map .dot{fill:var(--gold);stroke:var(--ink);stroke-width:3}
+  .map .ping{fill:none;stroke:var(--gold-d);stroke-width:4;transform-box:fill-box;transform-origin:center;animation:ping 1.4s ease-out infinite}
+  @keyframes ping{from{transform:scale(.3);opacity:1}to{transform:scale(1.8);opacity:0}}
+  .reveal-tag{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:var(--cream);border:3px solid var(--maroon);
+    border-radius:14px;padding:.15em 1em;text-align:center;box-shadow:0 4px 0 var(--maroon);width:max-content;max-width:94%;z-index:1}
+  .reveal-tag b{display:block;font-family:var(--head);font-weight:800;font-size:clamp(15px,3vmin,32px);line-height:1.15;color:var(--maroon)}
+  .reveal-tag span{display:block;font-size:clamp(11px,1.7vmin,17px);color:var(--muted);line-height:1.25}
+
+  /* ---------- opsi jawaban ---------- */
+  .timer{--t:1;background:var(--cream);border:3px solid var(--gold);border-radius:99px;overflow:hidden;position:relative;height:clamp(16px,2.2vmin,24px)}
+  .timer .bar{position:absolute;inset:0;transform-origin:left;transform:scaleX(var(--t));
+    background:repeating-linear-gradient(90deg,var(--gold) 0 14px,#f1c46a 14px 20px)}
+  .timer.low .bar{background:var(--red)}
+  .timer.off{opacity:.4}
+  .opts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-auto-rows:1fr;gap:clamp(10px,1.8vmin,18px);flex:1;min-height:0;padding-bottom:var(--lift)}
+  .opt{position:relative;font-family:var(--head);font-weight:700;padding:.3em .6em;display:flex;align-items:center;justify-content:center;gap:.5em;
+    min-height:52px;min-width:0;overflow-wrap:break-word;flex-wrap:wrap;text-align:center;line-height:1.1}
+  .opt .lt{flex:none;width:1.65em;height:1.65em;border-radius:6px;transform:rotate(45deg);display:grid;place-items:center;font-size:.68em;background:var(--gold);color:var(--ink)}
+  .opt .lt i{font-style:normal;transform:rotate(-45deg)}
+  .opt:nth-child(2) .lt{background:var(--indigo);color:#fff} .opt:nth-child(3) .lt{background:var(--maroon);color:#fff} .opt:nth-child(4) .lt{background:var(--green);color:#fff}
+  .opt kbd{position:absolute;top:4px;right:8px;font-size:12px;opacity:.5;font-family:"Nunito",sans-serif}
+  .opt.correct{--f:var(--green);--d:var(--green-d);--c:#fff;animation:pulse .5s}
+  .opt.wrong{--f:var(--red);--d:var(--red-d);--c:#fff;animation:shake .4s}
+  .opt.correct .lt,.opt.wrong .lt{background:#fff;color:var(--ink)}
+  .opt.dim{opacity:.4}
+  @media (hover:none){.opt kbd{display:none}}
+  .fb{min-height:1.5em;text-align:center;font-weight:900;color:#fff}
+  .fb.ok,.fb.bad{align-self:center;padding:.1em .9em;border-radius:99px}
+  .fb.ok{background:var(--green)} .fb.bad{background:var(--red)}
+  @keyframes pulse{50%{transform:scale(1.05)}}
+  @keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+  @keyframes pop{0%{transform:scale(.7)}70%{transform:scale(1.08)}100%{transform:none}}
+  .pop{animation:pop .35s ease-out}
+
+  /* ---------- single ---------- */
+  .game{flex:1;display:flex;flex-direction:column;gap:clamp(10px,1.8vmin,18px);width:100%;max-width:1400px;margin:0 auto;min-height:0}
+  .hud{display:flex;align-items:center;gap:clamp(8px,1.4vmin,14px);font-size:clamp(14px,2.2vmin,22px);flex-wrap:wrap}
+  .hud>div:not(.tools){background:var(--cream);border:3px solid var(--gold);border-radius:99px;padding:.15em .8em;font-weight:900}
+  .hud .who{max-width:34vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hud .tools{margin-left:auto}
+  .play{flex:1;min-height:0;display:grid;gap:clamp(10px,2vmin,20px);grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+  .side{display:flex;flex-direction:column;gap:clamp(8px,1.4vmin,14px);min-height:0}
+  #single .opts{grid-template-columns:minmax(0,1fr)}
+  #single .opt{font-size:clamp(18px,3.4vmin,36px);justify-content:flex-start;text-align:left;padding-left:.7em}
+  #single .fb{font-size:clamp(15px,2.6vmin,26px)}
+  @media (orientation:portrait){
+    .play{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+    .side{height:clamp(220px,36vh,420px)}
+    #single .opts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+    #single .opt{justify-content:center;text-align:center;padding-left:.6em}
+  }
+
+  /* ---------- VS: satu kartu di tengah, panel tim di kiri/kanan ---------- */
+  .arena{flex:1;display:grid;min-height:0;gap:clamp(8px,1.6vmin,16px);
+    grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr);grid-template-areas:"p1 center p2"}
+  .pl{--pc:var(--p1);min-width:0;min-height:0;display:flex;flex-direction:column;gap:clamp(6px,1.2vmin,12px);
+    background:var(--cream);border:4px solid var(--pc);border-radius:var(--r);box-shadow:0 6px 0 rgba(0,0,0,.35);
+    padding:clamp(18px,2vmin,22px) clamp(8px,1.4vmin,16px) clamp(8px,1.4vmin,16px);position:relative;overflow:hidden;transition:background .2s}
+  .pl::before{content:"";position:absolute;left:0;right:0;top:0;height:11px;background:var(--tumpal);background-color:var(--pc)}
+  #p1{grid-area:p1} #p2{grid-area:p2;--pc:var(--p2)}
+  .pl.win{background:#e1f2e6}
+  .pl.out .opts{opacity:.55}
+  .pl-head{display:flex;justify-content:space-between;align-items:center;gap:8px;font-family:var(--head);font-weight:800;font-size:clamp(17px,2.8vmin,30px)}
+  .pl-name{color:var(--pc);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pl-score{background:var(--pc);color:#fff;border-radius:99px;padding:0 .6em;min-width:2.2em;text-align:center}
+  .pl-ask{text-align:center;color:var(--muted);font-size:clamp(13px,2vmin,20px)}
+  .pl .opts{grid-template-columns:minmax(0,1fr)}
+  .pl .opt{font-size:clamp(14px,2.8vmin,30px)}
+  .pl .fb{font-size:clamp(12px,2vmin,20px)}
+  .center{grid-area:center;display:flex;flex-direction:column;gap:10px;min-height:0;min-width:0}
+  .cbar{display:flex;align-items:center;gap:10px}
+  .cbar .timer{flex:1}
+  .round{font-family:var(--head);font-weight:800;font-size:clamp(15px,2.4vmin,24px);background:var(--gold);border-radius:12px;padding:0 .5em;box-shadow:0 4px 0 var(--gold-d)}
+  .center .slot{flex:1}
+  @media (orientation:portrait){
+    .arena{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1fr);grid-template-areas:"p2" "center" "p1"}
+    #p2{transform:rotate(180deg)}   /* berhadapan: HP/tablet diletakkan di meja */
+    .pl .opts{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+    .center .q-ask{display:none}
+  }
+
+  /* ---------- hasil ---------- */
+  #result{overflow-y:auto}
+  .res-wrap{margin:auto;width:100%;max-width:780px;text-align:center;display:flex;flex-direction:column;gap:16px;
+    padding:clamp(28px,3.6vmin,38px) clamp(18px,3vmin,32px) clamp(18px,3vmin,32px);border:4px solid var(--gold);border-radius:28px;box-shadow:0 8px 0 var(--gold-d)}
+  .res-wrap::before{height:14px;background-size:28px 14px}
+  .res-icon{font-size:clamp(56px,11vmin,100px);line-height:1}
+  .res-wrap h2{font-size:clamp(30px,5.6vmin,54px);color:var(--maroon)}
+  .res-wrap h3{color:var(--indigo)}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px;padding-bottom:var(--lift)}
+  .stat{--sc:var(--gold);--sd:var(--gold-d);background:#fff;border:3px solid var(--sc);border-radius:var(--r);box-shadow:0 5px 0 var(--sd);padding:12px}
+  .stat:nth-child(4n+2){--sc:var(--indigo);--sd:var(--indigo-d)} .stat:nth-child(4n+3){--sc:var(--maroon);--sd:var(--maroon-d)} .stat:nth-child(4n+4){--sc:var(--green);--sd:var(--green-d)}
+  .stat.p1{--sc:var(--p1);--sd:var(--maroon-d)} .stat.p2{--sc:var(--p2);--sd:var(--indigo-d)}
+  .stat.lead{background:#fff1cf;transform:scale(1.05)}
+  .stat b{display:block;font-family:var(--head);font-weight:800;font-size:clamp(26px,4.6vmin,44px)}
+  .stat span{color:var(--muted)}
+  .res-map{background:#cfe9f1;border:3px solid var(--gold);border-radius:16px;aspect-ratio:925/345;position:relative;overflow:hidden}
+  .res-map .map{position:absolute;inset:0;width:100%;height:100%}
+  .res-map path.ok{fill:var(--green)} .res-map path.ng{fill:var(--red)}
+  .res-map .pin{display:none}
+  .legend{display:flex;gap:16px;justify-content:center;font-size:13px;color:var(--muted);flex-wrap:wrap}
+  .legend i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:4px}
+  .review{list-style:none;text-align:left;background:#fff;border:3px solid var(--line);border-radius:var(--r);padding:6px 16px}
+  .review li{padding:8px 0;border-bottom:2px dashed var(--line)}
+  .review li:last-child{border:0}
+  .review span{color:var(--muted);font-size:.9em}
+  .res-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;padding-bottom:var(--lift)}
+  .btn{padding:10px 26px;font-family:var(--head);font-weight:800;font-size:clamp(18px,2.8vmin,26px);min-height:56px}
+  .btn.primary{--f:var(--green);--d:var(--green-d);--c:#fff}
+  .btn.danger{--f:var(--red);--d:var(--red-d);--c:#fff}
+
+  /* ---------- modal, overlay, toast ---------- */
+  .modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;padding:16px;background:rgba(42,22,12,.55);
+    backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:fade .2s}
+  .modal-card{width:min(440px,100%);border:4px solid var(--gold);border-radius:26px;box-shadow:0 8px 0 var(--gold-d),0 24px 60px rgba(0,0,0,.35);
+    padding:clamp(28px,3.4vmin,36px) clamp(18px,3vmin,28px) clamp(18px,3vmin,28px);text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center;animation:pop .3s ease-out}
+  .modal-card .gunungan{width:clamp(56px,9vmin,80px)}
+  .modal-card h3{font-size:clamp(23px,3.6vmin,32px);color:var(--maroon)}
+  .modal-card p{color:var(--muted);font-size:clamp(15px,2.2vmin,19px)}
+  .modal-btns{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;padding-bottom:var(--lift)}
+  .modal-btns .btn{padding:8px 12px}
+  @keyframes fade{from{opacity:0}}
+  #overlay{position:fixed;inset:0;z-index:20;display:none;place-items:center;background:rgba(42,22,12,.5);
+    font-family:var(--head);font-weight:800;font-size:clamp(90px,24vmin,240px);color:var(--gold);
+    -webkit-text-stroke:clamp(4px,.8vmin,8px) var(--maroon-d);paint-order:stroke fill;text-shadow:0 10px 0 var(--maroon-d)}
+  #overlay.show{display:grid}
+  #overlay span{display:inline-block}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:50;max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .3s}
+  #toast.show{opacity:1}
+
+  @media (max-width:520px){
+    .names{grid-template-columns:1fr}
+    .brand small{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= MENU ================= -->
+<section id="home" class="screen active">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-ic"></span>
+      <div><b>KUIS BUDAYA NUSANTARA</b><small>Rumah Adat • Tarian • Alat Musik • Makanan (IFP Ready)</small></div>
+    </div>
+    <div class="tools">
+      <a class="tb home-link" href="index.html" aria-label="Kembali ke Beranda"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg><span>Beranda</span></a>
+      <button class="tb" data-act="sound" aria-label="Suara"></button>
+      <button class="tb" data-act="fs" aria-label="Layar penuh"></button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="hero">
+      <div class="hero-text">
+        <span class="chip">BHINNEKA TUNGGAL IKA</span>
+        <h1>Kenali Budaya Nusantara!</h1>
+        <p>Rumah adat, tarian, alat musik, dan makanan khas dari seluruh penjuru Indonesia. Tebak asal provinsinya, lalu lihat letaknya di peta!</p>
+      </div>
+      <div class="showcase"><div class="art-wrap" id="showArt"></div><span class="cat-chip" id="showCat"></span></div>
+    </div>
+
+    <div class="grid3">
+      <section class="sec kain">
+        <h2><span class="num"><span>1</span></span> Mode &amp; Pemain</h2>
+        <div class="tiles">
+          <button class="tile" data-mode="single"><span class="ic">👤</span>Single<small>Main sendiri</small></button>
+          <button class="tile" data-mode="vs"><span class="ic">⚔️</span>VS<small>2 tim, 1 layar</small></button>
+        </div>
+        <div class="field" id="nameSingle">
+          <label for="nSolo">Nama Siswa</label>
+          <input id="nSolo" maxlength="16" placeholder="Tulis namamu…" autocomplete="off">
+        </div>
+        <div class="names" id="nameVs" hidden>
+          <div class="field team-a"><label for="n1">Tim A</label><input id="n1" maxlength="14" value="Tim A" autocomplete="off"></div>
+          <div class="field team-b"><label for="n2">Tim B</label><input id="n2" maxlength="14" value="Tim B" autocomplete="off"></div>
+        </div>
+      </section>
+
+      <section class="sec kain">
+        <h2><span class="num"><span>2</span></span> Kategori Soal</h2>
+        <div class="seg" data-key="cat">
+          <button data-v="campur">🎲 Campur</button><button data-v="rumah">🏠 Rumah Adat</button><button data-v="tari">💃 Tarian</button>
+          <button data-v="musik">🎵 Alat Musik</button><button data-v="makan">🍲 Makanan</button>
+        </div>
+        <p class="cat-count" id="catCount"></p>
+      </section>
+
+      <section class="sec kain">
+        <h2><span class="num"><span>3</span></span> Waktu &amp; Soal</h2>
+        <p class="lbl">Jumlah soal</p>
+        <div class="seg" data-key="count">
+          <button data-v="10">10</button><button data-v="20">20</button><button data-v="30">30</button>
+        </div>
+        <p class="lbl">Waktu per soal</p>
+        <div class="seg" data-key="time">
+          <button data-v="10">10 dtk</button><button data-v="15">15 dtk</button><button data-v="25">25 dtk</button>
+          <button data-v="30">30 dtk</button><button data-v="0">Bebas</button>
+        </div>
+      </section>
+    </div>
+
+    <button class="start" id="btnStart"><span class="play-ic">▶</span>MULAI</button>
+    <p class="best" id="best"></p>
+    <p class="credit dev">Development by <b>Andri Fernanda, S.Pd., Gr.</b> © 2026</p>
+    <p class="credit">Data peta: <a href="https://github.com/denyherianto/indonesia-geojson-topojson-maps-with-38-provinces" target="_blank" rel="noopener">Indonesia GeoJSON &amp; TopoJSON Maps (38 Provinces)</a> oleh Deny Herianto, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a> — disederhanakan. Ilustrasi adalah gambaran umum, bukan bentuk persis.</p>
+  </main>
+</section>
+
+<!-- ================= SINGLE ================= -->
+<section id="single" class="screen">
+  <div class="game">
+    <header class="hud">
+      <div class="who">👤 <span id="sName"></span></div>
+      <div>Soal <b id="sNum">1</b>/<span id="sTot">10</span></div>
+      <div>Skor <b id="sScore">0</b></div>
+      <div>🔥 <b id="sStreak">0</b></div>
+      <div class="tools">
+        <button class="tb" data-act="sound" aria-label="Suara"></button>
+        <button class="tb" data-act="fs" aria-label="Layar penuh"></button>
+        <button class="tb" data-act="home" aria-label="Menu">🏠</button>
+      </div>
+    </header>
+    <div class="timer" id="sTimer"><div class="bar"></div></div>
+    <div class="play">
+      <div class="slot" id="sSlot"></div>
+      <div class="side">
+        <div class="opts" id="sOpts"></div>
+        <div class="fb" id="sFb"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= VS ================= -->
+<section id="vs" class="screen">
+  <div class="arena">
+    <div class="pl" id="p1">
+      <div class="pl-head"><span class="pl-name">Tim A</span><span class="pl-score">0</span></div>
+      <p class="pl-ask">Berasal dari provinsi…</p>
+      <div class="opts"></div>
+      <div class="fb"></div>
+    </div>
+    <div class="center">
+      <div class="cbar">
+        <div class="round" id="vRound">1/10</div>
+        <div class="timer" id="vTimer"><div class="bar"></div></div>
+        <div class="tools">
+          <button class="tb" data-act="sound" aria-label="Suara"></button>
+          <button class="tb" data-act="fs" aria-label="Layar penuh"></button>
+          <button class="tb" data-act="home" aria-label="Menu">🏠</button>
+        </div>
+      </div>
+      <div class="slot" id="vSlot"></div>
+    </div>
+    <div class="pl" id="p2">
+      <div class="pl-head"><span class="pl-name">Tim B</span><span class="pl-score">0</span></div>
+      <p class="pl-ask">Berasal dari provinsi…</p>
+      <div class="opts"></div>
+      <div class="fb"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HASIL ================= -->
+<section id="result" class="screen">
+  <div class="res-wrap kain">
+    <div class="res-icon" id="rIcon"></div>
+    <h2 id="rTitle"></h2>
+    <div id="rBody"></div>
+    <div class="res-btns">
+      <button class="btn primary" id="rAgain">🔁 Main Lagi</button>
+      <button class="btn" id="rHome">🏠 Menu</button>
+    </div>
+  </div>
+</section>
+
+<!-- kartu soal tunggal: dipindahkan ke #sSlot atau #vSlot sesuai layar -->
+<div class="card" id="card">
+  <div class="card-inner">
+    <div class="face front">
+      <div class="art-wrap" id="qArt"></div>
+      <span class="cat-chip" id="qCat"></span>
+      <h2 class="q-name" id="qName"></h2>
+      <p class="q-ask" id="qAsk"></p>
+    </div>
+    <div class="face back">
+      <div class="reveal-tag"><b id="rvName"></b><span id="rvInfo"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card kain" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <span id="mIcon"></span>
+    <h3 id="mTitle"></h3>
+    <p id="mText"></p>
+    <div class="modal-btns">
+      <button class="btn" id="mNo"></button>
+      <button class="btn primary" id="mYes"></button>
+    </div>
+  </div>
+</div>
+
+<div id="overlay"></div>
+<div id="toast"></div>
+
+<script>
+/* ===================== DATA: 38 provinsi ===================== */
+const DATA = [
+  {p:"Aceh", c:"Banda Aceh", r:"Sumatera"},
+  {p:"Sumatera Utara", c:"Medan", r:"Sumatera"},
+  {p:"Sumatera Barat", c:"Padang", r:"Sumatera"},
+  {p:"Riau", c:"Pekanbaru", r:"Sumatera"},
+  {p:"Kepulauan Riau", c:"Tanjungpinang", r:"Sumatera"},
+  {p:"Jambi", c:"Jambi", r:"Sumatera"},
+  {p:"Sumatera Selatan", c:"Palembang", r:"Sumatera"},
+  {p:"Kepulauan Bangka Belitung", c:"Pangkalpinang", r:"Sumatera"},
+  {p:"Bengkulu", c:"Bengkulu", r:"Sumatera"},
+  {p:"Lampung", c:"Bandar Lampung", r:"Sumatera"},
+  {p:"DKI Jakarta", c:"Jakarta", r:"Jawa"},
+  {p:"Jawa Barat", c:"Bandung", r:"Jawa"},
+  {p:"Banten", c:"Serang", r:"Jawa"},
+  {p:"Jawa Tengah", c:"Semarang", r:"Jawa"},
+  {p:"DI Yogyakarta", c:"Yogyakarta", r:"Jawa"},
+  {p:"Jawa Timur", c:"Surabaya", r:"Jawa"},
+  {p:"Bali", c:"Denpasar", r:"Nusa"},
+  {p:"Nusa Tenggara Barat", c:"Mataram", r:"Nusa"},
+  {p:"Nusa Tenggara Timur", c:"Kupang", r:"Nusa"},
+  {p:"Kalimantan Barat", c:"Pontianak", r:"Kalimantan"},
+  {p:"Kalimantan Tengah", c:"Palangka Raya", r:"Kalimantan"},
+  {p:"Kalimantan Selatan", c:"Banjarbaru", r:"Kalimantan"},
+  {p:"Kalimantan Timur", c:"Samarinda", r:"Kalimantan"},
+  {p:"Kalimantan Utara", c:"Tanjung Selor", r:"Kalimantan"},
+  {p:"Sulawesi Utara", c:"Manado", r:"Sulawesi"},
+  {p:"Gorontalo", c:"Gorontalo", r:"Sulawesi"},
+  {p:"Sulawesi Tengah", c:"Palu", r:"Sulawesi"},
+  {p:"Sulawesi Barat", c:"Mamuju", r:"Sulawesi"},
+  {p:"Sulawesi Selatan", c:"Makassar", r:"Sulawesi"},
+  {p:"Sulawesi Tenggara", c:"Kendari", r:"Sulawesi"},
+  {p:"Maluku", c:"Ambon", r:"Maluku"},
+  {p:"Maluku Utara", c:"Sofifi", r:"Maluku"},
+  {p:"Papua", c:"Jayapura", r:"Papua"},
+  {p:"Papua Barat", c:"Manokwari", r:"Papua"},
+  {p:"Papua Barat Daya", c:"Sorong", r:"Papua"},
+  {p:"Papua Tengah", c:"Nabire", r:"Papua"},
+  {p:"Papua Pegunungan", c:"Wamena", r:"Papua"},
+  {p:"Papua Selatan", c:"Merauke", r:"Papua"},
+];
+
+/* ===================== BANK SOAL BUDAYA ===================== */
+// [provinsi, kategori, nama, ilustrasi, provinsi lain yang tidak boleh jadi pengecoh (budaya serupa)]
+// Silakan guru menambah / mengoreksi baris di sini.
+const JAWA_TENGAH_DIY = ["Jawa Tengah", "DI Yogyakarta"];
+const JAWA_JOGLO = ["Jawa Tengah", "DI Yogyakarta", "Jawa Timur"];
+const DAYAK = ["Kalimantan Barat", "Kalimantan Tengah", "Kalimantan Timur", "Kalimantan Utara"];
+const TIMUR = DATA.filter(d => d.r === "Papua" || d.r === "Maluku").map(d => d.p);
+const ITEMS = [
+  ["Aceh", "rumah", "Rumoh Aceh", "panggung"],
+  ["Aceh", "tari", "Tari Saman", "row"],
+  ["Aceh", "musik", "Serune Kalee", "flute"],
+  ["Aceh", "makan", "Mie Aceh", "noodle"],
+  ["Sumatera Utara", "rumah", "Rumah Bolon", "saddle"],
+  ["Sumatera Utara", "tari", "Tari Tor-Tor", "scarf"],
+  ["Sumatera Utara", "musik", "Garantung", "xylo"],
+  ["Sumatera Utara", "makan", "Arsik Ikan Mas", "fish"],
+  ["Sumatera Barat", "rumah", "Rumah Gadang", "gadang"],
+  ["Sumatera Barat", "tari", "Tari Piring", "plate"],
+  ["Sumatera Barat", "musik", "Saluang", "flute"],
+  ["Sumatera Barat", "makan", "Rendang", "dish"],
+  ["Riau", "rumah", "Rumah Selaso Jatuh Kembar", "panggung"],
+  ["Riau", "tari", "Tari Zapin", "scarf"],
+  ["Riau", "musik", "Kompang", "drum"],
+  ["Riau", "makan", "Gulai Ikan Patin", "bowl"],
+  ["Kepulauan Riau", "rumah", "Rumah Belah Bubung", "panggung"],
+  ["Kepulauan Riau", "tari", "Tari Mak Yong", "mask"],
+  ["Kepulauan Riau", "makan", "Gonggong", "dish"],
+  ["Jambi", "rumah", "Rumah Kajang Leko", "panggung"],
+  ["Jambi", "tari", "Tari Sekapur Sirih", "fan"],
+  ["Jambi", "musik", "Kelintang Kayu", "xylo"],
+  ["Jambi", "makan", "Gulai Tepek Ikan", "bowl"],
+  ["Sumatera Selatan", "rumah", "Rumah Limas", "limas"],
+  ["Sumatera Selatan", "tari", "Tari Gending Sriwijaya", "fan"],
+  ["Sumatera Selatan", "makan", "Pempek", "dish"],
+  ["Kepulauan Bangka Belitung", "rumah", "Rumah Rakit", "panggung"],
+  ["Kepulauan Bangka Belitung", "tari", "Tari Campak", "scarf"],
+  ["Kepulauan Bangka Belitung", "musik", "Dambus", "string"],
+  ["Kepulauan Bangka Belitung", "makan", "Lempah Kuning", "bowl"],
+  ["Bengkulu", "rumah", "Rumah Bubungan Lima", "limas"],
+  ["Bengkulu", "tari", "Tari Andun", "scarf"],
+  ["Bengkulu", "musik", "Dol", "drum"],
+  ["Bengkulu", "makan", "Pendap", "dish"],
+  ["Lampung", "rumah", "Rumah Nuwo Sesat", "panggung"],
+  ["Lampung", "tari", "Tari Sigeh Pengunten", "fan"],
+  ["Lampung", "musik", "Gamolan", "xylo"],
+  ["Lampung", "makan", "Seruit", "fish"],
+  ["DKI Jakarta", "rumah", "Rumah Kebaya", "limas"],
+  ["DKI Jakarta", "tari", "Tari Topeng Betawi", "mask"],
+  ["DKI Jakarta", "musik", "Tehyan", "string"],
+  ["DKI Jakarta", "makan", "Kerak Telor", "dish"],
+  ["Jawa Barat", "rumah", "Rumah Kasepuhan", "joglo"],
+  ["Jawa Barat", "tari", "Tari Jaipong", "fan"],
+  ["Jawa Barat", "musik", "Angklung", "angklung"],
+  ["Jawa Barat", "makan", "Nasi Timbel", "rice"],
+  ["Banten", "rumah", "Rumah Baduy (Sulah Nyanda)", "panggung"],
+  ["Banten", "tari", "Tari Rampak Bedug", "row"],
+  ["Banten", "makan", "Sate Bandeng", "fish"],
+  ["Jawa Tengah", "rumah", "Rumah Joglo", "joglo", JAWA_JOGLO],
+  ["Jawa Tengah", "tari", "Tari Gambyong", "scarf", JAWA_TENGAH_DIY],
+  ["Jawa Tengah", "makan", "Lumpia Semarang", "dish"],
+  ["DI Yogyakarta", "rumah", "Bangsal Kencono", "joglo", JAWA_JOGLO],
+  ["DI Yogyakarta", "tari", "Tari Serimpi", "scarf", JAWA_TENGAH_DIY],
+  ["DI Yogyakarta", "makan", "Gudeg", "rice", JAWA_TENGAH_DIY],
+  ["Jawa Timur", "rumah", "Rumah Joglo Situbondo", "joglo", JAWA_JOGLO],
+  ["Jawa Timur", "tari", "Tari Remo", "scarf"],
+  ["Jawa Timur", "musik", "Saronen", "flute"],
+  ["Jawa Timur", "makan", "Rawon", "bowl"],
+  ["Bali", "rumah", "Gapura Candi Bentar", "gapura"],
+  ["Bali", "tari", "Tari Kecak", "row"],
+  ["Bali", "musik", "Rindik", "xylo"],
+  ["Bali", "makan", "Ayam Betutu", "dish"],
+  ["Nusa Tenggara Barat", "rumah", "Rumah Dalam Loka", "panggung"],
+  ["Nusa Tenggara Barat", "tari", "Tari Lenggo", "fan"],
+  ["Nusa Tenggara Barat", "musik", "Gendang Beleq", "drum"],
+  ["Nusa Tenggara Barat", "makan", "Ayam Taliwang", "dish"],
+  ["Nusa Tenggara Timur", "rumah", "Rumah Musalaki", "limas"],
+  ["Nusa Tenggara Timur", "tari", "Tari Caci", "shield"],
+  ["Nusa Tenggara Timur", "musik", "Sasando", "sasando"],
+  ["Nusa Tenggara Timur", "makan", "Se'i", "skewer"],
+  ["Kalimantan Barat", "rumah", "Rumah Radakng", "long", DAYAK],
+  ["Kalimantan Barat", "tari", "Tari Monong", "scarf"],
+  ["Kalimantan Barat", "musik", "Tuma", "drum"],
+  ["Kalimantan Barat", "makan", "Bubur Pedas", "bowl"],
+  ["Kalimantan Tengah", "rumah", "Rumah Betang", "long", DAYAK],
+  ["Kalimantan Tengah", "tari", "Tari Balean Dadas", "scarf"],
+  ["Kalimantan Tengah", "makan", "Juhu Singkah", "bowl"],
+  ["Kalimantan Selatan", "rumah", "Rumah Bubungan Tinggi", "limas"],
+  ["Kalimantan Selatan", "tari", "Tari Baksa Kembang", "fan"],
+  ["Kalimantan Selatan", "musik", "Panting", "string"],
+  ["Kalimantan Selatan", "makan", "Soto Banjar", "bowl"],
+  ["Kalimantan Timur", "rumah", "Rumah Lamin", "long", DAYAK],
+  ["Kalimantan Timur", "tari", "Tari Gong", "fan", DAYAK],
+  ["Kalimantan Timur", "musik", "Sampek", "string", DAYAK],
+  ["Kalimantan Timur", "makan", "Nasi Bekepor", "rice"],
+  ["Kalimantan Utara", "rumah", "Rumah Baloy", "panggung"],
+  ["Sulawesi Utara", "rumah", "Rumah Walewangko", "panggung"],
+  ["Sulawesi Utara", "tari", "Tari Maengket", "row"],
+  ["Sulawesi Utara", "musik", "Kolintang", "xylo"],
+  ["Sulawesi Utara", "makan", "Tinutuan (Bubur Manado)", "bowl"],
+  ["Gorontalo", "rumah", "Rumah Dulohupa", "panggung"],
+  ["Gorontalo", "tari", "Tari Saronde", "scarf"],
+  ["Gorontalo", "musik", "Polopalo", "gong"],
+  ["Gorontalo", "makan", "Binte Biluhuta", "bowl"],
+  ["Sulawesi Tengah", "rumah", "Rumah Tambi", "limas"],
+  ["Sulawesi Tengah", "tari", "Tari Dero", "row"],
+  ["Sulawesi Tengah", "musik", "Lalove", "flute"],
+  ["Sulawesi Tengah", "makan", "Kaledo", "bowl"],
+  ["Sulawesi Barat", "rumah", "Rumah Boyang", "panggung"],
+  ["Sulawesi Barat", "tari", "Tari Patuddu", "fan"],
+  ["Sulawesi Barat", "makan", "Jepa", "cake"],
+  ["Sulawesi Selatan", "rumah", "Rumah Tongkonan", "saddle", ["Sulawesi Barat"]],
+  ["Sulawesi Selatan", "tari", "Tari Pakarena", "fan"],
+  ["Sulawesi Selatan", "musik", "Keso-keso", "string"],
+  ["Sulawesi Selatan", "makan", "Coto Makassar", "bowl"],
+  ["Sulawesi Tenggara", "rumah", "Rumah Banua Tada", "panggung"],
+  ["Sulawesi Tenggara", "tari", "Tari Lulo", "row"],
+  ["Sulawesi Tenggara", "makan", "Sinonggi", "bowl"],
+  ["Maluku", "rumah", "Rumah Baileo", "panggung"],
+  ["Maluku", "tari", "Tari Cakalele", "shield", ["Maluku Utara"]],
+  ["Maluku", "musik", "Totobuang", "gong"],
+  ["Maluku", "makan", "Kohu-kohu", "dish"],
+  ["Maluku Utara", "rumah", "Rumah Sasadu", "limas"],
+  ["Maluku Utara", "tari", "Tari Soya-Soya", "shield", ["Maluku"]],
+  ["Maluku Utara", "makan", "Gohu Ikan", "fish"],
+  ["Papua", "rumah", "Rumah Kariwari", "limas", TIMUR],
+  ["Papua", "tari", "Tari Yospan", "row", TIMUR],
+  ["Papua", "musik", "Tifa", "drum", TIMUR],
+  ["Papua", "makan", "Papeda", "bowl", TIMUR],
+  ["Papua Barat", "rumah", "Rumah Kaki Seribu", "panggung", TIMUR],
+  ["Papua Pegunungan", "rumah", "Rumah Honai", "honai", TIMUR],
+  ["Papua Pegunungan", "musik", "Pikon", "flute", TIMUR],
+].map(([prov, cat, name, art, x]) => ({ prov, cat, name, art, x: x || [] }));
+
+const CATS = {
+  rumah: { label: "🏠 Rumah Adat",  ask: "Rumah adat ini berasal dari provinsi…" },
+  tari:  { label: "💃 Tarian",      ask: "Tarian ini berasal dari provinsi…" },
+  musik: { label: "🎵 Alat Musik",  ask: "Alat musik ini berasal dari provinsi…" },
+  makan: { label: "🍲 Makanan Khas", ask: "Makanan khas ini berasal dari provinsi…" },
+};
+
+/* ===================== PETA (path SVG per provinsi) ===================== */
+// Disederhanakan dari "Indonesia GeoJSON & TopoJSON Maps (38 Provinces)" — Deny Herianto, CC BY 4.0.
+const MAP = {"vb":[-1,1,925,345],"p":{"Sulawesi Tengah":{"d":"M491.2 141l3.3-3.8 3.1 4.1-2.4-7.5 1-7.1-2.7-0.3-1.4-2.2 4.7 1.8 0.8-3.5-1.9-3 2.3 0.2-0.3-4.9 3.2-1.1-0.1-3.9 3.8-1.7 1.1-3.8 2.3 3.9 3.8 0.7 0.9-3.7 3.5-1.8 0-5.9 1.9-0.6 7 2.5 4.2-1.5-0.9 2.4 2.6 2.4 12.9 0.5-3.6 2.6-3-1.6-12.9 4-1.1 2.4 3.3 1.9 0.1 2-5.1 1.5-8.7-2.4-5.4 1.2-4.8 5.4-2 5.3 1 12.3 4.5 5.5 2-0.8 1.9 1.4 3.4 8.4 3-1.2 5.5 1.7 4.7-7.5 6-5.2 1.7 3 4.5 0.8 3.1-0.7 2-3.4 15.2-0.7-4.3-1.6 6.3-2.2 4.1 0.3 3.5 2.8-1.8 6.3-1.9 0-3-4-6 2.1-8.3 11.1-10.9 4.1-3.4 4.9-7.4-3 0.7 3.8 1.5-1.5 2.7 5.2 5.5 2.5 3.7 8.5 6.2 4-1.4 2.1 4.7 3.1-3.5 1.9-1-3.5-11.8-4 2.3-5.2-6.3-4.5-7.3-0.3 0.1-2.4-7.3-0.8-6.5-5.2-2.6 1.2-4.3-1.8-4.1 1.4 0-4.7-4-4.8 0.3-2-5.1-2.1 3.3-4.3-0.7-5.5zM557.6 156l-1.9-3.1 2.5-5.3 5.6-0.6 1.1 4.8 2.4-3.3 3.8 1-2 4.9-4-1.6-0.3 4.2-2.8-1 1.7-1.7-1-4.3-5.1 6zM533.4 135.5l1.7-3 3.2 0.3-0.6 2-3-0.9-1.3 1.6zM569.8 158.1l1.1-4.3 1.4 4.2-2.5 0.1zM547.7 131.3l-3.1-3 3.1 1.4 0 1.6zM539.5 132.5l-2.3-0.9 4-0.6-1.7 1.5zM562.5 196.2l-1.6-0.3 2.3-0.7-0.7 1z","c":[528.7,143.2],"b":[488.6,96.9,83.7,99.3]},"Sulawesi Barat":{"d":"M491.2 141l0.7 5.5-3.3 4.3 5.1 2.1-0.3 2 4 4.8 0 4.7-3.8 5.2 1.6 6.1-0.2 2.6-3.4 0.8 1.1 7.1-5 2.1 1.8 5.7-3.3-1.5-6.3 2.8-1.8-0.8-2.5-8.9 2-4-2.2-0.3-0.3-1.6 1.4-3.3 2 0.8 4.3-3.7 1.4-9.6 3.1-2.7-1.7-3.4 0.5-8.3 5.1-8.5z","c":[486.3,168.1],"b":[475.1,141,22.3,54.3]},"Sulawesi Selatan":{"d":"M489.5 194l-1.8-5.7 5-2.1-1.1-7.1 3.4-0.8 0.2-2.6-1.6-6.1 3.8-5.2 4.1-1.4 4.3 1.8 2.6-1.2 6.5 5.2 7.3 0.8-0.1 2.4 7.3 0.3 6.3 4.5-2.3 5.2-5.6 2.3-6.2-4.8-1.4 1.8 1.4-3.3-6.6-1.6-11.2 7.1 1.3 3.7 3.3 2.1 0.4 9.6-2 6.9 0.2 6.7 2 4.6-2.9 4.3-0.7 5.4 3.9 9.4-3.1-2.1-3.6 1.7-4-0.9-4.5 3.2-5.7-2.9-1.3-4.7 3.4-8-0.9-3.5 3.1-8.6 0-7.1-3.6-5 0.4-4.3zM508.8 247.9l1.1-8.5 1.5 5.7-1.8 8.7-0.8-5.9zM515.5 266.4l-2.8 0.2-0.3-2.5 3.1 2.3zM522 271.9l-0.3-1.8 1.6 0.9-1.3 0.9z","c":[511.4,200.5],"b":[487.1,163,48.6,109]},"Papua Tengah":{"d":"M797.7 209l4.2-5.7-1.5-4.9 3.6-2.5-3.7 0.1-1.9-3.2-3.9-1.6-2.3-4.6-0.5-6.5 1.5-1 0.5 4.2 3.2-1.3 0.3 7 5.1 2.6 4.7 0.2 3.1-0.7 8.4-7.9 1.7-5.1 3.9 1.9 2.7 4.6 4.6 0.3-0.1 4.2 2-0.6 0.1-1.8 1.5 2.6 2.1-0.2 1 3 1.2-0.3-1.1-4.6 2.7 1-1.8 1.5 1.1 0.6 2.1-3.6 5.1-1.3 10.2 0.2 3.4-1.9-0.8 4 1.5 1.1-0.1 6.9 3.8 0.9-0.1 2.9 1.9 1-7.1 1.4-1.5 5.9-3.8-1.4 0 2 2.3-0.3 0.5 1.4 1.9-1.1-2.7 5.7 1.8 1.8-3.1 1.1 2.5 2.6-4.3 8.8-35-14.5-14.4-0.6-6.5-4.3z","c":[829.4,203.2],"b":[791.7,178.1,75.4,50.2]},"Papua Barat":{"d":"M752 168l1.9-2.6-1.3-3.2 2.1-1.2 3.6-11.3 2.1 1.3 4.6-3.3 3.6-0.1 1.1-8.8 9.7-0.4 3.3 3-2.5 1.9 5.3 7.4-4.1 6.8 0.9 9.7 6.9 14.1 1.5-8.3 2.1 1.1 0.4 5-1.5 1 0.5 6.5 2.3 4.6 3.9 1.6 1.9 3.2 3.7-0.1-3.6 2.5 1.5 4.9-4.2 5.7-5.1-2.6 1.4-1-0.8-1.7 6-0.7-5.7-0.6-3.4 2.5-3.1-3 0 1.4-1.6-0.4 0.7 2.1-3.8-2.9 1.5-1.4-1-1.8-3.9 2-2.2-5.7-0.4 3.3-2.5-1.1-1.4-3.9 1.6-1.4-0.7-3.2 4.2-4-0.7-2.2-3.8 3.7-0.4 5.9-2.7-0.8 2.1 3.1-3.8 3.2 0.9 3.4-4.1 4.2-6.7 0.3-3.6-8 4.1-2.7-2.5-2.1-0.1-3.7-2.9 1.1-3.9-5.7-3.7-2-3.9 0.6-1.8-2.7 1.1-0.9-2.1-0.2 5.6-2.3 7.2 0.8 2.8 2.2 9.6-7.9 3.3 1.9 0.7 3.8 4.6-3.2 0.4 2.5 2.2 0.1 0.7-0.4-0.4-3.1 0.5-0.4 0.3-0.5 0.7 0.5 0.2-0.3 0.6 0.5 1.5 0-0.5-1.7 0.4-0.2 0.4 0.1-0.1-0.5-0.7-0.8 1-1.7-1-3.2-6.6 3-8.8-0.7-4.4 1.9-6.4-0.1-0.8-1.7zM766.8 206l4.4 2.8-2 0.2-2.4-3zM778.7 170.6l1 0.7 0 0.5-0.7 0.1-2.2-0.7 1.9-0.6zM783.5 162.3l-0.6-1.7 1.9-1.7-1.3 3.4zM774.6 175.1l0.9 0.6 0.4 1.3-0.2 0.1-0.6 0-0.1-0.7-1.1-0.1 0.7-1.2zM776.6 172.2l0.8 0.9-0.1 0.3-0.8-0.5-1 0.7-0.9-0.8 2-0.6zM788.1 165.2l-1.1 2.1 0.3-3.3 0.8 1.2zM782 202.3l1.7 1.9-2-0.5 0.3-1.4zM791.2 172.1l-1.1-0.3 1.4-1.5-0.3 1.8z","c":[771.5,173.7],"b":[739,138.4,64.9,70.7]},"Gorontalo":{"d":"M526.7 114.5l-0.1-2-3.3-1.9 1.1-2.4 12.9-4 3 1.6 3.6-2.6 5.2 0.2 7.5 4.2 2.2-2.8 3.6 0.7 3 2.4 0.1 2.1 5.2 2.5-1.2 5.1-4.1 0-4.1-3.7-13.4-0.3-11.6 2-5.8-2.6-3.8 1.5z","c":[547,110.4],"b":[523.3,103.2,47.4,14.4]},"Riau":{"d":"M103.6 108.8l-1.2-1.2 0.9-7-2.2-4.2 7.6-2.8-0.9-4.8-2.2-1 1.9-8.3-1.1-6.5 1.5 4.6 3.5 3.3 3.9 1.4 0.1-3.9 5.5-0.2 5.2 5 1.8 6.5 7.3 1.1 7.8 5.7 1.6 7.6 3.9 3.9 2.9 1.2 6.9 0.5 3.9 6.6 4.3-3.2 7.7 4.9 2 6.2-3.9-0.1-3.2 3.6 6.5 3.2-7.2 3.5 0.4 4.2-1.7 1.4-7-0.9-7.5 7.4-7-4.2-5.9-0.7-3.2 2-15.2-9.5-1.5-3.8-2.9 0.6-2-5.9 2.4-1.9-1.7-0.8 1.3-2.8-3.2 0.7-4.4-2.5-0.1-1.9-3.7 0-1.5-4.3 1.7-1.3-2.1-1.4zM128.4 87.6l-0.3-4 6-1.5 1.6 3.1-1.5 3.9-3.7 0.8-2.1-2.3zM151.4 108.6l-2.7-1.1-0.5-1.3 6.5-2.6 6.4 4.8-0.7 1.9-3.3-2.2-5.7 0.5zM144.5 99.1l-0.3-3.1 1.2-0.4 4.3 3.6-0.9 3.4 0.9 2.4-1.8 0.7-2.4-1.8-1-4.8zM142.4 94.8l-2.4-2.7 9.2 1.5 1 5.2-4.5-3.5-3.3-0.5zM157.9 104.8l-3-1.6-2.4 0.4 2.2-2.7 3.2 0.6 5.2 5.5-5.2-2.2zM164.1 113.6l-1.3-1 1.3-2.6 1.9 2.1-1.9 1.5zM149.8 104.5l-0.6-2.1 1.5-1 1.4 2.5-2.3 0.6z","c":[138.6,109.8],"b":[101.1,73,75.1,73.4]},"Papua Selatan":{"d":"M853.6 228.4l4.3-8.8-2.5-2.6 3.1-1.1 3.3-0.6 2.1 3 2.6-0.9 1.5 2.8 3.4-0.3 0.4-1.9 5.3 0 3.9 2.9 2.3-2.1-1.7 4.9 18.1 1.4-1.3 3-2-0.8 2.5 1.1 0.8-2.6 1.2 1.8 1.5-0.6-1.2-2 3.5-0.1 3.1 3.3 12.2 2.7 0 19.5-3.1 7.3 1.4 3.6 2.1 0.5 0 44.7-2.6-0.9-18.8-19.6-12.2 2.1-2.7-2.2-5.9 3.3-1.5-2.7 0.5-0.7 0.9 0 0.5-0.6-0.4-2.5 2.1-1.5 1.9-5.8-8.5-6.8 0.4-3.1-2.8-2.8 7.5-1.8 0.2-0.9-2.4-0.4-0.1-1.7-8.1-7-2.9-10.1-4.2-2.3-0.4-2.7 1.6-1.1-5.2-3.7-2.6 0.4-1.1-3zM854.4 292.2l-1.6 0.2 0.5-2.4 4-8.9 7.1-7.7 10.3-2 6.9 4-1.7 5.6-2 1 0.3 3.5-1.4 0-0.7 1.2-2.4 0.2-4.9 4.2-14.4 1.1zM876.4 286.9l1.5 4.8-6.6-0.7 2.3-3.6 2.8-0.5zM874.2 256.7l2.1 1.3 0.1 1.5 0.5 0.5 2 0.1-2 0.5-3.4-2.1 0.7-1.8zM873.1 258.9l2.8 1.7-2.4 0.8-0.4-2.5z","c":[887,260.9],"b":[852.8,215.3,67.6,91.2]},"DI Yogyakarta":{"d":"M300.1 281.8l2.2-4.3 3.2 0.5 3.4-3.2 0.9 4.5 5.9 1-0.6 4.2 1.6 3.6-16.6-6.3z","c":[308.4,281.4],"b":[300.1,274.8,16.6,13.2]},"Sumatera Barat":{"d":"M103.6 108.8l2.1 1.4-1.7 1.3 1.5 4.3 3.7 0 0.1 1.9 4.4 2.5 3.2-0.7-1.3 2.8 1.7 0.8-2.4 1.9 2 5.9 2.9-0.6 1.5 3.8 15.2 9.5 1.2 3.1-3.7 2.8-0.4 4.5-4.1 3.5-6.8 0.2 3.2 12.1-5.5 3.8-3.9-6 0.9-4.7-4.6-6.7-1.5-5.5-3.3-1.3-1.4-8.2-10.2-11.2-1.8-5.6-7.4-5-3.9 0 6.9-6.2 8 1.4 1.1-1.5-2.7-3 0.1-3.9 6.9 2.6zM85.5 156.8l0 2.1-1.2-2.1 0.6 3.1-2.4 0.3-6-3.9-4.6-8.3 1.8-4.8 4.5-1 7.3 14.6zM105.1 185l-1.3-5.2 5.3 4.5 0.2 2.6-1.7 0.5 1.7 3.5-4.2-5.9zM96.2 170.1l1.1 1.7-5.3-2.1-0.8-4.7 2.6 0.5 2.4 4.6zM102.5 180.7l-2.3 0.2-0.8-6.6 5 4.7-1.9 1.7z","c":[110.5,139.9],"b":[71.9,106.2,65.7,84.8]},"DKI Jakarta":{"d":"M234.5 245.8l4.9 0-1 5.2-2.8-0.7-1.9-2.9 0.8-1.6z","c":[236.6,248.4],"b":[233.7,245.8,5.7,5.2]},"Maluku":{"d":"M657.9 193.8l1-2.8-2.1-3.7 5.5-2-0.7-2.1 2.1-1.9 17.4-1.4 1.5 3.5 7.9-3.9 10 4.5 7.2-0.2 4.3 3.2 0.9 4.5 3.2 0.6 1.5 4.2-1.2 5.1-16-7.7-1.8-2.9-8.1-0.8 0.3 3.4-12.1-2.3 0.6-2.6-1.6-0.4-4.2 4.6-4.1 0.5-4.1-5.1-1.7 0.5 0.1-3.3-1.9 1.3-2.6 8-1.3-0.8zM633.8 201.2l-10.2-4.9-3.5-5.1 0.2-3.7 15.5-2.3 6.4 3.5-1.5 0.6 0.7 2 3.8 0.2-0.7 5.7-10.7 4zM726.6 283.1l-0.6 1.4-0.3-2-3.6 1.4 0-5.8 2.5 0.3-1.5-1 1.7-4 4.1-2.5 1.8-4.1 2.5-0.3 1.7 1.7-2.2 0.9-0.1 7.3-6 6.7zM616.1 284.1l2.8-6.9 4.8 1.3 8.6-3.3 4.6 3.5-5.9 1.8-1.7 3-7.9-1.7-5.3 2.3zM785 261.8l-1.1 0.8-2.8-3.2 1.2-6.4 2 0.8-1.9-1.3-0.1-5.3 8.3 8.4-5.6 6.2zM785.7 246.8l-0.1-1.8 3.2-0.7 1.9-1.9 5 3.5-1.1 4.1-2.3 1.4-6.6-4.6zM786.8 244.5l-0.9-2.2 2-2.5-3.7-1.4 2.7 0.2 2.1-3.6 1.5 0.3 0.2 1.3 0.2 0.4 0.6 0.1 0 0.3 0.4 0.7 0.5 0.4 0.3-0.2 1 1.2 0.1 1.2-7 3.8zM662.5 199.6l2.2-3-4.7 3-1.5-2 8.3-3.6 0.3 2.6-1.9-0.2 0.8 1.5-3.5 1.7zM691.6 281.8l1.9-2.1 3.9 2.4-2.3 3-3.5-3.3zM757 243.9l6.1-14.4-1.1 6.5-5 7.9zM754.8 243l-2.1-5.7 1.5-1.4 2.1 5.1-1.5 2zM661 288.7l-4.6-0.7-1.1-1.8 7.2 0.9-1.5 1.6zM715.9 290.9l2.8-4.4 4.6-0.1-7.4 4.5zM785.9 249.7l-3.6-3.7 0.5-1.7 1.7 0 0.2 2.2 2 2-0.8 1.2zM790.8 236.7l-0.2-1.3 0.5-0.2 4.2 2.1-1.3 1.2-1.2-0.3-0.5 0.3-0.9-1.2-0.5-0.3-0.1-0.3zM792 235.4l-1.9-0.3-0.1-2.7 4 1.8-2 1.2zM789.2 249.5l1.5 1.3-1.1 2.2-2.4-1.7 2-1.8zM673.3 196.1l-2-2.1 3.3 0.3 0.1 2.1-1.4-0.3zM673.4 267.2l-0.9 1.1-2-1.4 1.7-1.7 1.2 2zM739.1 267.3l-0.1 1.7-4.7-1.9 4.8 0.2zM647.1 277l0.2-3 2.2 0.3-2.4 2.7zM668.4 196.7l0.6-2.5 2.4 1.1-3 1.4zM794.3 253.2l1 1.4-1.7 0.7-0.8-1.8 1.5-0.3zM662.8 289.5l-1-1.4 2.6 0.1 0.3 1.2-1.9 0.1zM794.4 240.7l0.3 2.9-2.1-1.2 1.8-1.7zM794.3 258.5l-1.8 0.6 1.6-3.5 0.2 2.9zM791.8 253.3l-1.5 1.3 0.1-3.2 1.4 1.9zM797.5 249.7l-0.6 3.8-1-1.7 1.6-2.1zM658.9 184.3l-2.1 0.2 3-2-0.9 1.8zM722.7 273.2l-3.3 0.6 3.8-1.7-0.5 1.1zM652.5 190.1l0.6 1.2-3.4-1.3 2.8 0.1zM717.2 274.1l2.2 1.2-2.7-0.2 0.5-1zM729 205.3l-1.7-1.8 1.2-0.5 0.5 2.3zM720.5 278.2l-1.2 0.6 3.1-1.9-1.9 1.3z","c":[687.2,190.4],"b":[616.1,179.5,181.3,111.4]},"Bengkulu":{"d":"M120.4 173.6l5.5-3.8 5.2 3.2-0.3 2.4 2.7-0.7 3.7 3.9 4.1 0.8 4.1 5.5 4 0.8 0.5 3.7 9.9 2 0.1 3.1-1.8 1.8-1.9-1.7-0.8 3.6-2.8 2 7.3 4.2-1.5 1.5 3 3.2 7.4 1.5-0.7 3.4 1.6 1.5 2.7-0.9 1.1 3.8 2.3 1.2-3.9 2.8-5.3-2.2-20.5-16.5-1.4-6-12.3-8.8-6-10.2-6-5.1zM143.9 232.3l-2.2-1.5 1-0.9 4.9 1.8-0.1 2-3.6-1.4z","c":[148.1,196.1],"b":[120.4,169.8,55.4,63.9]},"Lampung":{"d":"M171.9 222.4l3.9-2.8 1.5 2.7 9.4-0.9-0.8-4.3 1.8-6.2 12.7-3.6 6-8.6 4 2.1 2.6 4.9 3.4 1.4 0.1 3.9 1.8 1.8-0.3 9.7-3.7 19.6-8.5-9.2-2.5 3.2 0.9 3.3-1.2 0.8-8.8-5.8-3-0.1 3.4 8.4-2.9 0.2-13.6-14.2 0.1-2.2-6.3-4.1z","c":[195.1,220.8],"b":[171.9,198.7,46.3,44.2]},"Papua":{"d":"M820.2 178.1l4.3-1.9 3.3-7.8 7.2 0.6 8.2-3.1 1.4-0.8-2.8-4.1 0.7-1.5 16.2-6.3 2.6 2.8 12.4 4.1 3.8 3.3 17.8 7.8 6.9-0.8 4.8 2.8 0.8-1.2 6.1 1.6 0.2 3 5.9-0.5 0 28.3-6.8-0.7 0.7 1.2-2.2 1.4-3.2-3.7-0.2-3 2.5 1 0 2.7 4.7-0.1 1-1.8-2.5 0.3-0.2-1.8-7.4-1-1-1.5-5.4 0.6-4.9-3.8-3.2 4.3-2.4-5.3-6.7-0.7-1.5-3-3.9 3 0.8-3.4-3.3-1.5-1.7 2.6-1.5-1.7 0.2-5.3-1.4-0.5-3.4 0.2-2.2 2.1-2.2-1.2-1.1 5-1.5-1.1 0.8-4-3.4 1.9-10.2-0.2-5.1 1.3-2.1 3.6-1.1-0.6 1.8-1.5-2.7-1 1.1 4.6-1.2 0.3-1-3-2.1 0.2-1.5-2.6-0.1 1.8-2 0.6 0.1-4.2-4.6-0.3-2.7-4.6-3.9-1.9zM810 157.6l-0.9-1.6 28.9 3.7-13 2.2-15-4.3zM815.5 141.5l-1.1-1.6 1.8-2.2 7 7 4.5 0.9-5 2.4-5.5-0.7-1.7-5.8zM809.4 138.8l0.4 1.3-2.5-3.5 7.6 2.3-2 2.8-3.5-2.9zM797.8 146.8l-1.9-2.2 0.9-1.9 2 0.6-0.3 2.2 1.1-1.2-1.8 2.5z","c":[870.1,179.7],"b":[795.9,136.6,124.1,69.7]},"Kepulauan Riau":{"d":"M262 47.5l-2.5-3.8 4.9-4.3 3.6 5.4-0.1 2.7-2 3.3-2.9 0.5-0.7-2.1 2.8-0.4-3.1-1.3zM184.6 102.9l2.3-2.6 4.8-0.8 1.4 6.4-2 1.8-2.3-1.9 0.2-2.9-2.3 1.2-2.1-1.2zM190.6 129.4l-2.1-1.7 2.7-4.1 3.8 4.2 1.5-1.1 3.1 2.9-2.9 0.7-2.6-2.2-3.5 1.3zM185.2 133.5l1.3-2.5 0 1.7 3.1-2 2.4 2.7-1.9 3.5-1.3-1.1-1.5 1.9-2.1-4.2zM178.9 103.8l-0.5-2.7 4.4-0.5-0.1 2.7-3.8 0.5zM169.3 111.1l-2.1-1.7 0.3-3.3 2.7 2.7-0.9 2.3zM215.7 65.9l-1.2 1.8-0.6-4.6 2.7 1.1-0.9 1.7zM184.8 106.7l-1.2 1.6-2-3.2 3.2 1.6zM168.8 104.2l-2.2-0.6 0.4-2.3 1.8 2.9zM179.3 104.6l-0.5 1.2-2.1-2.2 2.6 1zM185.2 108l-0.1 2.1-1.5-1.6 1.6-0.5zM224.1 61.2l0.5-1.8 1.1 2.6-1.6-0.8zM280.7 74.3l-1.1-1.4 2.7 0.7-1.6 0.7zM188.8 130.5l-1-0.7 1.7-0.2-0.7 0.9z","c":[263.8,45.4],"b":[166.6,39.4,115.8,98.3]},"Nusa Tenggara Barat":{"d":"M439 305.1l-4.2-1.2 1.5-3.5-1.1-2.9 6.9-6 5.8 1.9 3.4-1.2 4.8 6.3 9.4-1.4-1-2.1-10.7-6.2 4.7-3.2 4.4 1.2 2.7 4.5 3.6-2.3 3.7 0.8 0.3 4.8 2.8-4.9 4.1 0.6 0.6 6.5 3-1-1.1 3.2-4.4-1.4-4 1.2 4 0.5-0.1 1.6-3.1-1-6.8 1.5-0.3-5-5.4 5.2-21.4 4.5-2.1-1zM422.1 301.5l-2 0.6-3.6-2.8 5.1-0.7-0.9-5.7 1.3-1.6 5-3.1 7.4 2.8-4.5 9.3 1.5 1.5-2.7 0.6 0.7-1.9-1.2 0.3-0.7 2.3-5.4-1.6zM453.7 287.7l-3.1 4.1-1.2-0.7 0.2-3.4 4.1 0zM481.4 286.6l1.1 1.2-1.5 1.4-1-1.7 1.4-0.9z","c":[459.2,295.8],"b":[416.5,285.6,67.2,20.5]},"Jambi":{"d":"M136.5 143.6l3.2-2 5.9 0.7 7 4.2 7.5-7.4 7 0.9 1.7-1.4 7.4 5.7 11 0.1 2.6 13-1.7-0.8-16.4 4.6-1.7 2 1.3 1.6-2.2 6.4-4.5-4.5-0.4 3.7-7.1 0.3-1.5 4.4-4 2.5-6.2-1.1-4.1 2.9-4.1-0.8-3.7-3.9-2.7 0.7 0.3-2.4-5.2-3.2-3.2-12.1 6.8-0.2 4.1-3.5 0.4-4.5 3.7-2.8-1.2-3.1z","c":[156.3,159],"b":[122.7,138.6,67.1,40.7]},"Bali":{"d":"M398.5 293.4l-6.8-1.4-2.9-6.1 8.4 2 6.5-2.7 10.5 6.4-8.8 5.5-2 3.9-1.7-0.3 1.6-2.6-4.8-4.7zM409.7 299.2l1.6-1.8 1.3 2-2.9-0.2z","c":[401.5,293.1],"b":[388.8,285.2,25.4,15.7]},"Jawa Timur":{"d":"M318 288.2l1.1-3 3.1 0.1 0.9-2.9 2.8-0.9-2.3-3.7-0.6-8.6 6.1 2.2 0-2.3 3.1-2.3-0.7-4.5 2.3-3.2 5.4 0.1 3.3 2.9 8.6-1.2 2.1 7.3 3.7 1.5 0.9 6.6 5.2 2.5 12-0.1 5.9-2.5 1.1 1.8 7.1 2.1-2.1 14.5 4.9 4.4-5-0.2 0.6-1.2-2.5-1.6-5.8 0.3-14.4-6.6-11.8 3.3-17.1-3.9-2.2 2.4-5.2-2.3-10.5-1zM353.8 267.1l-0.1-2.5 3.5-2.7 21-0.6 4.3 2.3-4.7 1.6-0.1 1.5-5.6-0.2-1.8 2.6-16.5-2zM407.1 262.8l1 1-4-1.1 0.8-2.1 6.5 2.2-4.3 0zM351.9 241.1l0.4-2.1 2.2-0.3-0.1 2.2-2.5 0.2zM415.8 266.3l2.2 0.2-0.1 1.3-2.8-0.4 0.7-1.1zM366 292.9l2.2 0.7-2.8 0.3 0.6-1z","c":[355,279],"b":[318,238.7,100,60.3]},"Papua Barat Daya":{"d":"M769.7 138.8l-1.1 8.8-3.6 0.1-4.6 3.3-2.1-1.3-3.6 11.3-2.1 1.2 1.3 3.2-1.9 2.6-5.7 1.7-5.5-4.3 1-0.8-2.3-1.1-1.1-3.2 2.1-2-2.2 0.1-1.2-3-2.8 0.2 0.6-1.7 0-0.7-0.1-0.3-0.4-0.4-5.5 1.6-1.8-3.7-1.5 3.7-6.7-1.3 6.1-7.1-0.3-5.1 12.2-2.5 6.3-5.4 5.2-1.8 10.7 2.2 10.6 5.7zM704.7 128l3 0.6 1.2-0.8-3.3-1.6 10.3-2.1 6.8 1.3 4.1 4.3-1.9 1.9-2.8-1.4-2.4 1-7-5.3 2.2 3.9 3.7 0.8-3.6 2.3-1.1-2.9-2.3 0.4-0.2 1.7-1.1-3.3-3.6 0.5-2-1.3zM696.6 160.6l10.4-3.2 1.9 3.1-1.8 1.9 1.7 1.3-6 1.4-8.2-3.1 2-1.4zM715 148.7l-2.1-5.6 7.7-0.8 1 2.4-1.8 6-2.7 0.2-2.1-2.2zM713.8 141.8l-5-0.3 0.9-1.7 8.6-0.1-4.5 2.1zM734.8 153.1l-0.1 1.1-1.5 0.7-1.5-1.2 2.6-1.1 0.5 0.5zM712.3 133.7l-2.9 0.7 0.7-1.6 3.8 0.2-1.6 0.7zM695.8 148.1l-1.1-0.3 4.9-0.4-3.8 0.7z","c":[744.3,150.3],"b":[694.6,124.1,75.1,45.6]},"Sumatera Utara":{"d":"M65.1 38.2l-1.6 3.5 7.3 2.1 3.3 4.8 21 12 4.7 4.6-0.1 3.6 4.7 1.1 2 3.1 1.1 6.5-1.9 8.3 2.2 1 0.9 4.8-7.6 2.8 2.2 4.2-0.9 7 1.2 1.2-6.9-2.6-0.1 3.9 2.7 3-1.1 1.5-8-1.4-6.9 6.2-2.1-10.2-6.6-15.8 2-2.9-14.1-9.9 1.4-2.9-2.3-4.1 0.6-5.1-3.2-2.4 0.6-4.4-1.4-2.7 2.4-1.6-4.6-7.9 2-3.7 3.7-0.9-0.3-5.9 3.7-0.8zM50.3 105.9l-9.1-10 4.5-0.4 1.3-2.3 2.8 1.3 4 5.9 4.6 3.1-0.7 8.4-3.5 0.9-3.9-6.9zM67.2 134.9l1.6-6 1.3 6-2.9 0zM66.9 124.8l0.7-1 1.8 2.1 1.3 5.1-3.8-6.2zM72 122.1l-1.5-0.9 6.6 0.5-5.1 0.4z","c":[82.3,78.8],"b":[41.2,38.2,67.5,96.7]},"Sulawesi Tenggara":{"d":"M520.2 181.3l1.4-1.8 6.2 4.8 5.6-2.3 11.8 4 1 3.5 1.4 3.5-2-1.7 0 3.8-1.7 1.1 5 2.8 1.6 2.9 2.8 0-2.5 1.5 2.4 0.7 0.4 3.1 3.5-1.8 0.7 6.6-1.4 0.9-2.9-2.4 1.3 3.7-3-2.3-7.4 1.7-3.1 2.1 0.6 4.8-1.4 1.4-6.8-0.9-4.3-3.6 2.8-12.1-5.3-1.6-9.3-9.1-0.3-1.9 3.8-5 0.7-5.2-1.6-1.2zM551.5 234.7l1.6-4.2 3.1-2.1-1.3-0.1 0.1-3.7 2.4-10.1 4.2-3.2 2.7 9.9-1.5-2.7-2.2 0.8-2.2 8.2 2.5-0.7 3.5 3.2-7 3.1 0.5 2.2-2.2 2.7-1.7-1.4-1.3 1.3-1.2-3.2zM546.6 231.9l-1.3-1.4 2.3-4.7-1.2-5.2 7.6-4.3 1.3 5.7-3.5 5.2 1 3.9-2.4 1.7 0.1-3.3-1.2 2.6-1.6-1.7-1.1 1.5zM536.8 230.7l0-4.5 2.4-1 2 2.9-0.3 5-2 0.6-2.1-3zM558.8 206.1l1.5-2.5 4.9 2.3-2.8 3.3-3.6-3.1zM571.9 231.7l-1.2-2.7 2.2 0.9-1 1.8zM578.7 239.6l-0.6-1.2 1.8 1-1.2 0.2zM561.8 219.9l0.5 1-1.5-0.2 1-0.8z","c":[537.6,200.7],"b":[517.3,179.5,62.6,60.1]},"Nusa Tenggara Timur":{"d":"M500.2 300.4l-2.4 0.8-1.8-1.9 1.5-6.1 2.9-1.6 1.9 1.2 1.7-2.7 4.6-1.3 10.9 2.1 10.8 5.4 2.1-2.8 7.6-0.5 5.9 3.8 3.7-0.7 0.2-2.6 8.1-4 0.1-1.9-3.4 0.7 2.7-3 3.1 4.3-2.6 3.3-2.1-0.3 0.7 3.3-8.9 3.1-5.2-0.4-6.8 3.1-7.7-1.9-1 2.3-6.2 1-3.8-2.5-1.7 1.3-3.1-1.6-11.8 0.1zM570.3 330.8l-1.2 0.2 0.7-2.5 5.6-3.6-3.7-0.2-0.1-1.8 4.3-9.1 5.7-3.3 0.4 1.7 2.3-0.9 2.8 2.4 2.5-6.2 8.9-4.2 1.2 2 2.6-1.9 1.3 1-0.1 3.1-3.8 0.3 2 5.5-2 3.4-10.1 9.7-6.8 0.8-7 3.9-5.5-0.3zM486.6 319.3l-6.1-1.8-2-2.5 0.8-1.4 6.7-2.5 10.1 0.8 2.6-2.4 2.9 3.8 2.6 0.5 0.7 2.9 4.3-0.4 2.7 2.3 4.9 7.3-7.7 4.4-5.8-1.6-9.9-9.1-6.8-0.3zM589.4 292.7l-2.7-0.3 4.1-3.6-2.7 0.6 1.3-2.8 2.6-0.1 0.2 1.4 9.5-1 1 1.5-0.2 2.4-13.1 1.9zM556.7 342.6l-0.5-3 10-3.7-1.9-0.3 3.8-2.5-0.1 4.6-3.5 2.8-7.8 2.1zM565.8 295l-1.6-0.8 5.1-3.3-1.5-1.7 3.4-0.4-1.2 2.2 1.3 0.3 0.8-2.9 1.6 0.8 2.1-1.8 2.7 1.5-6.1 3.2-1.2 3.1-5.4-0.2zM582 294.9l-1.3-2.5-2.4 0.3 1-1.7 1.9-1.1 0.6 1.6 4.7-3.8-0.5 2.9-4 4.3zM560 292.1l2.9-3.3 3.8 0.5-0.8 2.5-5.9 0.3zM535.1 336.3l-1.4-0.8 3.3-2.7 3 0.1-0.3 2.1-4.6 1.3zM489.3 292.7l2.1 1.4-2.7 4.9-1-2.5 1.6-3.8zM558.9 295.7l-1.5 0 2.1-3 3.8-0.1-4.4 3.1zM492.9 296.2l0.5 1.5 2.5-1.4-2 3.9-1.8-1.1 0.8-2.9zM567 330.1l-1-0.7 3-3.1 1.1 1.4-2.2 0.4 0.2 2.7-1.1-0.7zM531.7 336.7l-1.3 0 2.2-0.7-0.9 0.7z","c":[528.2,294.2],"b":[478.5,285.3,125.1,57.3]},"Kalimantan Selatan":{"d":"M387 193.3l5-13 3.2-1.9 3.5-5.6 7.2-4.5 2.4-4 0.5-1.5-2.6-1.8 1.6-6.6 7.4-4.1-2.8 3.5 2.2 6.1-0.7 4.9 2.3 0.4 0.5 6.6 6.5-1.7 7.9 2.1-0.9 3-3.9-0.6 1.9 1.2-2.8 8.3-2.4-1.4-0.2-2.1-1 3.2 3.5 2.4-4.7 5.1-1.3 4.9-26.5 11.3-0.5-10.5-5.3-3.7zM422 205.2l-2-8.4 2.3-6.6 2.8-2 1.1 14.1-4.2 2.9zM428.1 195.9l-0.9 1.1-0.9-2 1.9-3.8-0.1 4.7z","c":[409.1,178.9],"b":[387,150.3,44.1,57.2]},"Aceh":{"d":"M65.1 38.2l-3.7 0.8 0.3 5.9-3.7 0.9-2 3.7 4.6 7.9-2.4 1.6 1.4 2.7-0.6 4.4 3.2 2.4-0.6 5.1 2.3 4.1-1.4 2.9-3.5-2-3.3 0.8-2.3-3.2-1.6-9.8-4.5-2.3-9.7-13.6-7.6-1.4-19.2-18.2-6.4-12.6-0.5-4.8 4.7-2.6 3.6 0.5 5.6 2.6 3.8 4.2 6.3 1.6 9.3-1.3 6.9 2.6 5.8-2.1 8.2 7.2 1.6 7.1 6 2.4-0.6 2.5zM16.1 71.3l-2.3-2.8 1.9-3 6.1 3.5 0.4 2.3 6.9 3.2 0.9 2.2-3.1 0.5-5.3-4.5-5.5-1.4zM43.6 79.3l2.4 0.4 0.8 3.2-4.5-3.2 1.3-0.4zM6.5 8.5l-2.2-2.6 2.7 0.4-0.5 2.2z","c":[34.8,45.7],"b":[3.9,5.9,61.9,77]},"Kalimantan Tengah":{"d":"M314.7 183.9l8.8-6.1-1.2-7.3-1.8-2 1.5-4.7-2.7-1.6 1.1-3.9-2.7-2.3 6.3-2.5 7-5.4 1.8-4.7 8.9-5.4 1.8 0.5 0.8-2.2 1.9 2.1 5-0.5 11.4-4.9 1.8 1.1 0-3.4 4.5-5.4-3.2-6.3 5.4-1.7 5.7-6.5 5.7-0.7 1.6 3.1 3.2 0.2 5.9-3.4 6.5-0.6 2.8 7.2-4.4 1-3.9 4.9 3.6 2 1.8 5 3.7-3.8 2.9-0.1-1.5 5.7 1.1 3.8 1.8 0.3-1.8 4.5 1.7 1.6 3.6-0.3 4.2 5.6 1.5-0.9-1.6 4.4-7.4 4.1-1.6 6.6 2.6 1.8-0.5 1.5-2.4 4-7.2 4.5-3.5 5.6-3.2 1.9-5 13-6.1-2.9-8.3 2.9-0.6-6-5.3 2.2-5.8-6-2 2.5 1.3 1.2-8.9 5.7-6.2-2.6-8.3 4.5-1.4-0.6 1.1-9.2-2.1-4.1-3.3 3.3-2.9-2.1-8.7 3.2-4.8-1.4z","c":[365.8,152.1],"b":[314.7,109.4,102.2,85.4]},"Papua Pegunungan":{"d":"M858.5 215.9l-1.8-1.8 2.7-5.7-1.9 1.1-0.5-1.4-2.3 0.3 0-2 3.8 1.4 1.5-5.9 7.1-1.4-1.9-1 0.1-2.9-3.8-0.9 0.1-6.9 1.1-5 2.2 1.2 2.2-2.1 3.4-0.2 1.4 0.5-0.2 5.3 1.5 1.7 1.7-2.6 3.3 1.5-0.8 3.4 3.9-3 1.5 3 6.7 0.7 2.4 5.3 3.2-4.3 4.9 3.8 5.4-0.6 1 1.5 7.4 1 0.2 1.8 2.5-0.3-1 1.8-4.7 0.1 0-2.7-2.5-1 0.2 3 3.2 3.7 2.2-1.4-0.7-1.2 6.8 0.7 0 26.5-12.2-2.7-3.1-3.3-3.5 0.1 1.2 2-1.5 0.6-1.2-1.8-0.8 2.6-2.5-1.1 2 0.8 1.3-3-18.1-1.4 1.7-4.9-2.3 2.1-3.9-2.9-5.3 0-0.4 1.9-3.4 0.3-1.5-2.8-2.6 0.9-2.1-3-3.3 0.6z","c":[887.3,206.8],"b":[854.7,182.7,65.4,48.1]},"Kepulauan Bangka Belitung":{"d":"M208 166.5l-2 0.6-3.8-2.6 5.5-4.5 0.2-3.9 4.2-1.5 2.2 2.5-1.2 1.8 3.1 1.4-1.8-5.5 3.4-0.8 3.2 2 5 16.4 10.8 3-2.6 1.5-2.4 5.5 3 1.7-0.1 1.6-4.4 0.6-1.7-2.8-9.6-3.1-0.3-6.8-2.6-2.3-0.4-4-4.9-1.7-2.8 0.9zM253.3 188.3l-1.4 0.2 0.1-5.8-1.4-0.3 2.6-7.2 6.6 0.2 5.6 3.6 0.5 2.6-4.4 7.3-1.8 0.5-2.9-4.1-0.1 1.8-3.4 1.2zM236.9 182.4l0.8 2.2-3.3-1.2 2.5-1zM248.5 182.6l-0.9-1.6 1.8-0.5-0.9 2.1z","c":[219.5,170.2],"b":[202.2,154,63.7,35.4]},"Sumatera Selatan":{"d":"M141.3 179.4l4.1-2.9 6.2 1.1 4-2.5 1.5-4.4 7.1-0.3 0.4-3.7 4.5 4.5 2.2-6.4-1.3-1.6 1.7-2 16.4-4.6 1.7 0.8 0.7 0.8-1.1 3.1 0.7 2.1 1.5 0.7 0.6 0 0.9-0.8 3.5 0.8 1.4 2-4 5.1 4-1.6 2.9 1.9 11.5 0.3-0.2 4.2 3.4 1.8 0.7 4.6 4.6 1.5 1 4.9-3.6 2.9-1.9 5.1 2.8 3.7-2.8 6.6-3.4-1.4-2.6-4.9-4-2.1-6 8.6-12.7 3.6-1.8 6.2 0.8 4.3-9.4 0.9-1.5-2.7-2.3-1.2-1.1-3.8-2.7 0.9-1.6-1.5 0.7-3.4-7.4-1.5-3-3.2 1.5-1.5-7.3-4.2 2.8-2 0.8-3.6 1.9 1.7 1.8-1.8-0.1-3.1-9.9-2-0.5-3.7-4-0.8-4.1-5.5zM191.1 161.1l1.7 1.2-0.7 1.7-2.1-1.1 1.1-1.8z","c":[181.6,189.5],"b":[141.3,156.6,80.7,65.8]},"Banten":{"d":"M234.5 245.8l-0.8 1.6 1.9 2.9-7.1 0.7 0.1 6.6 1.9 1.8-2.6 4.2-8-3.3-9.1 1.2-5.5-0.6-0.7-1.8 2.9-2 1.9 3.5 3.6-7 2.4 0.7 2.2-8.8 2.8-3.7 3 2.8 3.6-1.3 2.7 1.7 3.9-0.7 0.9 1.5zM205.2 254.4l-1.8 2.9-1-1.5 2.8-1.4z","c":[220.1,252.7],"b":[202.4,241.8,33.2,21.7]},"Sulawesi Utara":{"d":"M569.5 117.6l1.2-5.1-5.2-2.5-0.1-2.1-3-2.4 16.3 1.8 7.2-3.5 1.8-3.4 3.8-0.2-0.9-3.3 5.7-2.1-0.2-2.3 3.5-3.5 3.7 1.2 1.3 4.5-3 2-3.9 7.9-4.9 3.5-2.6 6.4-20.7 3.1zM633.8 44l2-4.3-2.2-2.4 1.2-4.2 2.3 1.2 1.1 4.3-2.4 5.1-2 0.3zM610 54.6l-1.5-5.3 2.6 1.4 2.4 4.8-1.4 1.1-2.1-2zM607.5 70.5l1.1-2.6 0 3.1-1.1-0.5zM635.6 49l-0.5-2.1 1.9 2-1.4 0.1z","c":[583.5,103.3],"b":[562.4,33.1,75.8,84.5]},"Kalimantan Utara":{"d":"M391.3 95.5l2.8-4.2 0-3.7 3.5-2-2.8-5.4 10.2-6.4-3.2-2.1 1.3-3.6-1.1-0.7 3.7-4.3 2.2 1.3 3.3-3.4-0.3-4.2 2.2-1.6-1.8-9.6 6.2-9.4 3.9 2.3 2.1-2.1 3.5-0.2 1.8 2 2.5-2 9.1 1.4 4.6-1.1 4.4 4 2.5 0.1-1.6 1.4-2-0.8 0.9 4.2 4.9 1.4 1.6 2.1-2-0.2 2.5 1.2-2.8 1.8-3.7-2-1.1 1.8-8.3 0.6 4.2-0.2-0.1 2.2 6.1 3.9-4.1 2.7 2.5 0.1-0.2 2.2 3.8 0-1 1.4 2.3 0.4 0 3.5 6 7-4.9 2.2-2.6-3.9-4.5-0.8-3.2 1.6-0.3-1.7-3.3 0.3-1.4 2.3-3.7-1.5-1.6 2.4-4.2-1.3-0.6 3.3-3.7 1.1 1.1 1.5-2.5 1.3-1.2 7-2.4 3.8-5.5 5.9-5.6 0.2-2.1 2.6-5.6-1.6-4-4.4-3.6 2.1-3.1-2.2zM450.8 43.5l2.8 2.7-4.4-0.8-0.3-1.5 1.9-0.4zM451.7 58.1l-0.7-2.9 2.3 0.5-0.3 3.5-1.3-1.1zM454.9 43.1l-1.5 1.6-1.6-2.3 1.6-1.3 1.5 2zM445 52.2l5.4 2.2-5.8-0.3 0.4-1.9zM458.5 42.8l-4.8-2.1 4.3 0 0.5 2.1z","c":[425.5,68.9],"b":[391.3,36.2,68.5,65.5]},"Kalimantan Timur":{"d":"M376.8 110.8l1.7-3.6-0.7-4.2 4.8-2.1 1.5-5.1 3.6-2.2 3.6 1.9 3.1 2.2 3.6-2.1 4 4.4 5.6 1.6 2.1-2.6 5.6-0.2 5.5-5.9 2.4-3.8 1.2-7 2.5-1.3-1.1-1.5 3.7-1.1 0.6-3.3 4.2 1.3 1.6-2.4 3.7 1.5 1.4-2.3 3.3-0.3 0.3 1.7 3.2-1.6 4.5 0.8 2.6 3.9 4.9-2.2 2.2 3-1.6 1.7-6.6 0.4 0.2 2.9 2.4 0.5 1.8 3.8 21.5 16.7-3.8 3.7-8.5-0.1-6.1-2-3.4-4.4 2.6 7-2.2-1.2-3.3 1.6-3.8 6.7-0.8 9-2 3.7 0.7 4.9-3.6 2.3-0.5 6.6-7.3 7.4-1.5 0.1-1.8-4.8 0.8 6.4-4.1 1.8 0.1 3-6.3 3.6 4.1-0.1 0.2 5.7-2 1 0.8 2.1 3.7-0.9-0.6 4.8-7.9-2.1-6.5 1.7-0.5-6.6-2.3-0.4 0.7-4.9-2.2-6.1 2.8-3.5 1.6-4.4-1.5 0.9-4.2-5.6-3.6 0.3-1.7-1.6 1.8-4.5-1.8-0.3-1.1-3.8 1.5-5.7-2.9 0.1-3.7 3.8-1.8-5-3.6-2 3.9-4.9 4.4-1-2.8-7.2-6.5 0.6-5.9 3.4-3.2-0.2-1.6-3.1-5.7 0.7zM447.5 138.4l1.2 3-2.7-4.8 1.5 1.8zM456.1 80.9l-1.5 1.3 0-1.6 1.5 0.3zM450.1 134.9l1.6-0.5-0.7 1.6-0.9-1.1zM448.3 136.5l1.2 0.8-3.8-1.6 2.6 0.8zM457.8 80.9l1.2 0.8-3-1.4 1.8 0.6zM450 132.6l-0.7 1 1.1-2.6-0.4 1.6zM450.2 132.9l-0.9 0.7 1.4-1.7-0.5 1z","c":[428.3,122.4],"b":[376.8,72.7,102.9,99.5]},"Jawa Tengah":{"d":"M276 277.5l-2.5-6.3-2.4-1.5 0.1-2.3 4.1-1.1 1.3-6.6 4.7-0.5 0.7 1.6 4.1 0.6 4-1.6 9.4 2.7 4.1-1.5 2.8 2.3 2.7-0.2 5.2-9.9 3.7-1.1 2.9 0.4 2.2 4.6 4.5 0.9 2.3-1.6 3.9 2.7-2.3 3.2 0.7 4.5-3.1 2.3 0 2.3-6.1-2.2 0.6 8.6 2.3 3.7-2.8 0.9-0.9 2.9-3.1-0.1-1.1 3-1.3-0.1-1.6-3.6 0.6-4.2-5.9-1-0.9-4.5-3.4 3.2-3.2-0.5-2.2 4.3-14.3-3.8-5.8 0.9-4-1.4zM277.4 278.1l3.6 1.4-5.2-1.6 1.6 0.2z","c":[302.5,270.2],"b":[271.1,252.1,62.7,36.1]},"Maluku Utara":{"d":"M648.5 103.1l-0.3-3.8 3.3-10.4 8.1-9 1.7 0.7-4.5 6.4 3.4 2.2 0 8.6-2.1 3.2-5.1 2.6 0.3 2.9 4.4 0.9 2.1-5.2 4.1-1.5-2.2-1.9 1.6-2.1 6.1-3.7 5.1-0.4-0.8 10-9.7 5.6 2.4 2.7 7.2 2.1 0 4.3 3.8 1.9-15.8-4.7-3.3 0.4-0.9 2.9 0.4 6.3 3.2 8.3 7.4 9.6-8.2-4.4-2.9-6.3-3.6-1.9 1-11.6-4.2-4.9 2.3-5.2-4.3-4.6zM588.7 164.5l-2-2.7 1.3-4.6 5.4-0.3 8 2.6 1.3-1.8 0.9 2 1.2-1.2 1.6 1.2-0.2 2.1-9 0-8.5 2.7zM649.3 157.9l-1.3-1.4 0.7-3.8 4.1-2.1 10.6 6.1-3 1.8-11.1-0.6zM663.9 78.4l7.4-7.3 2.4 2.9-3.3 8.7-4.4 0.6-2.1-4.9zM647 135.1l-0.4-4.1 2.5 1.3 2.3-2 2.4 3-1.8 3 6 3.1-2.7 1.9-2.7-2.5-3.1 1.7 0.1-3.9-2.6-1.5zM614 162.6l-5.5 0.4-1.9-2.5 19.9 0.3-12.5 1.8zM621.5 172.7l-1.7 0.1-2.2-4.6 0.5-4.7 1.7 1.1-0.5 3.1 2.2 5zM644.6 134.2l-2.2-0.4 0.6-4.6 2.8 0.6-1.2 4.4zM650 149.4l0.2-1.8 3.7 1-0.5 1.2-3.4-0.4zM644.9 139.3l-1.6-0.3 1.1-2.9 2.3 3.6-1.8-0.4zM646.5 108.9l0-2.2 1.3 1.5-1.3 0.7zM647 117.7l1.8-0.7-0.5 1.4-1.3-0.7zM647 152.7l-1.4-0.4 2-0.9-0.6 1.3z","c":[662.8,110.9],"b":[586.7,71.1,90.6,101.7]},"Kalimantan Barat":{"d":"M384.1 95.8l-1.5 5.1-4.8 2.1 0.7 4.2-1.7 3.6-5.7 6.5-5.4 1.7 3.2 6.3-4.5 5.4 0 3.4-1.8-1.1-11.4 4.9-5 0.5-1.9-2.1-0.8 2.2-1.8-0.5-8.9 5.4-1.8 4.7-7 5.4-6.3 2.5 2.7 2.3-1.1 3.9 2.7 1.6-1.5 4.7 1.8 2 1.2 7.3-8.8 6.1-2.2 0.7-1.2-3.8-6.2 2.3-3.4-14.3 0.4-5-4.1-3.2 2.7-3.3 0.3-6.8-2.9-2.4 0.7-1.6-4.2-2.7 0.6-1.7-2.5-2.2 0.7-2.2-11.1-3.6-0.5-4.6 2.1-1.1 0-5.6-2.2-3.8-3.4-1.8 0.3-5.7-1.8-3.8 2.6-2.5-1.3-4.5 1.5-0.4 1.2-6 4.2-3.5 1.8-5.7 5.7-2.4-1.7 2.8 0.9 2.7 2 0.2-0.5 3.3 3.6 3.9 2.5 0.3 2 3.9 2.6 0.5 1.6 3.8 5.6 2.7 13.5-4.5 5.2 1 0.6 1.5 3-1.7 3 1.2 2.3-2.7 4.2-0.3 1.3-6.3 5.5-2.6 11 0.3-1.1 3.1 11.2 1.7 1.9 2.1 6.8-4.6 4.6 0.8zM293.7 148.1l-3.6 2.1-2.5-1.1 2.2-5.6 1.2 0.6 1.8-0.4 0.9 0.7 0.7-0.6 0.7 0.5 0.5 2.6-1.9 1.2zM284.8 140.4l0.2-3.2 6.2 1.8 3.7 3-1.2 2.3-2.6-2.5-2.5-0.7-2.6 0.9-1.2-1.6zM279 155.3l0.2 1.5-2.6 0.5-0.6-1.9 3-0.1zM282.6 128.1l1.3 0.3-2.2 1 0.2 1.2-0.8-2.1 1.5-0.4zM287.3 141.6l0.8 1-2-0.6 1.2-0.4zM283.6 126.4l-0.1 1.5-0.2-2.7 0.3 1.2z","c":[330.5,133.6],"b":[276,82.7,108.1,101.9]},"Jawa Barat":{"d":"M227.9 263.6l2.6-4.2-1.9-1.8-0.1-6.6 7.1-0.7 2.8 0.7 1.8-8.6 6.7 1 2.6 3.6 4.1 1.7 4.4-0.9 4 2.8 2.2-1.9 3 0.5 3.5 4.4 1.3 5.6 4.6 0.5-1.3 6.6-4.1 1.1-0.1 2.3 2.4 1.5 2.5 6.3-5.7 0.5-0.4 1.9-3 0.5-10-1.7-8-4.6-18.4-1.9-3.1-2.6 3.4-5.9-2.9-0.1z","c":[252,261.4],"b":[227.4,242.4,49.2,38]}}};
+
+/* ===================== ILUSTRASI SVG ===================== */
+// Gambaran umum per jenis (bukan bentuk persis tiap budaya). viewBox 200×150.
+const C = { maroon:"#8b1e2d", gold:"#e3a72f", cream:"#fff6e5", cream2:"#f6e3c2", wood:"#c98b5a", dark:"#6b3420", leaf:"#2f7d4f", skin:"#c98b5a", indigo:"#22386b", thatch:"#c9a063" };
+const SKY = `<circle class="a-sun ns" cx="164" cy="30" r="15" fill="#f6c453"/><g class="a-cloud"><path class="ns" d="M18 40a9 9 0 0 1 16-6 11 11 0 0 1 20 4 7 7 0 0 1 0 14H22a8 8 0 0 1-4-12z" fill="#fff"/></g>`;
+const GROUND = `<path d="M8 136H192" fill="none"/>`;
+const stilts = xs => xs.map(x => `<path d="M${x} 108V134" fill="none"/>`).join("");
+const NOTES = `<text class="a-note" x="150" y="52">♪</text><text class="a-note n2" x="168" y="66">♫</text>`;
+const STEAM = `<path class="a-steam" d="M80 62q-6-8 0-16t0-16"/><path class="a-steam s2" d="M100 58q-6-8 0-16t0-16"/><path class="a-steam s3" d="M120 62q-6-8 0-16t0-16"/>`;
+const PLATE = `<ellipse cx="100" cy="122" rx="74" ry="16" fill="${C.cream}"/><ellipse cx="100" cy="120" rx="54" ry="10" fill="none" stroke-width="2"/>`;
+const dancerBody = (dress, arms) => `
+  <path d="M100 56 72 132h56z" fill="${dress}"/><path d="M84 92h32" stroke="${C.gold}" stroke-width="5"/>
+  ${arms}
+  <circle cx="100" cy="40" r="13" fill="${C.skin}"/><path d="M87 36q13-16 26 0" fill="${C.dark}"/><circle cx="113" cy="30" r="6" fill="${C.dark}"/>`;
+
+const ART = {
+  /* --- rumah adat --- */
+  panggung: () => `${SKY}${GROUND}${stilts([58, 80, 120, 142])}
+    <rect x="50" y="72" width="100" height="38" fill="${C.wood}"/><rect x="90" y="80" width="20" height="30" fill="${C.dark}"/>
+    <rect x="60" y="82" width="20" height="14" fill="${C.cream}"/><rect x="120" y="82" width="20" height="14" fill="${C.cream}"/>
+    <path d="M36 74 100 32l64 42z" fill="${C.maroon}"/><path d="M92 110l-8 24M108 110l8 24M88 120h24" fill="none"/>`,
+  gadang: () => `${SKY}${GROUND}${stilts([52, 76, 124, 148])}
+    <rect x="40" y="78" width="120" height="32" fill="${C.wood}"/><rect x="40" y="78" width="120" height="8" fill="${C.gold}"/>
+    <rect x="62" y="92" width="16" height="12" fill="${C.cream}"/><rect x="122" y="92" width="16" height="12" fill="${C.cream}"/><rect x="92" y="90" width="16" height="20" fill="${C.dark}"/>
+    <path d="M30 80C42 62 32 42 18 26c30 18 52 28 82 30 30-2 52-12 82-30-14 16-24 36-12 54z" fill="${C.maroon}"/>
+    <path d="M86 56c8-12 14-20 14-34 0 14 6 22 14 34z" fill="${C.maroon}"/>`,
+  joglo: () => `${SKY}${GROUND}
+    <path d="M58 92v42M142 92v42M80 92v42M120 92v42" fill="none"/>
+    <rect x="52" y="92" width="96" height="10" fill="${C.wood}"/><rect x="88" y="104" width="24" height="30" fill="${C.dark}"/>
+    <path d="M26 94l26-24h96l26 24z" fill="${C.maroon}"/><path d="M68 70l14-30h36l14 30z" fill="#5e1320"/>`,
+  honai: () => `${SKY}${GROUND}
+    <rect x="58" y="90" width="84" height="44" rx="6" fill="${C.wood}"/><path d="M68 98v30M80 98v30M120 98v30M132 98v30" fill="none" stroke-width="2"/>
+    <rect x="90" y="106" width="20" height="28" fill="${C.dark}"/>
+    <path d="M42 98Q100 2 158 98z" fill="${C.thatch}"/><path d="M60 80q40-10 80 0M70 60q30-8 60 0" fill="none" stroke-width="2"/>`,
+  saddle: () => `${SKY}${GROUND}${stilts([66, 90, 110, 134])}
+    <rect x="58" y="76" width="84" height="34" fill="${C.wood}"/>
+    <path d="M66 84h68M66 94h68" stroke="${C.gold}" stroke-width="4"/><circle cx="100" cy="100" r="6" fill="${C.maroon}"/>
+    <path d="M16 40Q100 82 184 40l-30 38H46z" fill="#4a2214"/>`,
+  limas: () => `${SKY}${GROUND}${stilts([56, 82, 118, 144])}
+    <rect x="48" y="80" width="104" height="30" fill="${C.wood}"/><rect x="90" y="86" width="20" height="24" fill="${C.dark}"/>
+    <rect x="58" y="88" width="20" height="12" fill="${C.cream}"/><rect x="122" y="88" width="20" height="12" fill="${C.cream}"/>
+    <path d="M38 82l22-20h80l22 20z" fill="${C.maroon}"/><path d="M64 62l36-32 36 32z" fill="#5e1320"/>`,
+  long: () => `${SKY}${GROUND}${stilts([24, 46, 68, 90, 110, 132, 154, 176])}
+    <rect x="16" y="84" width="168" height="26" fill="${C.wood}"/>
+    ${[30, 62, 94, 126, 158].map(x => `<rect x="${x}" y="90" width="14" height="12" fill="${C.cream}"/>`).join("")}
+    <path d="M6 86l24-22h140l24 22z" fill="${C.maroon}"/><path d="M30 64l-8-10M170 64l8-10" fill="none"/>`,
+  gapura: () => `${SKY}${GROUND}
+    <path d="M30 134V74l10-8V52l10-8V30l10-8 10 8v14l8 6v84z" fill="#b5651d"/>
+    <path d="M170 134V74l-10-8V52l-10-8V30l-10-8-10 8v14l-8 6v84z" fill="#b5651d"/>
+    <path d="M40 80h38M50 58h28M140 58h-28M160 80h-38" fill="none" stroke-width="2"/>
+    <path d="M88 134l4-30h16l4 30z" fill="${C.cream2}"/>`,
+
+  /* --- tarian --- */
+  fan: () => `${GROUND}<g class="a-sway">${dancerBody(C.maroon, `<path d="M90 64 62 52M110 64l28-12" fill="none"/>`)}
+    <path class="a-wave" d="M62 52 40 34a28 28 0 0 1 30 2z" fill="${C.gold}"/><path class="a-wave" d="M138 52l22-18a28 28 0 0 0-30 2z" fill="${C.gold}"/></g>`,
+  plate: () => `${GROUND}<g class="a-sway">${dancerBody(C.maroon, `<path d="M90 64 60 50M110 64l30-14" fill="none"/>`)}
+    <g class="a-spin"><ellipse cx="56" cy="46" rx="16" ry="6" fill="#fff"/></g><g class="a-spin"><ellipse cx="144" cy="46" rx="16" ry="6" fill="#fff"/></g></g>`,
+  scarf: () => `${GROUND}<g class="a-sway">${dancerBody(C.indigo, `<path d="M90 64 66 80M110 64l26-18" fill="none"/>`)}
+    <path class="a-wave" d="M136 46q20 10 30 0t24 6" fill="none" stroke="${C.gold}" stroke-width="6"/>
+    <path class="a-wave" d="M66 80q-16 14-30 6t-22 8" fill="none" stroke="${C.maroon}" stroke-width="6"/></g>`,
+  mask: () => `${GROUND}<g class="a-sway">${dancerBody(C.maroon, `<path d="M90 64 66 78M110 64l24 14" fill="none"/>`)}
+    <ellipse cx="100" cy="41" rx="12" ry="14" fill="#fff"/><path d="M93 38h4M103 38h4M95 48q5 4 10 0" fill="none" stroke-width="2.5"/>
+    <path d="M86 28l14-12 14 12" fill="${C.gold}"/></g>`,
+  shield: () => `${GROUND}<g class="a-sway">${dancerBody("#4a2214", `<path d="M90 64 70 76M110 64l20-22" fill="none"/>`)}
+    <path d="M130 18v104" stroke="#6b3420" stroke-width="4"/><path d="M124 22l6-14 6 14z" fill="#ccc"/>
+    <rect x="52" y="60" width="22" height="50" rx="6" fill="${C.maroon}"/><path d="M58 70h10M58 85h10M58 100h10" stroke="#fff" stroke-width="2.5"/></g>`,
+  row: () => `${GROUND}${[46, 100, 154].map((x, i) => `
+    <g class="a-clap" style="animation-delay:${-i * .17}s">
+      <path d="M${x - 22} 134q22-44 44 0z" fill="${i === 1 ? C.maroon : C.indigo}"/><path d="M${x - 14} 104l-6-16M${x + 14} 104l6-16" fill="none"/>
+      <circle cx="${x}" cy="80" r="12" fill="${C.skin}"/><path d="M${x - 12} 76q12-14 24 0" fill="${C.gold}"/>
+    </g>`).join("")}`,
+
+  /* --- alat musik --- */
+  angklung: () => `${GROUND}${NOTES}<g class="a-shake">
+    <path d="M52 132V40M148 132V40M48 44h104M48 132h104" fill="none" stroke-width="5" stroke="#8a5a3b"/>
+    ${[[70, 58, 64], [96, 50, 72], [122, 64, 58]].map(([x, y, h]) => `<rect x="${x}" y="${y}" width="16" height="${h}" rx="8" fill="#e2c07e"/><rect x="${x + 2}" y="${y + h - 6}" width="12" height="14" rx="3" fill="#c49a52"/>`).join("")}
+    <rect x="58" y="112" width="84" height="10" rx="4" fill="#c49a52"/></g>`,
+  drum: () => `${GROUND}${NOTES}
+    <ellipse cx="100" cy="124" rx="44" ry="12" fill="${C.dark}"/><rect x="56" y="68" width="88" height="56" fill="${C.maroon}"/>
+    <path d="M56 70l22 54M78 70l22 54M100 70l22 54M122 70l22 54" fill="none" stroke="${C.gold}" stroke-width="3"/>
+    <ellipse cx="100" cy="68" rx="44" ry="12" fill="${C.cream}"/>
+    <g class="a-hit"><path d="M150 30 112 64" stroke="#6b3420" stroke-width="6"/><circle cx="112" cy="64" r="5" fill="${C.cream}"/></g>`,
+  string: () => `${GROUND}${NOTES}<g transform="rotate(-24 100 90)">
+    <rect x="118" y="34" width="56" height="14" rx="5" fill="#8a5a3b"/><rect x="170" y="30" width="14" height="22" rx="4" fill="${C.dark}"/>
+    <ellipse cx="86" cy="42" rx="44" ry="30" fill="${C.wood}"/><circle cx="86" cy="42" r="10" fill="${C.dark}"/>
+    <path d="M60 36H176M60 42H176M60 48H176" fill="none" stroke-width="1.5"/></g>`,
+  flute: () => `${GROUND}${NOTES}<g transform="rotate(-18 100 90)">
+    <rect x="22" y="80" width="156" height="16" rx="8" fill="#e2c07e"/><rect x="22" y="80" width="18" height="16" rx="6" fill="${C.maroon}"/>
+    ${[78, 98, 118, 138].map(x => `<circle cx="${x}" cy="88" r="3.5" fill="${C.dark}"/>`).join("")}
+    <path d="M150 80v16M60 80v16" stroke-width="2"/></g>`,
+  xylo: () => `${GROUND}${NOTES}
+    <path d="M26 104 46 132h108l20-28z" fill="${C.dark}"/>
+    ${[0, 1, 2, 3, 4, 5].map(i => `<rect x="${34 + i * 23}" y="${60 + i * 5}" width="18" height="${52 - i * 6}" rx="3" fill="${i % 2 ? "#e2c07e" : C.gold}"/>`).join("")}
+    <g class="a-hit"><path d="M168 30 128 70" stroke="#6b3420" stroke-width="4"/><circle cx="128" cy="70" r="7" fill="${C.maroon}"/></g>`,
+  gong: () => `${GROUND}${NOTES}
+    <path d="M40 134V24M160 134V24M30 26h140" fill="none" stroke="#8a5a3b" stroke-width="6"/>
+    <g class="a-swing"><path d="M100 26v14" fill="none"/>
+      <circle cx="100" cy="82" r="40" fill="${C.gold}"/><circle cx="100" cy="82" r="28" fill="none" stroke-width="2"/><circle cx="100" cy="82" r="11" fill="#c48a1a"/></g>`,
+  sasando: () => `${GROUND}${NOTES}
+    <path d="M44 120Q100-10 156 120z" fill="#e2c07e"/>
+    ${[56, 72, 88, 112, 128, 144].map(x => `<path d="M100 118 ${x} 40" fill="none" stroke="#c49a52" stroke-width="2"/>`).join("")}
+    <rect x="90" y="30" width="20" height="98" rx="8" fill="${C.wood}"/><path d="M95 36v86M100 36v86M105 36v86" fill="none" stroke-width="1"/>`,
+
+  /* --- makanan --- */
+  bowl: () => `${STEAM}<ellipse cx="100" cy="132" rx="38" ry="7" fill="${C.dark}"/>
+    <path d="M42 84h116q-6 46-58 46T42 84z" fill="${C.indigo}"/><path d="M60 104q40 10 80 0" fill="none" stroke="${C.gold}" stroke-width="3"/>
+    <ellipse cx="100" cy="84" rx="58" ry="12" fill="#e9b04a"/><circle cx="84" cy="82" r="5" fill="${C.leaf}"/><circle cx="112" cy="84" r="6" fill="#fff"/>`,
+  noodle: () => `${STEAM}<ellipse cx="100" cy="132" rx="38" ry="7" fill="${C.dark}"/>
+    <path d="M42 84h116q-6 46-58 46T42 84z" fill="${C.maroon}"/>
+    <ellipse cx="100" cy="84" rx="58" ry="12" fill="#f2c65a"/><path d="M60 84q8-8 16 0t16 0 16 0 16 0 16 0" fill="none" stroke="#c98b2a" stroke-width="2.5"/>
+    <path d="M128 30 104 80M142 32 112 80" stroke="#6b3420" stroke-width="4"/>`,
+  rice: () => `${PLATE}<path d="M58 118c10-14 30-6 42-6s32-8 42 6" fill="${C.leaf}"/>
+    <path d="M70 114q30-64 60 0z" fill="#fff"/><path d="M86 96h4M100 86h4M108 104h4" fill="none" stroke-width="2"/>
+    <circle cx="140" cy="108" r="8" fill="${C.maroon}"/><circle cx="58" cy="108" r="8" fill="${C.gold}"/>`,
+  skewer: () => `${PLATE}${[0, 1, 2].map(i => `<g transform="translate(${i * 24 - 24} ${i * 4})">
+    <path d="M70 116 140 70" stroke="#8a5a3b" stroke-width="3"/>
+    <rect x="82" y="96" width="14" height="14" rx="3" fill="${C.dark}" transform="rotate(-33 89 103)"/>
+    <rect x="100" y="84" width="14" height="14" rx="3" fill="#8b3a20" transform="rotate(-33 107 91)"/>
+    <rect x="118" y="72" width="14" height="14" rx="3" fill="${C.dark}" transform="rotate(-33 125 79)"/></g>`).join("")}${STEAM}`,
+  fish: () => `${PLATE}<path d="M48 110q40-34 86 0-46 32-86 0z" fill="#e0a04a"/><path d="M134 110l22-16v32z" fill="#e0a04a"/>
+    <circle cx="64" cy="106" r="3.5" fill="${C.ink || "#2a160c"}"/><path d="M84 98q4 12 0 24M100 96q4 14 0 28M116 98q4 12 0 24" fill="none" stroke-width="2"/>
+    <circle cx="72" cy="124" r="5" fill="${C.maroon}"/><circle cx="130" cy="126" r="5" fill="${C.leaf}"/>${STEAM}`,
+  dish: () => `${PLATE}${[[78, 108], [100, 102], [122, 108], [90, 114], [112, 114]].map(([x, y]) => `<rect x="${x - 10}" y="${y - 8}" width="20" height="16" rx="6" fill="#7a3a1c"/>`).join("")}
+    <path d="M60 114q4-14 14-10" fill="none" stroke="${C.leaf}" stroke-width="5"/><path d="M134 104q10 4 8 14" fill="none" stroke="#c0392b" stroke-width="5"/>${STEAM}`,
+  cake: () => `${PLATE}${[0, 1, 2].map(i => `<g transform="translate(${i * 34 - 34} 0)">
+    <path d="M86 116V84l28-10v42z" fill="${C.cream2}"/><path d="M86 92l28-10M86 100l28-10M86 108l28-10" fill="none" stroke="${C.dark}" stroke-width="3"/></g>`).join("")}`,
+};
+const DEFAULT_ART = { rumah: "panggung", tari: "scarf", musik: "drum", makan: "bowl" };
+const artSvg = item => `<svg class="art" viewBox="0 0 200 150" aria-hidden="true">${(ART[item.art] || ART[DEFAULT_ART[item.cat]])()}</svg>`;
+
+/* ===================== UTIL ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+const byName = Object.fromEntries(DATA.map(d => [d.p, d]));
+
+// Fisher–Yates: acak tanpa bias
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+
+const settings = {
+  mode:  store.get("budaya_mode", "single"),
+  cat:   store.get("budaya_cat", "campur"),
+  count: store.get("budaya_count", 10),
+  time:  store.get("budaya_time", 15),
+  sound: store.get("budaya_sound", true),
+};
+
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.id); toast.id = setTimeout(() => t.classList.remove("show"), 3500);
+}
+function replay(el, cls){ el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+/* ===================== GUNUNGAN (maskot SVG) ===================== */
+function gunungan(){
+  return `<svg class="gunungan" viewBox="0 0 120 140" aria-hidden="true">
+    <rect x="34" y="122" width="52" height="14" rx="3" fill="#8b1e2d" stroke="#2a160c" stroke-width="4"/>
+    <g class="g-body">
+      <path d="M60 6C40 30 18 60 16 98q0 22 16 24h56q16-2 16-24C102 60 80 30 60 6z" fill="#e3a72f" stroke="#2a160c" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M60 34v84M60 56l-16-12M60 56l16-12M60 74l-22-14M60 74l22-14" fill="none" stroke="#8b1e2d" stroke-width="4" stroke-linecap="round"/>
+      <g class="g-eyes"><circle cx="48" cy="94" r="5" fill="#2a160c"/><circle cx="72" cy="94" r="5" fill="#2a160c"/></g>
+      <path d="M52 106q8 6 16 0" fill="none" stroke="#2a160c" stroke-width="3.5" stroke-linecap="round"/>
+      <ellipse cx="40" cy="102" rx="5" ry="3" fill="#e5735b"/><ellipse cx="80" cy="102" rx="5" ry="3" fill="#e5735b"/>
+    </g>
+  </svg>`;
+}
+
+/* ===================== SUARA (Web Audio, nada pentatonis ala gamelan) ===================== */
+let actx;
+function sfx(type){
+  if(!settings.sound) return;
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === "suspended") actx.resume();
+    const seq = {
+      ok:[[587,.1],[784,.1],[880,.2]], bad:[[196,.3]], tick:[[523,.08]], go:[[659,.12],[880,.28]],
+      win:[[523,.12],[587,.12],[659,.12],[784,.12],[1047,.4]]
+    }[type];
+    let t = actx.currentTime;
+    for(const [f, d] of seq){
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type === "bad" ? "square" : "triangle";
+      o.frequency.value = f;
+      g.gain.setValueAtTime(.0001, t);
+      g.gain.exponentialRampToValueAtTime(type === "bad" ? .12 : .3, t + .01);
+      g.gain.exponentialRampToValueAtTime(.0001, t + d * 1.6);
+      o.connect(g).connect(actx.destination);
+      o.start(t); o.stop(t + d * 1.6 + .02);
+      t += d;
+    }
+  }catch(e){}
+  if(type === "bad" && navigator.vibrate) navigator.vibrate(120);
+}
+
+/* ===================== FULLSCREEN ===================== */
+const ICON_FS_ON  = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+const ICON_FS_OFF = '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+const ICON_SND_ON  = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/></svg>';
+const ICON_SND_OFF = '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+const isFs = () => document.fullscreenElement || document.webkitFullscreenElement;
+
+function toggleFs(){
+  const el = document.documentElement;
+  if(isFs()){
+    (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    return;
+  }
+  const req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if(!req){ toast("Browser ini tidak mendukung layar penuh. Di iPhone: Bagikan → Tambah ke Layar Utama."); return; }
+  const p = req.call(el);
+  if(p && p.catch) p.catch(() => toast("Layar penuh ditolak oleh browser."));
+}
+function updFs(){ $$('[data-act="fs"]').forEach(b => b.innerHTML = isFs() ? ICON_FS_OFF : ICON_FS_ON); }
+function updSound(){ $$('[data-act="sound"]').forEach(b => b.innerHTML = settings.sound ? ICON_SND_ON : ICON_SND_OFF); }
+document.addEventListener("fullscreenchange", updFs);
+document.addEventListener("webkitfullscreenchange", updFs);
+
+/* ===================== TIMER & PENJADWALAN ===================== */
+let pending = [], raf = 0, timer = {t0:0, dur:0};
+function later(fn, ms){ pending.push(setTimeout(fn, ms)); }
+function stopAll(){ pending.forEach(clearTimeout); pending = []; cancelAnimationFrame(raf); raf = 0; }
+function stopTimer(){ cancelAnimationFrame(raf); raf = 0; }
+function timeLeft(){ return timer.dur ? Math.max(0, 1 - (performance.now() - timer.t0) / timer.dur) : 0; }
+
+// frac = sisa waktu awal (1 = penuh); dipakai saat melanjutkan timer yang dijeda
+function startTimer(seconds, el, onEnd, frac = 1){
+  stopTimer();
+  el.classList.toggle("off", !seconds);
+  el.classList.remove("low");
+  el.style.setProperty("--t", frac);
+  timer = {t0: performance.now() - (1 - frac) * seconds * 1000, dur: seconds * 1000, seconds, el, onEnd};
+  if(!seconds) return;
+  const tick = () => {
+    const left = timeLeft();
+    el.style.setProperty("--t", left);
+    el.classList.toggle("low", left < .3);
+    if(left <= 0){ raf = 0; onEnd(); return; }
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+}
+function pauseTimer(){
+  if(!raf) return null;
+  const frac = timeLeft();
+  stopTimer();
+  return frac;
+}
+function resumeTimer(frac){
+  if(frac !== null) startTimer(timer.seconds, timer.el, timer.onEnd, frac);
+}
+
+/* ===================== MODAL (pengganti confirm) ===================== */
+// ask({...}) → Promise<boolean>; timer soal dijeda selama modal terbuka
+let modalDone = null;
+function ask({ title, text, yes = "Ya", no = "Batal", danger = false }){
+  if(modalDone) modalDone(false);
+  const frac = pauseTimer();
+  $("#mTitle").textContent = title;
+  $("#mText").textContent = text;
+  $("#mYes").textContent = yes;
+  $("#mNo").textContent = no;
+  $("#mYes").className = "btn " + (danger ? "danger" : "primary");
+  $("#mIcon").innerHTML = gunungan();
+  $("#modal").hidden = false;
+  $("#mYes").focus();
+  return new Promise(resolve => {
+    modalDone = ok => {
+      modalDone = null;
+      $("#modal").hidden = true;
+      if(!ok) resumeTimer(frac);
+      resolve(ok);
+    };
+  });
+}
+$("#mYes").addEventListener("click", () => modalDone && modalDone(true));
+$("#mNo").addEventListener("click", () => modalDone && modalDone(false));
+$("#modal").addEventListener("click", e => { if(e.target.id === "modal" && modalDone) modalDone(false); });
+
+/* ===================== KARTU SOAL & PETA ===================== */
+const card = $("#card");
+function mapSvg(){
+  return `<svg class="map" viewBox="${MAP.vb.join(" ")}" aria-hidden="true">
+    ${DATA.map(d => `<path data-p="${d.p}" d="${MAP.p[d.p].d}"/>`).join("")}
+    <g class="pin"><circle class="ping" r="28"/><circle class="dot" r="9"/></g>
+  </svg>`;
+}
+// Kotak kamera di sekitar provinsi, menyesuaikan rasio kartu; digeser agar provinsi berada di atas label
+function focusBox(prov, el){
+  const [x, y, w, h] = MAP.p[prov].b;
+  const A = Math.max(.3, el.clientWidth / Math.max(1, el.clientHeight));
+  let W = Math.max(w * 3.2, 300), H = Math.max(h * 3.2, 300 / A);
+  if(W / H < A) W = H * A; else H = W / A;
+  return [x + w / 2 - W / 2, y + h / 2 - H / 2 + H * .14, W, H];
+}
+function cardAsk(q){
+  card.classList.remove("flipped", "bad");
+  $("#qArt").innerHTML = artSvg(q);
+  $("#qCat").textContent = CATS[q.cat].label;
+  $("#qName").textContent = q.name;
+  $("#qAsk").textContent = CATS[q.cat].ask;
+  replay($(".front"), "pop");
+}
+// Balik kartu: tampilkan provinsi jawaban di peta
+function cardReveal(q, ok){
+  const back = $(".back"), map = back.querySelector(".map");
+  map.querySelectorAll("path").forEach(p => p.classList.toggle("tg", p.dataset.p === q.prov));
+  const vb = focusBox(q.prov, back), [px, py] = MAP.p[q.prov].c;
+  map.setAttribute("viewBox", vb.map(n => n.toFixed(2)).join(" "));
+  map.querySelector(".pin").setAttribute("transform", `translate(${px} ${py}) scale(${(vb[2] / MAP.vb[2]).toFixed(4)})`);
+  $("#rvName").textContent = `${q.name} — ${q.prov}`;
+  $("#rvInfo").textContent = `Ibukota provinsi: ${byName[q.prov].c}`;
+  card.classList.toggle("bad", !ok);
+  card.classList.add("flipped");
+}
+
+/* ===================== GENERATOR SOAL ===================== */
+// Pilihan = 4 nama provinsi: 1 benar + 3 pengecoh (maks. 2 dari wilayah yang sama),
+// tanpa provinsi yang memiliki budaya serupa (kolom ke-5 bank soal)
+function makeQuestion(item){
+  const ans = byName[item.prov], excl = new Set([item.prov, ...item.x]);
+  const others = DATA.filter(d => !excl.has(d.p));
+  const same = shuffle(others.filter(d => d.r === ans.r)).slice(0, 2);
+  const rest = shuffle(others.filter(d => !same.includes(d)));
+  const distractors = [...same, ...rest].slice(0, 3).map(d => d.p);
+  return { cat: item.cat, name: item.name, art: item.art, prov: item.prov, options: shuffle([item.prov, ...distractors]) };
+}
+const poolFor = cat => cat === "campur" ? ITEMS : ITEMS.filter(i => i.cat === cat);
+function buildQuiz(){
+  const pool = poolFor(settings.cat);
+  return shuffle(pool).slice(0, Math.min(settings.count, pool.length)).map(makeQuestion);
+}
+
+function renderOpts(box, options, keys){
+  box.innerHTML = "";
+  options.forEach((o, i) => {
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.dataset.val = o;
+    b.innerHTML = `<span class="lt"><i>${"ABCD"[i]}</i></span><span>${o}</span><kbd>${keys[i]}</kbd>`;
+    box.appendChild(b);
+  });
+}
+function revealOpts(box, answer){
+  box.querySelectorAll(".opt").forEach(b => {
+    if(b.dataset.val === answer) b.classList.add("correct");
+    else if(!b.classList.contains("wrong")) b.classList.add("dim");
+  });
+}
+function setFb(el, text, cls){ el.textContent = text; el.className = "fb " + (cls || ""); }
+
+/* ===================== NAVIGASI & MENU ===================== */
+let lastMode = "single";
+function show(id){
+  $$(".screen").forEach(s => s.classList.toggle("active", s.id === id));
+  // pindahkan kartu tunggal ke layar yang aktif
+  const slot = id === "single" ? $("#sSlot") : id === "vs" ? $("#vSlot") : null;
+  if(slot) slot.appendChild(card);
+}
+function goHome(keepSave){
+  stopAll();
+  if(!keepSave) clearGame();
+  $("#overlay").classList.remove("show");
+  const best = store.get("budaya_best", null);
+  $("#best").textContent = best ? `🏆 Skor terbaik Single: ${best.score}${best.name ? " — " + best.name : ""}` : "";
+  show("home");
+}
+// Single → 1 kotak nama; VS → 2 kotak nama tim
+function setMode(m){
+  settings.mode = m;
+  store.set("budaya_mode", m);
+  $$(".tile").forEach(t => t.classList.toggle("on", t.dataset.mode === m));
+  $("#nameSingle").hidden = m !== "single";
+  $("#nameVs").hidden = m !== "vs";
+}
+function updCatCount(){ $("#catCount").textContent = `Tersedia ${poolFor(settings.cat).length} soal di kategori ini.`; }
+function startGame(){ settings.mode === "vs" ? startVs() : startSingle(); }
+
+/* ===================== SIMPAN & LANJUTKAN (tahan refresh) ===================== */
+const SAVE_KEY = "budaya_game", SAVE_TTL = 6 * 3600 * 1000;   // simpanan kedaluwarsa setelah 6 jam
+function saveGame(mode){
+  const st = mode === "single" ? S : V;
+  store.set(SAVE_KEY, { mode, t: Date.now(), time: settings.time, state: { ...st, lock: true } });
+}
+function clearGame(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+function resumeGame(g){
+  settings.time = g.time;
+  stopAll();
+  if(g.mode === "single"){
+    lastMode = "single";
+    Object.assign(S, g.state);
+    $("#sName").textContent = S.name;
+    $("#sTot").textContent = S.qs.length;
+    show("single");
+    nextSingle();
+  }else{
+    lastMode = "vs";
+    Object.assign(V, g.state, { state: [null, null] });
+    PL.forEach((p, k) => p.el.querySelector(".pl-name").textContent = V.names[k]);
+    updVsScore();
+    $("#vRound").textContent = `${V.i}/${V.qs.length}`;
+    show("vs");
+    countdown(nextVs);
+  }
+}
+function offerResume(){
+  const g = store.get(SAVE_KEY, null);
+  if(!g || !g.state || !g.state.qs || Date.now() - g.t > SAVE_TTL || g.state.i >= g.state.qs.length){ clearGame(); return; }
+  const st = g.state, who = g.mode === "single" ? st.name : st.names.join(" vs ");
+  ask({ title: "Lanjutkan permainan?", text: `${g.mode === "single" ? "Single" : "VS"} — ${who}, soal ${st.i + 1} dari ${st.qs.length}.`,
+        yes: "▶ Lanjutkan", no: "Mulai baru" })
+    .then(ok => ok ? resumeGame(g) : clearGame());
+}
+
+/* ===================== SINGLE MODE ===================== */
+const S = {};
+function startSingle(){
+  stopAll();
+  lastMode = "single";
+  const name = $("#nSolo").value.trim() || "Siswa";
+  store.set("budaya_solo", $("#nSolo").value.trim());
+  Object.assign(S, { name, qs: buildQuiz(), i: 0, score: 0, streak: 0, maxStreak: 0, correct: 0, log: [], lock: true });
+  $("#sName").textContent = name;
+  $("#sTot").textContent = S.qs.length;
+  show("single");
+  nextSingle();
+}
+function updHud(){
+  $("#sNum").textContent = Math.min(S.i + 1, S.qs.length);
+  $("#sScore").textContent = S.score;
+  $("#sStreak").textContent = S.streak;
+}
+function nextSingle(){
+  if(S.i >= S.qs.length) return endSingle();
+  saveGame("single");
+  const q = S.qs[S.i];
+  S.lock = false;
+  updHud();
+  cardAsk(q);
+  renderOpts($("#sOpts"), q.options, ["1","2","3","4"]);
+  setFb($("#sFb"), "");
+  startTimer(settings.time, $("#sTimer"), () => answerSingle(null, null));
+}
+function answerSingle(val, btn){
+  if(S.lock) return;
+  S.lock = true;
+  const frac = timeLeft();
+  stopTimer();
+  const q = S.qs[S.i];
+  const ok = val === q.prov;
+  if(btn && !ok) btn.classList.add("wrong");
+  revealOpts($("#sOpts"), q.prov);
+  cardReveal(q, ok);
+
+  if(ok){
+    S.correct++; S.streak++; S.maxStreak = Math.max(S.maxStreak, S.streak);
+    // skor = 100 dasar + bonus kecepatan (maks 50) + bonus beruntun (maks 50)
+    const pts = 100 + Math.round(50 * frac) + Math.min(S.streak - 1, 5) * 10;
+    S.score += pts;
+    setFb($("#sFb"), `✅ Benar! +${pts}`, "ok");
+    sfx("ok");
+  }else{
+    S.streak = 0;
+    setFb($("#sFb"), val === null ? "⏰ Waktu habis!" : "❌ Kurang tepat!", "bad");
+    sfx("bad");
+  }
+  S.log.push({ q, val, ok });
+  S.i++;
+  updHud();
+  later(nextSingle, ok ? 2000 : 3000);
+}
+function endSingle(){
+  clearGame();
+  const n = S.qs.length, pct = Math.round(S.correct / n * 100);
+  const best = store.get("budaya_best", null), isBest = !best || S.score > best.score;
+  if(isBest && S.score > 0) store.set("budaya_best", { score: S.score, name: S.name });
+  // peta penguasaan: hijau = pernah dijawab benar, merah = hanya salah
+  const okSet = new Set(S.log.filter(l => l.ok).map(l => l.q.prov));
+  const ngSet = new Set(S.log.filter(l => !l.ok && !okSet.has(l.q.prov)).map(l => l.q.prov));
+  $("#rIcon").textContent = pct >= 90 ? "🏆" : pct >= 70 ? "🎉" : pct >= 50 ? "👍" : "📚";
+  $("#rTitle").textContent = (isBest && S.score > 0) ? `Rekor Baru, ${S.name}!` : pct >= 70 ? `Hebat, ${S.name}!` : `Ayo Belajar Lagi, ${S.name}!`;
+  const wrong = S.log.filter(l => !l.ok);
+  $("#rBody").innerHTML = `
+    <div class="stats">
+      <div class="stat"><b>${S.score}</b><span>Skor</span></div>
+      <div class="stat"><b>${S.correct}/${n}</b><span>Benar</span></div>
+      <div class="stat"><b>${pct}%</b><span>Akurasi</span></div>
+      <div class="stat"><b>🔥${S.maxStreak}</b><span>Beruntun</span></div>
+    </div>
+    <h3 style="margin:18px 0 8px">Peta Jelajah Budayamu</h3>
+    <div class="res-map" id="resMap">${mapSvg()}</div>
+    <p class="legend"><span><i style="background:var(--green)"></i>Dijawab benar</span><span><i style="background:var(--red)"></i>Perlu dipelajari</span></p>
+    ${wrong.length ? `<h3 style="margin:16px 0 8px">Perlu dipelajari lagi</h3><ul class="review">${
+      wrong.map(l => `<li>${CATS[l.q.cat].label.split(" ")[0]} <b>${l.q.name}</b> → ${l.q.prov} <span>(${l.val === null ? "waktu habis" : "jawabanmu: " + l.val})</span></li>`).join("")
+    }</ul>` : ""}`;
+  $$("#resMap path").forEach(p => { p.classList.toggle("ok", okSet.has(p.dataset.p)); p.classList.toggle("ng", ngSet.has(p.dataset.p)); });
+  show("result");
+  sfx(pct >= 70 ? "win" : "tick");
+}
+
+/* ===================== VS MODE ===================== */
+const PL = [
+  { el: $("#p1"), keys: ["1","2","3","4"] },
+  { el: $("#p2"), keys: ["7","8","9","0"] },
+];
+const V = { lock: true };
+
+function startVs(){
+  stopAll();
+  lastMode = "vs";
+  const names = [$("#n1").value.trim() || "Tim A", $("#n2").value.trim() || "Tim B"];
+  store.set("budaya_names", names);
+  Object.assign(V, { qs: buildQuiz(), i: 0, score: [0, 0], state: [null, null], names, lock: true });
+  PL.forEach((p, k) => {
+    p.el.querySelector(".pl-name").textContent = names[k];
+    p.el.querySelector(".opts").innerHTML = "";
+    p.el.classList.remove("win", "out");
+    setFb(p.el.querySelector(".fb"), "");
+  });
+  updVsScore();
+  $("#vRound").textContent = `0/${V.qs.length}`;
+  show("vs");
+  cardAsk(V.qs[0]);
+  countdown(nextVs);
+}
+function countdown(done){
+  const ov = $("#overlay");
+  let n = 3;
+  ov.classList.add("show");
+  const step = () => {
+    // span baru tiap angka → animasi pop hanya pada angka, bukan latar overlay
+    if(n === 0){
+      ov.innerHTML = '<span class="pop">Mulai!</span>'; sfx("go");
+      later(() => { ov.classList.remove("show"); done(); }, 600);
+      return;
+    }
+    ov.innerHTML = `<span class="pop">${n--}</span>`; sfx("tick");
+    later(step, 700);
+  };
+  step();
+}
+function updVsScore(){ PL.forEach((p, k) => p.el.querySelector(".pl-score").textContent = V.score[k]); }
+
+function nextVs(){
+  if(V.i >= V.qs.length) return endVs();
+  saveGame("vs");
+  const q = V.qs[V.i];
+  V.state = [null, null];
+  V.lock = false;
+  $("#vRound").textContent = `${V.i + 1}/${V.qs.length}`;
+  cardAsk(q);
+  PL.forEach((p, k) => {
+    p.el.classList.remove("win", "out");
+    // urutan pilihan tiap tim diacak berbeda supaya tidak bisa menyontek posisi tombol lawan
+    renderOpts(p.el.querySelector(".opts"), k === 0 ? q.options : shuffle(q.options), p.keys);
+    setFb(p.el.querySelector(".fb"), "");
+  });
+  startTimer(settings.time, $("#vTimer"), () => revealVs(null, "⏰ Waktu habis!"));
+}
+function answerVs(k, btn){
+  if(V.lock || V.state[k]) return;            // ronde terkunci / tim sudah menjawab
+  const q = V.qs[V.i], me = PL[k].el, foe = PL[1 - k].el;
+  if(btn.dataset.val === q.prov){
+    // tim pertama yang benar memenangkan ronde
+    V.state[k] = "right";
+    V.score[k]++;
+    me.classList.add("win");
+    setFb(me.querySelector(".fb"), "✅ Benar! +1", "ok");
+    setFb(foe.querySelector(".fb"), `${V.names[k]} lebih cepat!`, "bad");
+    sfx("ok");
+    updVsScore();
+    revealVs(k);
+  }else{
+    // salah → tim ini dikunci untuk ronde ini, lawan masih boleh menjawab
+    V.state[k] = "wrong";
+    btn.classList.add("wrong");
+    me.classList.add("out");
+    setFb(me.querySelector(".fb"), "❌ Salah! Tunggu lawan…", "bad");
+    sfx("bad");
+    if(V.state[1 - k] === "wrong") revealVs(null, "Dua-duanya salah!");
+  }
+}
+function revealVs(winner, msg){
+  if(V.lock) return;
+  V.lock = true;
+  stopTimer();
+  const q = V.qs[V.i];
+  cardReveal(q, winner !== null);
+  PL.forEach(p => {
+    revealOpts(p.el.querySelector(".opts"), q.prov);
+    if(winner === null) setFb(p.el.querySelector(".fb"), msg, "bad");
+  });
+  V.i++;
+  later(nextVs, 2800);
+}
+function endVs(){
+  clearGame();
+  const [a, b] = V.score;
+  const w = a === b ? -1 : a > b ? 0 : 1;
+  $("#rIcon").textContent = w < 0 ? "🤝" : "🏆";
+  $("#rTitle").textContent = w < 0 ? "Seri! Sama Hebat" : `${V.names[w]} Menang!`;
+  $("#rBody").innerHTML = `<div class="stats">${[0, 1].map(k => `
+    <div class="stat p${k + 1} ${w === k ? "lead" : ""}"><b>${V.score[k]}</b><span>${esc(V.names[k])}</span></div>`).join("")}
+  </div><p style="color:var(--muted);margin-top:10px">${V.qs.length - a - b} soal tidak terjawab benar</p>`;
+  show("result");
+  sfx("win");
+}
+
+/* ===================== INPUT ===================== */
+// Tombol toolbar (fullscreen, suara, menu) — dipakai di semua layar
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]");
+  if(!b) return;
+  const act = b.dataset.act;
+  if(act === "fs") toggleFs();
+  if(act === "sound"){ settings.sound = !settings.sound; store.set("budaya_sound", settings.sound); updSound(); }
+  if(act === "home"){
+    ask({ title: "Keluar ke menu?", text: "Permainan yang sedang berjalan akan dihentikan dan skornya tidak disimpan.",
+          yes: "Ya, keluar", no: "Lanjut main", danger: true })
+      .then(ok => { if(ok) goHome(); });
+  }
+});
+
+// Single: click biasa
+$("#sOpts").addEventListener("click", e => {
+  const b = e.target.closest(".opt");
+  if(b) answerSingle(b.dataset.val, b);
+});
+
+// VS: pointerdown → responsif & mendukung multi-touch (2 siswa menekan bersamaan di flat panel)
+PL.forEach((p, k) => {
+  p.el.querySelector(".opts").addEventListener("pointerdown", e => {
+    const b = e.target.closest(".opt");
+    if(!b) return;
+    e.preventDefault();
+    answerVs(k, b);
+  });
+});
+
+// Keyboard (laptop): Single 1–4 / A–D, VS Tim A = 1–4, Tim B = 7 8 9 0, F = fullscreen
+document.addEventListener("keydown", e => {
+  if(modalDone){
+    if(e.key === "Escape") modalDone(false);
+    if(e.key === "Enter"){ e.preventDefault(); modalDone(true); }
+    return;
+  }
+  if(e.target.matches("input")){
+    if(e.key === "Enter"){ e.target.blur(); startGame(); }
+    return;
+  }
+  if(e.repeat) return;
+  const k = e.key.toLowerCase();
+  if(k === "f"){ toggleFs(); return; }
+  const cur = $(".screen.active").id;
+  if(cur === "single"){
+    let i = ["1","2","3","4"].indexOf(k);
+    if(i < 0) i = ["a","b","c","d"].indexOf(k);
+    const b = $("#sOpts").children[i];
+    if(b) answerSingle(b.dataset.val, b);
+  }else if(cur === "vs"){
+    PL.forEach((p, pi) => {
+      const i = p.keys.indexOf(k);
+      const b = i >= 0 && p.el.querySelector(".opts").children[i];
+      if(b) answerVs(pi, b);
+    });
+  }
+});
+
+// Pengaturan di menu (nilai angka atau teks)
+$$(".seg").forEach(seg => {
+  const key = seg.dataset.key;
+  seg.querySelectorAll("button").forEach(b => {
+    b.classList.toggle("on", b.dataset.v === String(settings[key]));
+    b.addEventListener("click", () => {
+      settings[key] = isNaN(b.dataset.v) ? b.dataset.v : +b.dataset.v;
+      store.set("budaya_" + key, settings[key]);
+      seg.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+      updCatCount();
+    });
+  });
+});
+
+$$(".tile").forEach(t => t.addEventListener("click", () => setMode(t.dataset.mode)));
+$("#btnStart").addEventListener("click", startGame);
+$("#rAgain").addEventListener("click", () => lastMode === "vs" ? startVs() : startSingle());
+$("#rHome").addEventListener("click", () => goHome());
+
+/* ===================== INIT ===================== */
+$(".back").insertAdjacentHTML("afterbegin", mapSvg());
+$(".brand-ic").innerHTML = gunungan();
+
+// etalase di menu: ilustrasi budaya acak berganti-ganti
+function cycleShowcase(){
+  const it = ITEMS[Math.floor(Math.random() * ITEMS.length)];
+  $("#showArt").innerHTML = artSvg(it);
+  $("#showCat").textContent = CATS[it.cat].label;
+  replay($(".showcase"), "pop");
+}
+cycleShowcase();
+setInterval(() => { if($("#home").classList.contains("active")) cycleShowcase(); }, 2800);
+
+const savedNames = store.get("budaya_names", null);
+if(savedNames){ $("#n1").value = savedNames[0] || "Tim A"; $("#n2").value = savedNames[1] || "Tim B"; }
+$("#nSolo").value = store.get("budaya_solo", "");
+setMode(settings.mode === "vs" ? "vs" : "single");
+updCatCount();
+updFs();
+updSound();
+goHome(true);
+offerResume();
+
+// PWA: service worker hanya jalan lewat http(s) / localhost, tidak lewat file://
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
